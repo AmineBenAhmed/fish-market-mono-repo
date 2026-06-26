@@ -1,6 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { OrderStatus, Prisma } from '@prisma/client';
+import * as crypto from 'node:crypto';
 
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Order, OrderStatus, Prisma } from '@prisma/client';
+
+import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { QueryOrdersDto } from './dto/query-orders.dto';
@@ -8,10 +11,13 @@ import { InventoryReservationService } from './inventory-reservation.service';
 import { OrderCalculationService } from './order-calculation.service';
 import { OrderStatusService } from './order-status.service';
 
+export interface OrderCreateResult {
+  parentOrder: Order | null;
+  childOrders: Order[];
+}
+
 @Injectable()
 export class OrdersService {
-  private static orderCounter = 0;
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly inventoryReservation: InventoryReservationService,
@@ -22,9 +28,8 @@ export class OrdersService {
   private generateOrderNumber(): string {
     const now = new Date();
     const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const seq = String(++OrdersService.orderCounter).padStart(4, '0');
-    const rand = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-    return `FM-${datePart}-${seq}${rand}`;
+    const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 7).toUpperCase();
+    return `FM-${datePart}-${suffix}`;
   }
 
   async createFromCart(userId: string) {
@@ -78,12 +83,19 @@ export class OrdersService {
     const result = await this.prisma.$transaction(async (tx) => {
       const sellerOrders: { data: Prisma.OrderCreateInput; items: typeof cart.items }[] = [];
 
+      const sellerIds = Array.from(groupedBySeller.keys());
+      const profiles = await tx.sellerProfile.findMany({
+        where: { userId: { in: sellerIds } },
+        select: { userId: true, commissionRate: true },
+      });
+      const commissionMap = new Map(profiles.map((p) => [p.userId, p.commissionRate]));
+
       for (const [sellerId, items] of groupedBySeller) {
         const calcItems = items.map((i) => ({
           unitPrice: Number(i.listing.price),
           quantity: i.quantity,
         }));
-        const sellerCommissionRate = 0.12;
+        const sellerCommissionRate = commissionMap.get(sellerId) ?? 0.12;
         const sellerCalc = this.calculation.calculateSellerOrder({
           items: calcItems,
           commissionRate: sellerCommissionRate,
@@ -105,7 +117,7 @@ export class OrdersService {
         });
       }
 
-      let parentOrder: any = null;
+      let parentOrder: Order | null = null;
 
       if (sellerOrders.length > 1) {
         const parentCalc = this.calculation.calculateMarketplaceOrder(
@@ -135,7 +147,7 @@ export class OrdersService {
         }
       }
 
-      const createdOrders: any[] = [];
+      const createdOrders: Order[] = [];
 
       for (const so of sellerOrders) {
         const created = await tx.order.create({
@@ -174,10 +186,10 @@ export class OrdersService {
 
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
-      return { parentOrder, childOrders: createdOrders };
+      return { parentOrder, childOrders: createdOrders } satisfies OrderCreateResult;
     });
 
-    return result;
+    return result as OrderCreateResult;
   }
 
   async findCustomerOrders(userId: string, query: QueryOrdersDto) {
@@ -188,7 +200,7 @@ export class OrdersService {
 
     if (query.status) where.status = query.status as OrderStatus;
     if (query.search) {
-      where.OR = [{ orderNumber: { contains: query.search, mode: 'insensitive' as any } }];
+      where.OR = [{ orderNumber: { contains: query.search, mode: 'insensitive' as const } }];
     }
     if (query.startDate || query.endDate) {
       where.createdAt = {};
@@ -196,9 +208,7 @@ export class OrdersService {
       if (query.endDate) where.createdAt.lte = new Date(query.endDate);
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(query.page, query.limit);
 
     const [data, total] = await Promise.all([
       this.prisma.order.findMany({
@@ -221,14 +231,7 @@ export class OrdersService {
 
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: skip + limit < total,
-        hasPreviousPage: page > 1,
-      },
+      meta: createPaginationMeta(total, page, limit),
     };
   }
 
@@ -325,9 +328,7 @@ export class OrdersService {
       if (query.endDate) where.createdAt.lte = new Date(query.endDate);
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(query.page, query.limit);
 
     const [data, total] = await Promise.all([
       this.prisma.order.findMany({
@@ -347,14 +348,7 @@ export class OrdersService {
 
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: skip + limit < total,
-        hasPreviousPage: page > 1,
-      },
+      meta: createPaginationMeta(total, page, limit),
     };
   }
 
@@ -383,7 +377,7 @@ export class OrdersService {
 
     if (query.status) where.status = query.status as OrderStatus;
     if (query.search) {
-      where.OR = [{ orderNumber: { contains: query.search, mode: 'insensitive' as any } }];
+      where.OR = [{ orderNumber: { contains: query.search, mode: 'insensitive' as const } }];
     }
     if (query.startDate || query.endDate) {
       where.createdAt = {};
@@ -391,9 +385,7 @@ export class OrdersService {
       if (query.endDate) where.createdAt.lte = new Date(query.endDate);
     }
 
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(query.page, query.limit);
 
     const [data, total] = await Promise.all([
       this.prisma.order.findMany({
@@ -413,14 +405,7 @@ export class OrdersService {
 
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: skip + limit < total,
-        hasPreviousPage: page > 1,
-      },
+      meta: createPaginationMeta(total, page, limit),
     };
   }
 }
