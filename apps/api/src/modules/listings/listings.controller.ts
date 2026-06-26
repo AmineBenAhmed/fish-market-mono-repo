@@ -35,7 +35,6 @@ export class ListingsController {
 
   @Get('today')
   @Roles('SELLER', 'ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Get today's listings for the current seller" })
   @ApiResponse({ status: 200, description: "Today's listings" })
   async findToday(@CurrentUser() user: JwtPayload) {
@@ -44,7 +43,6 @@ export class ListingsController {
 
   @Get('history')
   @Roles('SELLER', 'ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get listing history for the current seller' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -62,7 +60,6 @@ export class ListingsController {
 
   @Patch(':id')
   @Roles('SELLER', 'ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a listing (price, quantity, status)' })
   @ApiResponse({ status: 200, description: 'Listing updated' })
   async update(
@@ -75,7 +72,6 @@ export class ListingsController {
 
   @Delete(':id')
   @Roles('SELLER', 'ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a listing' })
   @ApiResponse({ status: 200, description: 'Listing deleted' })
   async remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
@@ -85,7 +81,6 @@ export class ListingsController {
 
   @Patch(':id/reduce-stock')
   @Roles('SELLER', 'ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reduce stock by a quantity (e.g., after manual sale)' })
   @ApiResponse({ status: 200, description: 'Stock reduced' })
   async reduceStock(

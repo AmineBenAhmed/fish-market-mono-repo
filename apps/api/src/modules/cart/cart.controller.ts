@@ -53,7 +53,6 @@ export class CartController {
 
   @Delete('items/:id')
   @Roles('CUSTOMER', 'SELLER', 'ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Remove item from cart' })
   async removeItem(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     await this.cartService.removeItem(user.sub, id);
@@ -62,7 +61,6 @@ export class CartController {
 
   @Delete()
   @Roles('CUSTOMER', 'SELLER', 'ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Clear entire cart' })
   async clearCart(@CurrentUser() user: JwtPayload) {
     await this.cartService.clearCart(user.sub);

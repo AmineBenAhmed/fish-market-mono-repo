@@ -23,7 +23,6 @@ export class CategoriesController {
 
   @Get()
   @Public()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all categories' })
   @ApiResponse({ status: 200, description: 'Category list' })
   async findAll() {
@@ -32,7 +31,6 @@ export class CategoriesController {
 
   @Get(':id')
   @Public()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get category by ID' })
   @ApiResponse({ status: 200, description: 'Category found' })
   async findOne(@Param('id') id: string) {
@@ -52,7 +50,6 @@ export class CategoriesController {
   @Patch(':id')
   @Roles('ADMIN')
   @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a category' })
   @ApiResponse({ status: 200, description: 'Category updated' })
   async update(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
@@ -62,7 +59,6 @@ export class CategoriesController {
   @Delete(':id')
   @Roles('ADMIN')
   @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a category' })
   @ApiResponse({ status: 200, description: 'Category deleted' })
   async remove(@Param('id') id: string) {

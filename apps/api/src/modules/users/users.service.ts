@@ -50,7 +50,7 @@ export class UsersService {
             city: true,
             state: true,
             vehicleType: true,
-            deliveryZone: true,
+            deliveryZoneId: true,
           },
         },
         setting: true,

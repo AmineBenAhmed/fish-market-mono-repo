@@ -5,6 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderStatus, PaymentMethod, PaymentStatus, Prisma, TransactionType } from '@prisma/client';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
@@ -31,6 +32,7 @@ export class PaymentsService {
     private readonly providerRegistry: PaymentProviderRegistry,
     private readonly walletService: WalletService,
     private readonly billingService: BillingService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -86,6 +88,14 @@ export class PaymentsService {
         data: { status: OrderStatus.PENDING },
       });
     }
+
+    this.eventEmitter.emit('payment.created', {
+      paymentId: payment.id,
+      orderId: order.id,
+      amount: Number(payment.amount),
+      method: payment.method,
+      customerId: userId,
+    });
 
     this.logger.log(`Payment created: ${payment.id} for order ${order.orderNumber}`);
 
@@ -192,11 +202,26 @@ export class PaymentsService {
         this.logger.error(`Post-payment processing failed for ${payment.id}`, error);
       }
 
+      this.eventEmitter.emit('payment.succeeded', {
+        paymentId: payment.id,
+        orderId: payment.order.id,
+        transactionId: providerResponse.transactionId ?? payment.transactionId,
+        amount: Number(payment.amount),
+        customerId: userId,
+      });
+
       this.logger.log(`Payment confirmed: ${payment.id}`);
     } else {
       await this.prisma.payment.update({
         where: { id: payment.id },
         data: { status: PaymentStatus.DECLINED },
+      });
+
+      this.eventEmitter.emit('payment.failed', {
+        paymentId: payment.id,
+        orderId: payment.order.id,
+        reason: 'Payment was not approved by provider',
+        customerId: userId,
       });
 
       throw new BadRequestException('Payment was not approved by provider');
@@ -282,6 +307,14 @@ export class PaymentsService {
         where: { id: payment.order.id },
         data: { status: isFullRefund ? OrderStatus.REFUNDED : OrderStatus.CANCELLED },
       });
+    });
+
+    this.eventEmitter.emit('payment.refunded', {
+      paymentId: payment.id,
+      orderId: payment.order.id,
+      amount: refundAmount,
+      isFullRefund,
+      customerId: userId,
     });
 
     this.logger.log(`Payment refunded: ${payment.id}, amount: ${refundAmount}`);

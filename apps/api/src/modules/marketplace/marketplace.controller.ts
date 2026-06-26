@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { Public } from '../../common/decorators';
@@ -11,7 +11,6 @@ export class MarketplaceController {
   constructor(private readonly marketplaceService: MarketplaceService) {}
 
   @Get('today')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Browse all available fish for today' })
   @ApiQuery({ name: 'city', required: false, type: String })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
@@ -54,7 +53,6 @@ export class MarketplaceController {
   }
 
   @Get('category/:id')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Browse fish by category for today' })
   @ApiQuery({ name: 'city', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Category listings' })
@@ -63,7 +61,6 @@ export class MarketplaceController {
   }
 
   @Get('search')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Search available fish' })
   @ApiQuery({ name: 'q', required: true, type: String })
   @ApiResponse({ status: 200, description: 'Search results' })
@@ -72,7 +69,6 @@ export class MarketplaceController {
   }
 
   @Get('sellers/:sellerId')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'See all listings from a specific seller for today' })
   @ApiResponse({ status: 200, description: 'Seller listings' })
   async findBySeller(@Param('sellerId') sellerId: string) {

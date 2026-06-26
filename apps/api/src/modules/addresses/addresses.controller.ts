@@ -32,7 +32,6 @@ export class AddressesController {
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all addresses for current user' })
   @ApiResponse({ status: 200, description: 'List of addresses' })
   async findAll(@CurrentUser() user: JwtPayload) {
@@ -40,7 +39,6 @@ export class AddressesController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update an address' })
   @ApiResponse({ status: 200, description: 'Address updated' })
   async update(
@@ -52,7 +50,6 @@ export class AddressesController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete an address' })
   @ApiResponse({ status: 200, description: 'Address deleted' })
   async remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
@@ -61,7 +58,6 @@ export class AddressesController {
   }
 
   @Patch(':id/default')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Set address as default' })
   @ApiResponse({ status: 200, description: 'Default address updated' })
   async setDefault(@CurrentUser() user: JwtPayload, @Param('id') id: string) {

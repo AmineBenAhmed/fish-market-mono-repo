@@ -23,7 +23,6 @@ export class SellersController {
   }
 
   @Get('me')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get own seller profile' })
   @ApiResponse({ status: 200, description: 'Seller profile' })
   async getMyProfile(@CurrentUser() user: JwtPayload) {
@@ -31,7 +30,6 @@ export class SellersController {
   }
 
   @Patch('me')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update own seller profile' })
   @ApiResponse({ status: 200, description: 'Seller profile updated' })
   async updateProfile(@CurrentUser() user: JwtPayload, @Body() dto: UpdateSellerDto) {
@@ -40,7 +38,6 @@ export class SellersController {
 
   @Patch(':id/approve')
   @Roles('ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Approve seller application' })
   @ApiResponse({ status: 200, description: 'Seller approved' })
   async approve(@Param('id') id: string) {
@@ -49,7 +46,6 @@ export class SellersController {
 
   @Patch(':id/reject')
   @Roles('ADMIN')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reject seller application' })
   @ApiResponse({ status: 200, description: 'Seller rejected' })
   async reject(@Param('id') id: string) {

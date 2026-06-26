@@ -88,13 +88,16 @@ enum PaymentStatus {
 }
 
 enum DeliveryStatus {
-  PENDING
+  PENDING_ASSIGNMENT
   ASSIGNED         // Driver assigned
+  ACCEPTED         // Driver accepted
+  PICKING_UP       // Driver heading to seller
   PICKED_UP        // Driver picked up from seller
   IN_TRANSIT       // En route to customer
   DELIVERED        // Customer received
   FAILED           // Could not deliver
   RETURNED         // Returned to seller
+  CANCELLED        // Cancelled
 }
 
 enum QualityGrade {
@@ -174,6 +177,7 @@ enum NotificationChannel {
 }
 
 enum NotificationType {
+  ACCOUNT_CREATED
   ORDER_CONFIRMED
   ORDER_PREPARING
   ORDER_OUT_FOR_DELIVERY
@@ -184,6 +188,8 @@ enum NotificationType {
   NEW_REVIEW
   NEW_MESSAGE
   PROMOTION
+  SELLER_APPROVED
+  DRIVER_ACTIVATED
   WITHDRAWAL_COMPLETED
   LOW_INVENTORY
 }
@@ -305,6 +311,7 @@ model SellerProfile {
   lat                Float?
   lng                Float?
   pickupAddress      String?
+  deliveryZoneId     String?
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
 
@@ -312,9 +319,7 @@ model SellerProfile {
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeLogo       File?           @relation("StoreLogo", fields: [storeLogoFileId], references: [id], onDelete: SetNull)
   listings        SellerListing[]
-
-  @@index([city, state])
-  @@index([isActive, verificationStatus])
+  zone            DeliveryZone?   @relation("SellerZones", fields: [deliveryZoneId], references: [id])
 }
 
 /// Extended profile for drivers.
@@ -323,22 +328,24 @@ model DriverProfile {
   userId        String       @unique
   status        DriverStatus @default(OFFLINE)
   isAvailable   Boolean      @default(true)
-  currentLat    Float?
-  currentLng    Float?
-  city          String
-  state         String
-  deliveryZone  String?
-  vehicleType   String?
-  vehiclePlate  String?
-  licenseNumber String?
-  maxLoadKg     Float?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  currentLat       Float?
+  currentLng       Float?
+  city             String
+  state            String
+  deliveryZoneId   String?
+  lastLocationAt   DateTime?     // timestamp of last GPS update
+  activeDeliveries Int           @default(0)   // current active delivery count
+  maxDeliveries    Int           @default(1)   // max simultaneous deliveries
+  vehicleType      String?
+  vehiclePlate     String?
+  licenseNumber    String?
+  maxLoadKg        Float?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   // Relations
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([status, isAvailable, city])
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zone     DeliveryZone? @relation("DriverZones", fields: [deliveryZoneId], references: [id])
   @@index([city, state])
 }
 
@@ -655,7 +662,7 @@ model Delivery {
   orderId         String         @unique
   addressId       String
   driverId        String?
-  status          DeliveryStatus @default(PENDING)
+  status          DeliveryStatus @default(PENDING_ASSIGNMENT)
   scheduledDate   DateTime?      @db.Date
   scheduledTime   String?        // "14:00-16:00" time window
   pickedUpAt      DateTime?
@@ -673,7 +680,9 @@ model Delivery {
   statusHistory  DeliveryStatusHistory[]
 
   @@index([driverId, status])
+  @@index([driverId, status, createdAt])
   @@index([status, scheduledDate])
+  @@index([status, createdAt])
   @@index([scheduledDate])
 }
 
@@ -689,6 +698,29 @@ model DeliveryStatusHistory {
   delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
 
   @@index([deliveryId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DELIVERY ZONE DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Delivery zones for geographic dispatch. Polygon-ready for future GIS.
+model DeliveryZone {
+  id        String   @id @default(cuid())
+  name      String
+  city      String?
+  region    String?
+  polygon   Json?    // GeoJSON polygon for future GIS integration
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  drivers DriverProfile[] @relation("DriverZones")
+  sellers SellerProfile[] @relation("SellerZones")
+
+  @@index([city])
+  @@index([isActive])
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -14,4 +14,8 @@ export class SellerOrdersService {
   async findOne(sellerUserId: string, orderId: string) {
     return this.ordersService.findSellerOrder(sellerUserId, orderId);
   }
+
+  async markReadyForPickup(sellerUserId: string, orderId: string) {
+    return this.ordersService.markReadyForPickup(sellerUserId, orderId);
+  }
 }

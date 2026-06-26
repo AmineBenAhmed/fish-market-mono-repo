@@ -11,6 +11,7 @@ export class DriversService {
   async getProfile(userId: string) {
     const profile = await this.prisma.driverProfile.findUnique({
       where: { userId },
+      include: { zone: true },
     });
 
     if (!profile) {
@@ -34,7 +35,7 @@ export class DriversService {
       data: {
         ...(dto.city !== undefined && { city: dto.city }),
         ...(dto.state !== undefined && { state: dto.state }),
-        ...(dto.deliveryZone !== undefined && { deliveryZone: dto.deliveryZone }),
+        ...(dto.deliveryZoneId !== undefined && { deliveryZoneId: dto.deliveryZoneId }),
         ...(dto.vehicleType !== undefined && { vehicleType: dto.vehicleType }),
         ...(dto.vehiclePlate !== undefined && { vehiclePlate: dto.vehiclePlate }),
         ...(dto.licenseNumber !== undefined && { licenseNumber: dto.licenseNumber }),
@@ -60,5 +61,36 @@ export class DriversService {
         isAvailable: status === 'ONLINE',
       },
     });
+  }
+
+  async findAvailable(zoneId?: string) {
+    return this.prisma.driverProfile.findMany({
+      where: {
+        status: 'ONLINE',
+        isAvailable: true,
+        ...(zoneId && { deliveryZoneId: zoneId }),
+        activeDeliveries: { lt: this.prisma.driverProfile.fields.maxDeliveries },
+      } as any,
+      include: {
+        user: { select: { id: true, name: true, phone: true } },
+        zone: { select: { id: true, name: true } },
+      },
+      orderBy: { activeDeliveries: 'asc' },
+    });
+  }
+
+  async getDeliveryStats(userId: string) {
+    const [activeCount, totalDeliveries, completedDeliveries] = await Promise.all([
+      this.prisma.delivery.count({
+        where: {
+          driverId: userId,
+          status: { in: ['ASSIGNED', 'ACCEPTED', 'PICKING_UP', 'PICKED_UP', 'IN_TRANSIT'] as any },
+        },
+      }),
+      this.prisma.delivery.count({ where: { driverId: userId } }),
+      this.prisma.delivery.count({ where: { driverId: userId, status: 'DELIVERED' as any } }),
+    ]);
+
+    return { activeCount, totalDeliveries, completedDeliveries };
   }
 }

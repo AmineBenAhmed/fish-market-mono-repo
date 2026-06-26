@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser, Roles } from '../../common/decorators';
@@ -39,5 +39,12 @@ export class SellerOrdersController {
   @ApiOperation({ summary: 'Get seller order details' })
   async findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.sellerOrdersService.findOne(user.sub, id);
+  }
+
+  @Patch(':id/ready')
+  @Roles('SELLER')
+  @ApiOperation({ summary: 'Mark order as ready for pickup' })
+  async markReady(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.sellerOrdersService.markReadyForPickup(user.sub, id);
   }
 }

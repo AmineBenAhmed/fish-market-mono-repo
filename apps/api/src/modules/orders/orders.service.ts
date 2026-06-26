@@ -1,6 +1,7 @@
 import * as crypto from 'node:crypto';
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Order, OrderStatus, Prisma } from '@prisma/client';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
@@ -23,6 +24,7 @@ export class OrdersService {
     private readonly inventoryReservation: InventoryReservationService,
     private readonly calculation: OrderCalculationService,
     private readonly orderStatus: OrderStatusService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private generateOrderNumber(): string {
@@ -189,6 +191,26 @@ export class OrdersService {
       return { parentOrder, childOrders: createdOrders } satisfies OrderCreateResult;
     });
 
+    for (const order of result.childOrders) {
+      this.eventEmitter.emit('order.created', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerId: userId,
+        sellerId: order.sellerId ?? null,
+        total: Number(order.total),
+      });
+    }
+
+    if (result.parentOrder) {
+      this.eventEmitter.emit('order.created', {
+        orderId: result.parentOrder.id,
+        orderNumber: result.parentOrder.orderNumber,
+        customerId: userId,
+        sellerId: null,
+        total: Number(result.parentOrder.total),
+      });
+    }
+
     return result as OrderCreateResult;
   }
 
@@ -312,7 +334,50 @@ export class OrdersService {
       }
     });
 
+    this.eventEmitter.emit('order.cancelled', {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      cancelledBy: userId,
+      reason: dto.reason ?? null,
+    });
+
     return { message: 'Order cancelled successfully' };
+  }
+
+  async markReadyForPickup(sellerUserId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { id: orderId, sellerId: sellerUserId },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    this.orderStatus.validateTransition(order.status as OrderStatus, OrderStatus.READY_FOR_PICKUP);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: OrderStatus.READY_FOR_PICKUP },
+      });
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: order.status,
+          toStatus: OrderStatus.READY_FOR_PICKUP,
+          changedById: sellerUserId,
+        },
+      });
+    });
+
+    this.eventEmitter.emit('order.ready-for-pickup', {
+      orderId,
+      orderNumber: order.orderNumber,
+      sellerId: sellerUserId,
+    });
+
+    return { message: 'Order marked as ready for pickup' };
   }
 
   async findSellerOrders(sellerUserId: string, query: QueryOrdersDto) {

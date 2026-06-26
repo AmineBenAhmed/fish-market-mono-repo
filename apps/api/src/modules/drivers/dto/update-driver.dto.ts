@@ -11,7 +11,7 @@ export class UpdateDriverDto {
 
   @IsString()
   @IsOptional()
-  deliveryZone?: string;
+  deliveryZoneId?: string;
 
   @IsString()
   @IsOptional()

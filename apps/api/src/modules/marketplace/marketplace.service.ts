@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Preservation, Prisma, QualityGrade } from '@prisma/client';
 
+import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface FindTodayParams {
@@ -51,11 +52,11 @@ export class MarketplaceService {
     }
 
     if (params.qualityGrade) {
-      productFilter.qualityGrade = params.qualityGrade as any;
+      productFilter.qualityGrade = params.qualityGrade as QualityGrade;
     }
 
     if (params.preservation) {
-      productFilter.preservation = params.preservation as any;
+      productFilter.preservation = params.preservation as Preservation;
     }
 
     if (Object.keys(productFilter).length > 0) {
@@ -78,9 +79,7 @@ export class MarketplaceService {
       orderBy.push({ createdAt: 'desc' });
     }
 
-    const page = params.page || 1;
-    const limit = params.limit || 20;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(params.page, params.limit);
 
     const [data, total] = await Promise.all([
       this.prisma.sellerListing.findMany({
@@ -111,14 +110,7 @@ export class MarketplaceService {
 
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: skip + limit < total,
-        hasPreviousPage: page > 1,
-      },
+      meta: createPaginationMeta(total, page, limit),
     };
   }
 

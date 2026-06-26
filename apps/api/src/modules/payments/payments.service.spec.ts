@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrderStatus, PaymentMethod, PaymentStatus, Prisma, TransactionType } from '@prisma/client';
 
@@ -40,7 +41,7 @@ describe('PaymentsService', () => {
   const mockPayment = {
     id: 'payment-1',
     orderId: 'order-1',
-    method: PaymentMethod.COD,
+    method: PaymentMethod.CASH,
     status: PaymentStatus.PENDING,
     amount: 100,
     currency: 'TND',
@@ -98,6 +99,8 @@ describe('PaymentsService', () => {
     getTransactions: jest.fn(),
   };
 
+  const mockEventEmitter = { emit: jest.fn() };
+
   const mockBillingService = {
     generateCustomerReceipt: jest.fn(),
     generateSellerSettlement: jest.fn(),
@@ -111,6 +114,7 @@ describe('PaymentsService', () => {
         { provide: PaymentProviderRegistry, useValue: mockProviderRegistry },
         { provide: WalletService, useValue: mockWalletService },
         { provide: BillingService, useValue: mockBillingService },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
 
@@ -135,7 +139,7 @@ describe('PaymentsService', () => {
       });
       mockPrisma.payment.create.mockResolvedValue(mockPayment);
 
-      const result = await service.create('customer-1', 'order-1', PaymentMethod.COD);
+      const result = await service.create('customer-1', 'order-1', PaymentMethod.CASH);
 
       expect(result.payment.status).toBe(PaymentStatus.PENDING);
       expect(mockPrisma.order.update).toHaveBeenCalledWith({
@@ -146,14 +150,14 @@ describe('PaymentsService', () => {
 
     it('should throw NotFoundException if order not found', async () => {
       mockPrisma.order.findFirst.mockResolvedValue(null);
-      await expect(service.create('customer-1', 'order-1', PaymentMethod.COD)).rejects.toThrow(
+      await expect(service.create('customer-1', 'order-1', PaymentMethod.CASH)).rejects.toThrow(
         NotFoundException,
       );
     });
 
     it('should throw ConflictException if payment already exists', async () => {
       mockPrisma.order.findFirst.mockResolvedValue({ ...mockOrder, payment: mockPayment });
-      await expect(service.create('customer-1', 'order-1', PaymentMethod.COD)).rejects.toThrow(
+      await expect(service.create('customer-1', 'order-1', PaymentMethod.CASH)).rejects.toThrow(
         ConflictException,
       );
     });
@@ -164,7 +168,7 @@ describe('PaymentsService', () => {
         status: OrderStatus.CONFIRMED,
         payment: null,
       });
-      await expect(service.create('customer-1', 'order-1', PaymentMethod.COD)).rejects.toThrow(
+      await expect(service.create('customer-1', 'order-1', PaymentMethod.CASH)).rejects.toThrow(
         BadRequestException,
       );
     });

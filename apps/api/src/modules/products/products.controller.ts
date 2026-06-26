@@ -25,7 +25,6 @@ export class ProductsController {
 
   @Get()
   @Public()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all active products' })
   @ApiResponse({ status: 200, description: 'Product list' })
   async findAll() {
@@ -34,7 +33,6 @@ export class ProductsController {
 
   @Get(':id')
   @Public()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get product by ID' })
   @ApiResponse({ status: 200, description: 'Product found' })
   async findOne(@Param('id') id: string) {
@@ -54,7 +52,6 @@ export class ProductsController {
   @Patch(':id')
   @Roles('ADMIN')
   @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a product' })
   @ApiResponse({ status: 200, description: 'Product updated' })
   async update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
@@ -64,7 +61,6 @@ export class ProductsController {
   @Delete(':id')
   @Roles('ADMIN')
   @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a product' })
   @ApiResponse({ status: 200, description: 'Product deleted' })
   async remove(@Param('id') id: string) {
@@ -85,7 +81,6 @@ export class ProductsController {
   @Patch(':productId/variants/:variantId')
   @Roles('ADMIN')
   @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a variant' })
   @ApiResponse({ status: 200, description: 'Variant updated' })
   async updateVariant(
@@ -99,7 +94,6 @@ export class ProductsController {
   @Delete(':productId/variants/:variantId')
   @Roles('ADMIN')
   @ApiBearerAuth()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a variant' })
   @ApiResponse({ status: 200, description: 'Variant deleted' })
   async removeVariant(

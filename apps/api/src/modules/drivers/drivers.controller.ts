@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators';
@@ -13,7 +13,6 @@ export class DriversController {
   constructor(private readonly driversService: DriversService) {}
 
   @Get('me')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get own driver profile' })
   @ApiResponse({ status: 200, description: 'Driver profile' })
   async getMyProfile(@CurrentUser() user: JwtPayload) {
@@ -21,7 +20,6 @@ export class DriversController {
   }
 
   @Patch('me')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update own driver profile' })
   @ApiResponse({ status: 200, description: 'Driver profile updated' })
   async updateProfile(@CurrentUser() user: JwtPayload, @Body() dto: UpdateDriverDto) {
@@ -29,7 +27,6 @@ export class DriversController {
   }
 
   @Patch('me/online')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Set driver online' })
   @ApiResponse({ status: 200, description: 'Driver is now online' })
   async goOnline(@CurrentUser() user: JwtPayload) {
@@ -37,7 +34,6 @@ export class DriversController {
   }
 
   @Patch('me/offline')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Set driver offline' })
   @ApiResponse({ status: 200, description: 'Driver is now offline' })
   async goOffline(@CurrentUser() user: JwtPayload) {

@@ -8,20 +8,25 @@ import { JwtAuthGuard, PermissionsGuard, RolesGuard } from './common/guards';
 import { LoggingInterceptor } from './common/interceptors';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { AdminOrdersModule } from './modules/admin-orders/admin-orders.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CommissionModule } from './modules/commission/commission.module';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { DeliveryFeeModule } from './modules/delivery-fee/delivery-fee.module';
+import { DeliveryZoneModule } from './modules/delivery-zones/delivery-zone.module';
 import { DriversModule } from './modules/drivers/drivers.module';
+import { EventsModule } from './modules/events/events.module';
 import { HealthModule } from './modules/health/health.module';
 import { ListingsModule } from './modules/listings/listings.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { ProductsModule } from './modules/products/products.module';
+import { NotificationModule } from './modules/notifications/notification.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
-import { ProductsModule } from './modules/products/products.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { SellerOrdersModule } from './modules/seller-orders/seller-orders.module';
 import { SellersModule } from './modules/sellers/sellers.module';
@@ -58,11 +63,16 @@ import { WalletModule } from './modules/wallet/wallet.module';
     OrdersModule,
     SellerOrdersModule,
     AdminOrdersModule,
+    AuditLogModule,
+    EventsModule,
+    NotificationModule,
     PaymentsModule,
     WalletModule,
     CommissionModule,
     DeliveryFeeModule,
+    DeliveryZoneModule,
     BillingModule,
+    DeliveriesModule,
   ],
   providers: [
     {

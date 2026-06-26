@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators';
@@ -13,7 +13,6 @@ export class UserSettingsController {
   constructor(private readonly userSettingsService: UserSettingsService) {}
 
   @Get()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get current user settings' })
   @ApiResponse({ status: 200, description: 'User settings' })
   async getSettings(@CurrentUser() user: JwtPayload) {
@@ -21,7 +20,6 @@ export class UserSettingsController {
   }
 
   @Patch()
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update user settings' })
   @ApiResponse({ status: 200, description: 'Settings updated' })
   async updateSettings(@CurrentUser() user: JwtPayload, @Body() dto: UpdateSettingsDto) {

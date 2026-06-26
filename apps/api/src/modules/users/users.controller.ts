@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../common/decorators';
@@ -20,7 +20,6 @@ export class UsersController {
   }
 
   @Patch('me')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update current user basic profile' })
   @ApiResponse({ status: 200, description: 'Profile updated' })
   async updateProfile(@CurrentUser() user: JwtPayload, @Body() dto: UpdateUserDto) {
@@ -28,7 +27,6 @@ export class UsersController {
   }
 
   @Delete('me')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Soft delete own account' })
   @ApiResponse({ status: 200, description: 'Account deleted' })
   async deleteAccount(@CurrentUser() user: JwtPayload) {
@@ -37,7 +35,6 @@ export class UsersController {
   }
 
   @Patch('me/avatar')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update avatar file reference' })
   @ApiResponse({ status: 200, description: 'Avatar updated' })
   async updateAvatar(@CurrentUser() user: JwtPayload, @Body('fileId') fileId: string) {

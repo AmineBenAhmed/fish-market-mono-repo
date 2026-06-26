@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -11,12 +12,15 @@ describe('OrdersService', () => {
   let service: OrdersService;
 
   const mockTx = {
+    sellerProfile: { findMany: jest.fn() },
     sellerListing: { updateMany: jest.fn() },
     order: { create: jest.fn(), update: jest.fn(), findMany: jest.fn(), findUnique: jest.fn() },
     orderItem: { create: jest.fn(), findMany: jest.fn() },
     orderStatusHistory: { create: jest.fn() },
     cartItem: { deleteMany: jest.fn() },
   };
+
+  const mockEventEmitter = { emit: jest.fn() };
 
   const mockPrisma = {
     cart: { findUnique: jest.fn() },
@@ -32,6 +36,7 @@ describe('OrdersService', () => {
       providers: [
         OrdersService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
         InventoryReservationService,
         OrderCalculationService,
         OrderStatusService,
@@ -84,6 +89,9 @@ describe('OrdersService', () => {
         items: [mockCartItem],
       });
 
+      mockTx.sellerProfile.findMany.mockResolvedValue([
+        { userId: 'seller-user-1', commissionRate: 0.12 },
+      ]);
       mockTx.sellerListing.updateMany.mockResolvedValue({ count: 1 });
       mockTx.order.create.mockResolvedValue({ id: 'order-1' });
 
@@ -113,6 +121,10 @@ describe('OrdersService', () => {
         items: [mockCartItem, seller2Item],
       });
 
+      mockTx.sellerProfile.findMany.mockResolvedValue([
+        { userId: 'seller-user-1', commissionRate: 0.12 },
+        { userId: 'seller-user-2', commissionRate: 0.1 },
+      ]);
       mockTx.sellerListing.updateMany.mockResolvedValue({ count: 1 });
       mockTx.order.create.mockResolvedValue({ id: 'child-1' });
 
