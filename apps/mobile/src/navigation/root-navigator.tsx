@@ -1,32 +1,23 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useEffect } from 'react';
+import { useAuthStore } from '../stores/auth';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { AuthNavigator } from './auth-navigator';
+import { DriverTabNavigator } from './driver-tab-navigator';
 
-export type RootStackParamList = {
-  Home: undefined;
-  Products: undefined;
-  ProductDetail: { productId: string };
-  Cart: undefined;
-  Checkout: undefined;
-  Orders: undefined;
-  Profile: undefined;
-};
+export function RootNavigator() {
+  const { isLoading, isAuthenticated, restoreSession } = useAuthStore();
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+  useEffect(() => {
+    restoreSession();
+  }, []);
 
-function RootNavigator() {
-  return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="Home" component={PlaceholderScreen} />
-    </Stack.Navigator>
-  );
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAuthenticated()) {
+    return <AuthNavigator />;
+  }
+
+  return <DriverTabNavigator />;
 }
-
-function PlaceholderScreen() {
-  return null;
-}
-
-export { RootNavigator };
-export type { RootStackParamList };
