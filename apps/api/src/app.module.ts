@@ -6,10 +6,14 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AllExceptionsFilter } from './common/filters';
 import { JwtAuthGuard } from './common/guards';
 import { LoggingInterceptor } from './common/interceptors';
+import { AddressesModule } from './modules/addresses/addresses.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DriversModule } from './modules/drivers/drivers.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { SellersModule } from './modules/sellers/sellers.module';
+import { UserSettingsModule } from './modules/user-settings/user-settings.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -29,6 +33,10 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    AddressesModule,
+    SellersModule,
+    DriversModule,
+    UserSettingsModule,
   ],
   providers: [
     {

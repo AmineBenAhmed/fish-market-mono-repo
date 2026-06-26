@@ -1,4 +1,16 @@
-export type { User, UserRole, UserStatus, Address, GeoLocation, SellerProfile } from './user';
+export type {
+  Address,
+  CustomerProfile,
+  DriverProfile,
+  DriverStatus,
+  GeoLocation,
+  SellerProfile,
+  SellerVerificationStatus,
+  User,
+  UserRole,
+  UserSetting,
+  UserStatus,
+} from './user';
 
 export type {
   AuthResponse,
