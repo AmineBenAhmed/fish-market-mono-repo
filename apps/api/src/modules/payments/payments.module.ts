@@ -1,4 +1,25 @@
 import { Module } from '@nestjs/common';
 
-@Module({})
+import { BillingModule } from '../billing/billing.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { WalletModule } from '../wallet/wallet.module';
+import { PaymentProviderRegistry } from './payment-provider.registry';
+import { AdminPaymentsController, PaymentsController } from './payments.controller';
+import { PaymentsService } from './payments.service';
+import { BankTransferProvider } from './providers/bank-transfer.provider';
+import { CashOnDeliveryProvider } from './providers/cash-on-delivery.provider';
+import { StripeProvider } from './providers/stripe.provider';
+
+@Module({
+  imports: [PrismaModule, WalletModule, BillingModule],
+  controllers: [PaymentsController, AdminPaymentsController],
+  providers: [
+    PaymentsService,
+    PaymentProviderRegistry,
+    CashOnDeliveryProvider,
+    BankTransferProvider,
+    StripeProvider,
+  ],
+  exports: [PaymentsService, PaymentProviderRegistry],
+})
 export class PaymentsModule {}
