@@ -36,10 +36,11 @@ export type {
 } from './product';
 
 export type {
+  Cart,
+  CartItem,
   Order,
   OrderItem,
   OrderStatus,
-  OrderStatusTransition,
   PaymentInfo,
   PaymentMethod,
   PaymentStatus,

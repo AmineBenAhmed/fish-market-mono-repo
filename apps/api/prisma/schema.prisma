@@ -60,6 +60,7 @@ enum UserStatus {
 }
 
 enum OrderStatus {
+  DRAFT               // Created from cart, items reserved
   PENDING             // Checked out, awaiting payment
   CONFIRMED           // Paid, seller accepted
   PREPARING           // Seller packing the fish
@@ -466,9 +467,11 @@ model SellerListing {
   updatedAt DateTime      @updatedAt
 
   // Relations
-  seller  SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  product  FishProduct  @relation(fields: [productId], references: [id])
-  variant  FishVariant  @relation(fields: [variantId], references: [id])
+  seller     SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  product    FishProduct   @relation(fields: [productId], references: [id])
+  variant    FishVariant   @relation(fields: [variantId], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
 
   @@unique([variantId, sellerId, date])
   @@index([sellerId, date, status])
@@ -498,29 +501,35 @@ model Cart {
 model CartItem {
   id        String   @id @default(cuid())
   cartId    String
+  listingId String
   variantId String
   quantity  Int
   createdAt DateTime @default(now())
 
   // Relations
-  cart    Cart        @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  variant FishVariant @relation(fields: [variantId], references: [id])
+  cart    Cart          @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listing SellerListing @relation(fields: [listingId], references: [id])
+  variant FishVariant   @relation(fields: [variantId], references: [id])
 
   @@unique([cartId, variantId])
   @@index([cartId])
+  @@index([listingId])
 }
 
 // ═══════════════════════════════════════════════════════════════
 //  ORDER DOMAIN
 // ═══════════════════════════════════════════════════════════════
 
-/// Core order. References buyer and seller for the marketplace split.
+/// Core order. Parent for marketplace split. References customer.
+/// For multi-seller carts: parent (sellerId=null) + children (parentOrderId set).
+/// For single-seller: single order (parentOrderId=null, sellerId set).
 model Order {
   id              String      @id @default(cuid())
+  parentOrderId   String?
   orderNumber     String      @unique // human-readable: "FM-20240101-XXXX"
   customerId      String
-  sellerId        String
-  status          OrderStatus @default(PENDING)
+  sellerId        String?     // null for parent orders in multi-seller splits
+  status          OrderStatus @default(DRAFT)
   subtotal        Decimal     @db.Decimal(10, 2)
   deliveryFee     Decimal     @db.Decimal(10, 2)
   commission      Decimal     @db.Decimal(10, 2)
@@ -533,28 +542,33 @@ model Order {
   updatedAt       DateTime    @updatedAt
 
   // Relations
-  customer       User                @relation("CustomerOrders", fields: [customerId], references: [id])
-  seller         User                @relation("SellerOrders", fields: [sellerId], references: [id])
-  cancelledBy    User?               @relation("CancelledBy", fields: [cancelledById], references: [id])
-  items          OrderItem[]
-  statusHistory  OrderStatusHistory[]
-  payment        Payment?
-  delivery       Delivery?
-  coupon         OrderCoupon?
-  review         Review?
+  parentOrder  Order?              @relation("OrderHierarchy", fields: [parentOrderId], references: [id])
+  childOrders  Order[]             @relation("OrderHierarchy")
+  customer     User                @relation("CustomerOrders", fields: [customerId], references: [id])
+  seller       User?               @relation("SellerOrders", fields: [sellerId], references: [id])
+  cancelledBy  User?               @relation("CancelledBy", fields: [cancelledById], references: [id])
+  items        OrderItem[]
+  statusHistory OrderStatusHistory[]
+  payment      Payment?
+  delivery     Delivery?
+  coupon       OrderCoupon?
+  review       Review?
 
   @@index([customerId, status])
   @@index([sellerId, status])
+  @@index([parentOrderId])
   @@index([status, createdAt])
   @@index([orderNumber])
   @@index([createdAt])
 }
 
-/// Snapshot of what was ordered. References variant for historical data.
+/// Snapshot of what was ordered. References variant + listing for historical data.
 model OrderItem {
   id          String  @id @default(cuid())
   orderId     String
+  listingId   String? // nullable for backward compat
   variantId   String
+  sellerId    String  // denormalized for per-seller queries
   productName String  // snapshot at order time
   variantName String  // snapshot at order time
   quantity    Int
@@ -563,11 +577,14 @@ model OrderItem {
   totalPrice  Decimal @db.Decimal(10, 2)
 
   // Relations
-  order   Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  variant FishVariant @relation(fields: [variantId], references: [id])
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listing SellerListing? @relation(fields: [listingId], references: [id])
+  variant FishVariant    @relation(fields: [variantId], references: [id])
 
   @@index([orderId])
+  @@index([listingId])
   @@index([variantId])
+  @@index([sellerId])
 }
 
 /// Immutable audit trail of every status change.
