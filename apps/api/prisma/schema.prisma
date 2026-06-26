@@ -183,11 +183,14 @@ model User {
   isEmailVerified Boolean @default(false)
   isPhoneVerified Boolean @default(false)
   lastLoginAt    DateTime?
+  resetToken     String?  @unique
+  resetTokenExpiresAt DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   deletedAt      DateTime?
 
   // Relations
+  refreshTokens   RefreshToken[]
   avatarFile       File?          @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
   sellerProfile   SellerProfile?
   driverProfile   DriverProfile?
@@ -207,6 +210,22 @@ model User {
   @@index([email])
   @@index([role, status])
   @@index([deletedAt])
+}
+
+/// Refresh tokens for JWT authentication with rotation support.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  jti       String    @unique
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([jti])
+  @@index([expiresAt])
 }
 
 /// Extended profile for sellers.

@@ -27,7 +27,11 @@ class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
-  JWT_EXPIRATION: string = '7d';
+  JWT_EXPIRATION: string = '15m';
+
+  @IsString()
+  @IsOptional()
+  JWT_REFRESH_EXPIRATION: string = '7d';
 
   @IsString()
   @IsOptional()
@@ -61,6 +65,7 @@ export interface AppConfig {
   redisUrl: string;
   jwtSecret: string;
   jwtExpiration: string;
+  jwtRefreshExpiration: string;
   appUrl: string;
   apiUrl: string;
   isProduction: boolean;
@@ -90,7 +95,8 @@ export const env: AppConfig = {
   databaseUrl: process.env.DATABASE_URL || '',
   redisUrl: process.env.REDIS_URL || '',
   jwtSecret: process.env.JWT_SECRET || '',
-  jwtExpiration: process.env.JWT_EXPIRATION || '7d',
+  jwtExpiration: process.env.JWT_EXPIRATION || '15m',
+  jwtRefreshExpiration: process.env.JWT_REFRESH_EXPIRATION || '7d',
   appUrl: process.env.APP_URL || 'http://localhost:3000',
   apiUrl: process.env.API_URL || 'http://localhost:4000',
   isProduction: process.env.NODE_ENV === 'production',

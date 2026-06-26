@@ -1,0 +1,25 @@
+export const ROLE_PERMISSIONS: Record<string, string[]> = {
+  CUSTOMER: [
+    'profile:read',
+    'profile:update',
+    'orders:create',
+    'orders:read',
+    'orders:cancel',
+    'reviews:create',
+    'addresses:manage',
+  ],
+  SELLER: [
+    'profile:read',
+    'profile:update',
+    'products:create',
+    'products:update',
+    'products:delete',
+    'inventory:manage',
+    'orders:read',
+    'orders:manage',
+    'reviews:reply',
+    'analytics:read',
+  ],
+  DRIVER: ['profile:read', 'profile:update', 'deliveries:read', 'deliveries:update'],
+  ADMIN: ['*'],
+};

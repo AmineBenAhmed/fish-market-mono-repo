@@ -1,6 +1,17 @@
 export type { User, UserRole, UserStatus, Address, GeoLocation, SellerProfile } from './user';
 
 export type {
+  AuthResponse,
+  AuthTokens,
+  AuthUser,
+  ForgotPasswordRequest,
+  LoginRequest,
+  RefreshTokenRequest,
+  RegisterRequest,
+  ResetPasswordRequest,
+} from './auth';
+
+export type {
   Product,
   ProductCategory,
   ProductStatus,

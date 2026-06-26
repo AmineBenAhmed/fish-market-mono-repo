@@ -1,11 +1,9 @@
 import { Request } from 'express';
 
+import { JwtPayload } from './jwt-payload.interface';
+
 export interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
+  user: JwtPayload;
 }
 
 export interface PaginationQuery {
@@ -16,3 +14,4 @@ export interface PaginationQuery {
 }
 
 export type { ApiResponseWrapper, PaginatedResponse } from './api-response.interface';
+export type { JwtPayload, TokenPair } from './jwt-payload.interface';
