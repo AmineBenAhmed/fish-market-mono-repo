@@ -125,14 +125,29 @@ enum ListingStatus {
 }
 
 enum TransactionType {
-  ORDER_PAYMENT
-  COMMISSION
-  DELIVERY_FEE
-  WITHDRAWAL
-  DEPOSIT
-  REFUND
-  COUPON_DISCOUNT
-  ADJUSTMENT
+  ORDER_PAYMENT     // Customer pays for an order
+  COMMISSION        // Marketplace commission
+  DELIVERY_FEE      // Delivery service fee
+  SELLER_EARNING    // Seller receives payment for goods
+  WITHDRAWAL        // User withdraws funds
+  DEPOSIT           // User deposits funds
+  REFUND            // Money returned to customer
+  COUPON_DISCOUNT   // Promotional discount
+  WALLET_CREDIT     // Generic wallet credit
+  WALLET_DEBIT      // Generic wallet debit
+  ADJUSTMENT        // Manual ledger adjustment
+}
+
+enum BillingType {
+  CUSTOMER_RECEIPT
+  SELLER_SETTLEMENT
+  MARKETPLACE_REPORT
+}
+
+enum BillingStatus {
+  PENDING
+  GENERATED
+  SENT
 }
 
 enum CouponType {
@@ -553,6 +568,7 @@ model Order {
   delivery     Delivery?
   coupon       OrderCoupon?
   review       Review?
+  billings     Billing[]
 
   @@index([customerId, status])
   @@index([sellerId, status])
@@ -744,12 +760,18 @@ model OrderCoupon {
 // ═══════════════════════════════════════════════════════════════
 
 /// One wallet per user (sellers for payouts, customers for refunds).
+/// Wallets represent accounting balances — they do not process payments directly.
+/// - balance: settled funds available for withdrawal
+/// - pendingBalance: funds from orders in transit (not yet settled)
+/// - availableBalance: total - pending (computed via trigger/service)
 model Wallet {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  balance   Decimal  @default(0) @db.Decimal(12, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  balance          Decimal  @default(0) @db.Decimal(12, 2)
+  pendingBalance   Decimal  @default(0) @db.Decimal(12, 2)
+  availableBalance Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -777,6 +799,32 @@ model Transaction {
   @@index([walletId, createdAt])
   @@index([referenceType, referenceId])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BILLING DOMAIN — Invoices, Receipts, Settlement Statements
+// ═══════════════════════════════════════════════════════════════
+
+/// Invoice/receipt records for customers and settlement statements for sellers.
+/// PDF generation can be added later by storing the URL in documentUrl.
+model Billing {
+  id          String        @id @default(cuid())
+  orderId     String
+  type        BillingType
+  number      String        @unique
+  amount      Decimal       @db.Decimal(10, 2)
+  status      BillingStatus @default(PENDING)
+  documentUrl String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([type, status])
+  @@index([number])
 }
 
 // ═══════════════════════════════════════════════════════════════
