@@ -8,3 +8,5 @@ build
 coverage
 *.md
 .DS_Store
+.env
+.env.*

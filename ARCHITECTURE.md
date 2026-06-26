@@ -4,68 +4,150 @@
 
 FishMarket is a production-ready marketplace for selling fresh fish. It connects sellers with customers in local markets. The platform generates revenue through marketplace commissions and delivery fees.
 
-The project is a **monorepo** managed by **TurboRepo** with **pnpm** workspaces. This architecture was chosen for:
-
-- **Code sharing** — shared types, utilities, and UI components across all applications
-- **Consistent tooling** — single ESLint, Prettier, and TypeScript configuration
-- **Simplified dependencies** — single `node_modules` at the root
-- **Orchestrated builds** — TurboRepo caches and parallelizes builds
-- **Future microservice migration** — each app can be extracted into its own repository when needed
+The project is a **monorepo** managed by **TurboRepo** with **pnpm** workspaces.
 
 ---
 
 ## Applications
 
-| App | Package | Tech | Port | Description |
-|-----|---------|------|------|-------------|
-| API | `@fishmarket/api` | NestJS + Prisma + PostgreSQL + Redis | 4000 | REST API with Swagger docs |
-| Admin | `@fishmarket/admin` | React + Vite + Tailwind + Shadcn | 3001 | Admin dashboard |
-| Seller | `@fishmarket/seller` | React + Vite + Tailwind + Shadcn | 3002 | Seller portal |
-| Website | `@fishmarket/website` | React + Vite + Tailwind + Shadcn | 3000 | Landing page & customer storefront |
-| Mobile | `@fishmarket/mobile` | Expo + React Native | — | Customer mobile app |
+| App     | Package               | Tech                                 | Port | Description                        |
+| ------- | --------------------- | ------------------------------------ | ---- | ---------------------------------- |
+| API     | `@fishmarket/api`     | NestJS + Prisma + PostgreSQL + Redis | 4000 | REST API with Swagger docs         |
+| Admin   | `@fishmarket/admin`   | React + Vite + Tailwind + Shadcn     | 3001 | Admin dashboard                    |
+| Seller  | `@fishmarket/seller`  | React + Vite + Tailwind + Shadcn     | 3002 | Seller portal                      |
+| Website | `@fishmarket/website` | React + Vite + Tailwind + Shadcn     | 3000 | Landing page & customer storefront |
+| Mobile  | `@fishmarket/mobile`  | Expo + React Native                  | —    | Customer mobile app                |
 
 ---
 
 ## Shared Packages
 
-| Package | Description |
-|---------|-------------|
-| `@fishmarket/shared` | Pure TypeScript package with types, constants, and utilities used by all apps |
-| `@fishmarket/ui` | Shared React component library based on shadcn/ui with Tailwind |
-| `@fishmarket/config-eslint` | Centralized ESLint configuration |
-| `@fishmarket/config-tsconfig` | Shared TypeScript base configurations (base, react, react-native, nest) |
-| `@fishmarket/config-prettier` | Shared Prettier configuration |
+| Package                       | Description                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------- |
+| `@fishmarket/shared`          | Pure TypeScript package with types, constants, and utilities used by all apps |
+| `@fishmarket/ui`              | Shared React component library based on shadcn/ui with Tailwind               |
+| `@fishmarket/config-eslint`   | Centralized ESLint configuration                                              |
+| `@fishmarket/config-tsconfig` | Shared TypeScript base configurations (base, react, react-native, nest)       |
+| `@fishmarket/config-prettier` | Shared Prettier configuration                                                 |
 
 ---
 
-## Folder Structure
+## Production Architecture
 
 ```
-fishmarket/
-├── apps/                      # Application packages
-│   ├── api/                   # NestJS backend
-│   │   ├── prisma/            # Database schema and migrations
-│   │   ├── src/
-│   │   │   ├── config/        # Environment and app configuration
-│   │   │   ├── common/        # Shared decorators, filters, guards, interceptors
-│   │   │   └── modules/       # Feature modules (auth, users, products, etc.)
-│   │   └── test/              # E2E tests
-│   ├── admin/                 # React admin dashboard
-│   ├── seller/                # React seller portal
-│   ├── website/               # React landing website
-│   └── mobile/                # React Native (Expo) app
-├── packages/                  # Shared packages
-│   ├── shared/                # Types, constants, utilities
-│   ├── ui/                    # shadcn/ui component library
-│   ├── config-eslint/         # ESLint config
-│   ├── config-tsconfig/       # TypeScript configs
-│   └── config-prettier/       # Prettier config
-├── docker/                    # Dockerfiles
-├── .husky/                    # Git hooks
-├── .vscode/                   # Workspace recommendations
-├── turbo.json                 # TurboRepo pipeline
-└── package.json               # Root workspace config
+                         ┌─────────────┐
+                         │   Cloudflare │
+                         │   (DNS/CDN)  │
+                         └──────┬──────┘
+                                │
+                         ┌──────┴──────┐
+                         │  Nginx/ALB  │
+                         │  (Reverse   │
+                         │   Proxy)    │
+                         └──────┬──────┘
+                                │
+           ┌────────────────────┼────────────────────┐
+           │                    │                    │
+    ┌──────┴──────┐    ┌───────┴───────┐    ┌───────┴───────┐
+    │  /api/*     │    │  /admin/*     │    │  /seller/*    │
+    │  fishmarket-│    │  fishmarket-  │    │  fishmarket-  │
+    │  api:4000   │    │  admin:3001   │    │  seller:3002  │
+    └──────┬──────┘    └───────────────┘    └───────────────┘
+           │
+    ┌──────┴──────┐
+    │   Redis     │
+    │  (Cache +   │
+    │   Jobs)     │
+    └──────┬──────┘
+           │
+    ┌──────┴──────┐
+    │ PostgreSQL  │
+    │  (Primary)  │
+    └─────────────┘
 ```
+
+### Deployment Options
+
+**Option A — Single VPS (MVP)**: All services run via `docker-compose` on a single VM. Suitable for up to ~1,000 daily active users.
+
+**Option B — Scalable Cloud (Production)**: Each service runs on separate infrastructure with load balancing and horizontal scaling.
+
+---
+
+## Infrastructure Components
+
+### Docker
+
+- **Dockerfile.api**: Multi-stage build for NestJS. Builder stage compiles TypeScript, runner stage is minimal `node:20-alpine` with only production dependencies. HEALTHCHECK pings `/api/v1/health`.
+- **Dockerfile.web**: Multi-stage for React apps. Builds with pnpm, serves via `nginx:alpine`. HEALTHCHECK pings root.
+- **docker-compose.yml**: All services (postgres, redis, api, admin, seller, website) with health checks and dependency ordering.
+- **docker-compose.dev.yml**: Dev overrides with hot-reload volume mounts.
+
+### CI/CD (GitHub Actions)
+
+- **ci.yml**: Runs on push/PR to master/develop. Stages: lint → typecheck → test → build → docker build.
+- **deploy.yml**: On successful CI to master, builds and pushes Docker images to GHCR, then deploys via SSH.
+
+### Caching (Redis)
+
+Custom `CacheService` wrapping ioredis with `get`, `set`, `del`, `delPattern`, and `getOrSet`. TTL configurable per key. Used for marketplace listings, seller dashboards, and frequent queries.
+
+### Background Jobs (BullMQ)
+
+Three queues:
+
+- **orders**: Order expiration scheduling and processing
+- **notifications**: Async notification dispatch
+- **cleanup**: Periodic cleanup tasks
+
+### Observability
+
+- **Structured logging**: Logger metadata includes `requestId`, `method`, `url`, `statusCode`, `elapsed`. Correlation ID via `x-request-id` header/middleware.
+- **Health checks**: `/api/v1/health` checks database and Redis connectivity.
+- **Sentry ready**: Error tracking integration prepared (add `SENTRY_DSN` env var).
+
+### Security
+
+| Measure       | Implementation                                                     |
+| ------------- | ------------------------------------------------------------------ |
+| Rate limiting | 3 tiers: global (100/min), auth (10/min), marketplace (200/min)    |
+| Helmet        | Security headers (CSP disabled for API)                            |
+| CORS          | Whitelist of allowed origins                                       |
+| Validation    | Global ValidationPipe with whitelist + forbidNonWhitelisted        |
+| JWT           | Access tokens with configurable expiration, refresh token rotation |
+| SQL injection | Prevented by Prisma parameterized queries                          |
+
+---
+
+## Backend Architecture (NestJS)
+
+### Module Structure
+
+Each domain is a self-contained NestJS module:
+
+- **Controller** — HTTP endpoints with Swagger decorators
+- **Service** — Business logic
+- **DTO** — Request/response validation with class-validator
+- **Tests** — Jest unit tests
+
+### Global Providers
+
+| Provider               | Purpose                                             |
+| ---------------------- | --------------------------------------------------- |
+| `AllExceptionsFilter`  | Catches all unhandled exceptions                    |
+| `JwtAuthGuard`         | Validates JWT on every request (unless `@Public()`) |
+| `RolesGuard`           | Checks user role against `@Roles()` decorator       |
+| `PermissionsGuard`     | Checks granular permissions                         |
+| `ThrottlerGuard`       | Rate limiting                                       |
+| `LoggingInterceptor`   | Structured request logging                          |
+| `TransformInterceptor` | Wraps responses in `{ success, data }` format       |
+
+### Database (Prisma + PostgreSQL)
+
+- 24 models covering users, products, orders, payments, deliveries, notifications, and audit
+- Full-text search via PostgreSQL `tsvector`
+- Connection pooling via Prisma's internal pool (configurable via `DATABASE_URL` pool size)
+- Indexes on foreign keys, status fields, and date-based query columns
 
 ---
 
@@ -73,130 +155,99 @@ fishmarket/
 
 ### Why TurboRepo over Nx?
 
-TurboRepo was chosen over Nx because:
+Simplicity and zero-config. Sufficient for this project size.
 
-- **Simplicity** — zero-config setup, minimal boilerplate
-- **Speed** — faster than Nx for this project size
-- **Caching** — built-in remote caching (shared across team)
-- **Lightweight** — fewer concepts to learn (no generators, no executors)
-- **Sufficient** — the project does not need Nx's advanced CI features at this stage
+### Why feature-based modules?
 
-### Why feature-based modules in the API?
-
-NestJS applications are organized by business domain (auth, users, products, orders, etc.). Each domain is a self-contained module with its own:
-
-- Controller
-- Service
-- DTOs
-- Guards
-- Tests
-
-This makes it trivial to extract any module into a separate microservice later.
-
-### Why a shared UI package?
-
-All three web apps (admin, seller, website) use the same design system (shadcn/ui). Having a single `@fishmarket/ui` package:
-
-- Eliminates component duplication
-- Guarantees visual consistency
-- Simplifies theme changes
-- One version of Tailwind configuration
-
-### Why Zustand over Redux?
-
-Zustand was chosen for state management because:
-
-- Minimal boilerplate (no actions, reducers, or providers)
-- TypeScript-first API
-- Works identically in React and React Native
-- Simple enough for this project's state needs
+Each domain is self-contained, making microservice extraction trivial.
 
 ### Why Prisma?
 
-Prisma was chosen as the ORM because:
+Type-safe database access with auto-generated migrations and great DX.
 
-- Type-safe database access (generated types)
-- Auto-generated migrations
-- Great DX with Prisma Studio
-- Easy to model complex relationships (products, orders, users)
+### Why Zustand over Redux?
 
----
-
-## Design Principles
-
-1. **Keep it simple** — avoid over-engineering. Solve today's problems today.
-2. **Composition over inheritance** — prefer composing small, focused modules.
-3. **Explicit over implicit** — make dependencies and data flow clear.
-4. **Fail early** — validate inputs at boundaries (API layer, form submission).
-5. **Test the contract** — focus integration tests on API contracts, not implementation details.
-6. **Separate concerns** — each file has one responsibility.
-7. **Convention over configuration** — follow framework conventions unless there's a compelling reason not to.
+Minimal boilerplate, TypeScript-first, works in React and React Native identically.
 
 ---
 
-## Development Workflow
+## API Versioning
+
+All endpoints live under `/api/v1/`. No breaking changes should be introduced without incrementing the version prefix (`/api/v2/`).
+
+---
+
+## Development
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Start all apps in dev mode
-pnpm dev
-
-# Build all apps
-pnpm build
-
-# Lint all apps
-pnpm lint
-
-# Run tests
-pnpm test
+pnpm dev          # All apps in dev mode
+pnpm build        # Build all apps
+pnpm lint         # Lint all apps
+pnpm test         # Run all tests
+pnpm --filter @fishmarket/api prisma:studio
 ```
 
 ### Commit Convention
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/):
-
 ```
 <type>(<scope>): <description>
-
 Types: feat, fix, chore, docs, refactor, test, style
 Scopes: api, admin, seller, website, mobile, shared, ui, config, root, deps, docs
 ```
 
 ---
 
-## Roadmap
+## Environment Variables
 
-### Phase 2 — Core Infrastructure (Next)
-- Prisma schema for users, products, and orders
-- Authentication module (JWT + Passport)
-- User CRUD
-- Product CRUD
-- File upload for product images
-- Basic admin dashboard layout
-- Seller portal layout
-- Website landing page
+| Variable                 | Required | Description                                |
+| ------------------------ | -------- | ------------------------------------------ |
+| `NODE_ENV`               | ✓        | `development` \| `staging` \| `production` |
+| `DATABASE_URL`           | ✓        | PostgreSQL connection string               |
+| `REDIS_URL`              | ✓        | Redis connection string                    |
+| `JWT_SECRET`             | ✓        | JWT signing secret (256-bit random)        |
+| `JWT_EXPIRATION`         |          | Access token TTL (default: `15m`)          |
+| `JWT_REFRESH_EXPIRATION` |          | Refresh token TTL (default: `7d`)          |
+| `APP_URL`                |          | CORS origin(s), comma-separated            |
+| `SENTRY_DSN`             |          | Sentry error tracking DSN                  |
+| `STRIPE_SECRET_KEY`      |          | Stripe API key                             |
+| `STRIPE_WEBHOOK_SECRET`  |          | Stripe webhook signing secret              |
+| `SMTP_*`                 |          | Email provider credentials                 |
+| `AWS_ACCESS_KEY_ID`      |          | AWS S3 key (file uploads)                  |
+| `GOOGLE_MAPS_API_KEY`    |          | Maps API key (future)                      |
 
-### Phase 3 — Marketplace Features
-- Order placement workflow
-- Payment integration (Stripe)
-- Delivery management
-- Real-time order tracking (WebSockets)
-- Search and filtering
-- Rating and reviews
+---
 
-### Phase 4 — Operations
-- Analytics dashboard
-- Notification system (email + push)
-- Multi-city support
-- Performance monitoring
-- CI/CD pipeline
-- Load testing
+## Maintenance
 
-### Phase 5 — Scale
-- Horizontal scaling
-- Microservice extraction
-- CDN for images
-- Caching strategy
-- Database read replicas
+### Backups
+
+- PostgreSQL: `docker exec fishmarket-postgres pg_dump -U fishmarket fishmarket > backup_$(date +%Y%m%d).sql`
+- Automate with cron: daily backup, retain 30 days, off-site copy via S3/rsync.
+
+### Deployment Rollback
+
+```bash
+# Revert to previous Docker image tag
+docker compose up -d api=<previous-tag>
+```
+
+### Prisma Migrations
+
+```bash
+pnpm --filter @fishmarket/api prisma:migrate:prod   # Apply pending migrations
+pnpm --filter @fishmarket/api prisma:migrate dev     # Create new migration
+```
+
+Always backup the database before applying migrations in production.
+
+### Scaling Strategy
+
+1. **Vertical** — Increase VPS resources (CPU/RAM). Good for initial growth.
+2. **Horizontal** — Split services across machines:
+   - API instances behind load balancer
+   - Read replicas for PostgreSQL
+   - Redis cluster for caching layer
+3. **CDN** — Serve static assets via Cloudflare/CDN
+4. **Caching** — Add Redis caching for marketplace and dashboard queries
+5. **Queue workers** — Scale BullMQ workers independently for background jobs

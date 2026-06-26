@@ -16,16 +16,28 @@ import {
 import { TransformInterceptor } from './common/interceptors';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+    bufferLogs: true,
+  });
 
   app.setGlobalPrefix(API_PREFIX);
 
   app.enableCors({
-    origin: process.env.APP_URL || 'http://localhost:3000',
+    origin: process.env.APP_URL
+      ? process.env.APP_URL.split(',')
+      : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
   });
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(compression());
 
   app.useGlobalPipes(
@@ -40,6 +52,8 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new TransformInterceptor());
+
+  app.enableShutdownHooks();
 
   const config = new DocumentBuilder()
     .setTitle(SWAGGER_TITLE)
@@ -59,6 +73,8 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(API_DOCS_PATH, app, document);
+
+  app.useLogger(app.get(Logger));
 
   const port = process.env.PORT || 4000;
   await app.listen(port);

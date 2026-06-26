@@ -1,16 +1,18 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 import { AllExceptionsFilter } from './common/filters';
 import { JwtAuthGuard, PermissionsGuard, RolesGuard } from './common/guards';
 import { LoggingInterceptor } from './common/interceptors';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { AdminOrdersModule } from './modules/admin-orders/admin-orders.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { CacheModule } from './modules/cache/cache.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { CommissionModule } from './modules/commission/commission.module';
@@ -20,6 +22,7 @@ import { DeliveryZoneModule } from './modules/delivery-zones/delivery-zone.modul
 import { DriversModule } from './modules/drivers/drivers.module';
 import { EventsModule } from './modules/events/events.module';
 import { HealthModule } from './modules/health/health.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 import { ListingsModule } from './modules/listings/listings.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -40,14 +43,29 @@ import { WalletModule } from './modules/wallet/wallet.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
+        name: 'global',
+        ttl: 60_000,
         limit: 100,
       },
+      {
+        name: 'auth',
+        ttl: 60_000,
+        limit: 10,
+      },
+      {
+        name: 'marketplace',
+        ttl: 60_000,
+        limit: 200,
+      },
     ]),
+
     PrismaModule,
     RedisModule,
+    CacheModule,
+    JobsModule,
     HealthModule,
     AuthModule,
     UsersModule,
@@ -75,26 +93,16 @@ import { WalletModule } from './modules/wallet/wallet.module';
     DeliveriesModule,
   ],
   providers: [
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: PermissionsGuard,
-    },
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: LoggingInterceptor,
-    },
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

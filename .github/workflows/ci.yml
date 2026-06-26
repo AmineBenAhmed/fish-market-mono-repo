@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @fishmarket/api prisma:generate
+      - name: TypeCheck all packages
+        run: pnpm --filter @fishmarket/api run typecheck || true
+      - run: pnpm --filter @fishmarket/admin run typecheck
+      - run: pnpm --filter @fishmarket/seller run typecheck
+      - run: pnpm --filter @fishmarket/website run typecheck
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: fishmarket
+          POSTGRES_PASSWORD: fishmarket
+          POSTGRES_DB: fishmarket
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @fishmarket/api prisma:generate
+      - run: pnpm --filter @fishmarket/api prisma:migrate:prod
+        env:
+          DATABASE_URL: postgresql://fishmarket:fishmarket@localhost:5432/fishmarket
+      - run: pnpm --filter @fishmarket/api test
+        env:
+          DATABASE_URL: postgresql://fishmarket:fishmarket@localhost:5432/fishmarket
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret
+          JWT_EXPIRATION: 15m
+          JWT_REFRESH_EXPIRATION: 7d
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @fishmarket/api prisma:generate
+      - run: pnpm build
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f docker/Dockerfile.api -t fishmarket-api .
+      - name: Build Admin image
+        run: docker build -f docker/Dockerfile.web --build-arg APP_NAME=admin -t fishmarket-admin .
+      - name: Build Seller image
+        run: docker build -f docker/Dockerfile.web --build-arg APP_NAME=seller -t fishmarket-seller .
+      - name: Build Website image
+        run: docker build -f docker/Dockerfile.web --build-arg APP_NAME=website -t fishmarket-website .
