@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "prisma.prisma",
+    "ms-vscode.vscode-typescript-next",
+    "expo.vscode-expo-tools",
+    "yzhang.markdown-all-in-one",
+    "naumovs.color-highlight",
+    "mikestead.dotenv",
+    "ms-azuretools.vscode-docker"
+  ]
+}

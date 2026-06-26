@@ -1,0 +1,9 @@
+{
+  "extends": "@fishmarket/config-tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["vite.config.ts"]
+}

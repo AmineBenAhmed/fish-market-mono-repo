@@ -1,0 +1,8 @@
+{
+  "name": "@fishmarket/config-prettier",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "main": "index.js",
+  "files": ["index.js"]
+}

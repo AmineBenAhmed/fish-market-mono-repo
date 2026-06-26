@@ -1,0 +1,32 @@
+# ─── Development overrides ─────────────────────────────────
+# Use for local development with hot-reload.
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  api:
+    command: pnpm --filter @fishmarket/api dev
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/test:/app/apps/api/test
+      - ./packages:/app/packages
+
+  admin:
+    build:
+      dockerfile: docker/Dockerfile.web.dev
+    command: pnpm --filter @fishmarket/admin dev
+    ports:
+      - "3001:3001"
+
+  seller:
+    build:
+      dockerfile: docker/Dockerfile.web.dev
+    command: pnpm --filter @fishmarket/seller dev
+    ports:
+      - "3002:3002"
+
+  website:
+    build:
+      dockerfile: docker/Dockerfile.web.dev
+    command: pnpm --filter @fishmarket/website dev
+    ports:
+      - "3000:3000"

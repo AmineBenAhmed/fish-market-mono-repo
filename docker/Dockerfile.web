@@ -1,0 +1,25 @@
+# ─── Build Stage ────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+WORKDIR /app
+
+ARG APP_NAME
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages ./packages
+COPY apps/${APP_NAME} ./apps/${APP_NAME}
+
+RUN pnpm install --frozen-lockfile
+
+RUN pnpm --filter @fishmarket/${APP_NAME} build
+
+# ─── Production Stage ──────────────────────────────────────
+FROM nginx:alpine AS runner
+
+COPY --from=builder /app/apps/${APP_NAME}/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

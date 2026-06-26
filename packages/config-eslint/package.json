@@ -1,0 +1,21 @@
+{
+  "name": "@fishmarket/config-eslint",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "main": "index.js",
+  "files": ["index.js"],
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-simple-import-sort": "^12.1.0",
+    "eslint-plugin-unused-imports": "^4.1.0"
+  },
+  "peerDependencies": {
+    "eslint": ">=8"
+  }
+}

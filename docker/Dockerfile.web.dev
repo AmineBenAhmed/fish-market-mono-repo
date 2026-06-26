@@ -1,0 +1,18 @@
+# ─── Development Dockerfile for Web Apps ─────────────────
+# Uses the Vite dev server with hot-reload.
+
+FROM node:20-alpine
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY packages ./packages
+COPY apps ./apps
+
+RUN pnpm install --frozen-lockfile
+
+EXPOSE 3000
+
+CMD ["pnpm", "dev"]

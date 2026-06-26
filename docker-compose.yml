@@ -1,0 +1,103 @@
+# ─── Development Docker Compose ────────────────────────────
+# Spins up all services with hot-reload for local development.
+
+services:
+  # ─── Database ───────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: fishmarket-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: fishmarket
+      POSTGRES_PASSWORD: fishmarket
+      POSTGRES_DB: fishmarket
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fishmarket"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── Cache ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: fishmarket-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── API ────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: fishmarket-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - apps/api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages:/app/packages
+
+  # ─── Admin Dashboard ────────────────────────────────────────
+  admin:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        APP_NAME: admin
+    container_name: fishmarket-admin
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    env_file:
+      - apps/admin/.env
+
+  # ─── Seller Portal ──────────────────────────────────────────
+  seller:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        APP_NAME: seller
+    container_name: fishmarket-seller
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    env_file:
+      - apps/seller/.env
+
+  # ─── Landing Website ────────────────────────────────────────
+  website:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        APP_NAME: website
+    container_name: fishmarket-website
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    env_file:
+      - apps/website/.env
+
+volumes:
+  postgres_data:
+  redis_data:
