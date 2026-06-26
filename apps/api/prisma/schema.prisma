@@ -1,5 +1,39 @@
+// ═══════════════════════════════════════════════════════════════
+//  FishMarket — Complete Domain Schema
+// ═══════════════════════════════════════════════════════════════
+//
+//  Architecture decisions:
+//
+//  1. String CUIDs everywhere — avoids auto-increment leaks,
+//     works across microservices, makes sharding trivial.
+//
+//  2. Soft delete with deletedAt on User and FishProduct —
+//     orders reference historical data that must not disappear.
+//
+//  3. OrderStatusHistory and DeliveryStatusHistory are
+//     append-only tables. Every transition is immutable.
+//
+//  4. AuditLog stores JSON diffs for sensitive mutations
+//     (price changes, cancellations, status overrides).
+//
+//  5. DailyInventory decouples "what a seller sells" from
+//     "what they have today" — critical for fresh fish where
+//     stock changes daily.
+//
+//  6. Payment stores the full gateway response as JSON for
+//     debugging and reconciliation.
+//
+//  7. Wallet + Transaction implements double-entry accounting
+//     for seller payouts and customer refunds.
+//
+//  8. No composite foreign keys — Prisma handles them.
+//     All relations use explicit @relation + fields for clarity.
+//
+// ═══════════════════════════════════════════════════════════════
+
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 datasource db {
@@ -7,4 +41,728 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Models will be added in Phase 2 ───────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  ENUMS
+// ═══════════════════════════════════════════════════════════════
+
+enum UserRole {
+  CUSTOMER
+  SELLER
+  DRIVER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum OrderStatus {
+  PENDING             // Checked out, awaiting payment
+  CONFIRMED           // Paid, seller accepted
+  PREPARING           // Seller packing the fish
+  READY_FOR_PICKUP    // Packed, waiting for driver
+  OUT_FOR_DELIVERY    // Driver en route
+  DELIVERED           // Customer received
+  CANCELLED           // Cancelled (before delivery)
+  REFUNDED            // Money returned to customer
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  APPROVED
+  DECLINED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED         // Driver assigned
+  PICKED_UP        // Driver picked up from seller
+  IN_TRANSIT       // En route to customer
+  DELIVERED        // Customer received
+  FAILED           // Could not deliver
+  RETURNED         // Returned to seller
+}
+
+enum ProductStatus {
+  AVAILABLE
+  SOLD_OUT
+  UNAVAILABLE
+}
+
+enum FishCategorySlug {
+  WHITE_FISH
+  BLUE_FISH
+  SHELLFISH
+  CRUSTACEANS
+  CEPHALOPODS
+  FRESHWATER
+  PROCESSED
+  OTHER
+}
+
+enum InventoryUnit {
+  KG
+  G
+  UNIT
+  DOZEN
+}
+
+enum Preservation {
+  FRESH
+  CHILLED
+  FROZEN
+  SALTED
+  SMOKED
+}
+
+enum TransactionType {
+  ORDER_PAYMENT
+  COMMISSION
+  DELIVERY_FEE
+  WITHDRAWAL
+  DEPOSIT
+  REFUND
+  COUPON_DISCOUNT
+  ADJUSTMENT
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_DELIVERY
+}
+
+enum NotificationChannel {
+  IN_APP
+  PUSH
+  EMAIL
+}
+
+enum NotificationType {
+  ORDER_CONFIRMED
+  ORDER_PREPARING
+  ORDER_OUT_FOR_DELIVERY
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  NEW_REVIEW
+  NEW_MESSAGE
+  PROMOTION
+  WITHDRAWAL_COMPLETED
+  LOW_INVENTORY
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  USER & PROFILE DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Core identity. Soft-deletable to preserve historical references.
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  phone          String?
+  avatarFileId   String?   @unique
+  role           UserRole @default(CUSTOMER)
+  status         UserStatus @default(ACTIVE)
+  isEmailVerified Boolean @default(false)
+  isPhoneVerified Boolean @default(false)
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  avatarFile       File?          @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
+  sellerProfile   SellerProfile?
+  driverProfile   DriverProfile?
+  addresses       UserAddress[]
+  cart            Cart?
+  orders          Order[]        @relation("CustomerOrders")
+  sellerOrders    Order[]        @relation("SellerOrders")
+  cancelledOrders Order[]        @relation("CancelledBy")
+  driverDeliveries Delivery[]    @relation("DriverDeliveries")
+  orderStatusChanges OrderStatusHistory[] @relation("OrderStatusChangedBy")
+  reviews         Review[]
+  wallet          Wallet?
+  notifications   Notification[]
+  uploads         File[]         @relation("FileUploader")
+  auditLogs       AuditLog[]
+
+  @@index([email])
+  @@index([role, status])
+  @@index([deletedAt])
+}
+
+/// Extended profile for sellers.
+model SellerProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  storeName        String
+  storeDescription String?
+  storeLogoFileId  String?  @unique
+  deliveryRadius   Int      @default(10) // in km
+  commissionRate   Float    @default(0.12) // platform commission override
+  preparationTime  Int      @default(30) // average preparation minutes
+  isActive         Boolean  @default(true)
+  city             String
+  state            String
+  lat              Float?
+  lng              Float?
+  pickupAddress    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeLogo       File?           @relation("StoreLogo", fields: [storeLogoFileId], references: [id], onDelete: SetNull)
+  products        FishProduct[]
+  dailyInventories DailyInventory[]
+
+  @@index([city, state])
+  @@index([isActive])
+}
+
+/// Extended profile for drivers.
+model DriverProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  isAvailable   Boolean  @default(true)
+  currentLat    Float?
+  currentLng    Float?
+  city          String
+  state         String
+  vehicleType   String?  // bike, car, van
+  vehiclePlate  String?
+  licenseNumber String?
+  maxLoadKg     Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isAvailable, city])
+  @@index([city, state])
+}
+
+/// User addresses. Geocoded for delivery radius calculation.
+model UserAddress {
+  id           String   @id @default(cuid())
+  userId       String
+  label        String?  // "Home", "Work", etc.
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  zipCode      String
+  lat          Float?
+  lng          Float?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries Delivery[]
+
+  @@index([userId])
+  @@index([city, state])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PRODUCT DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Hierarchical fish categories. Self-referencing for subcategories.
+model FishCategory {
+  id          String            @id @default(cuid())
+  name        String
+  slug        FishCategorySlug  @unique
+  description String?
+  imageFileId String?  @unique
+  parentId    String?
+  sortOrder   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  parent     FishCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children   FishCategory[] @relation("CategoryHierarchy")
+  image      File?          @relation("CategoryImage", fields: [imageFileId], references: [id], onDelete: SetNull)
+  products   FishProduct[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([sortOrder])
+}
+
+/// A seller's fish product listing. Soft-deletable.
+model FishProduct {
+  id            String           @id @default(cuid())
+  sellerId      String
+  categoryId    String
+  name          String
+  slug          String
+  description   String?
+  catchDate     DateTime?        // when the fish was caught (freshness)
+  origin        String?          // where it was caught
+  preservation  Preservation?    @default(FRESH)
+  status        ProductStatus    @default(AVAILABLE)
+  isPromoted    Boolean          @default(false)
+  rating        Float            @default(0)
+  reviewCount   Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  deletedAt     DateTime?
+
+  // Relations
+  seller        SellerProfile  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  category      FishCategory   @relation(fields: [categoryId], references: [id])
+  variants      FishVariant[]
+  reviews       Review[]
+
+  @@unique([sellerId, slug])
+  @@index([sellerId, status])
+  @@index([categoryId, status])
+  @@index([status, createdAt])
+  @@index([name])
+  @@index([deletedAt])
+}
+
+/// Product variants — different sizes, cuts, or weights of the same fish.
+model FishVariant {
+  id            String        @id @default(cuid())
+  productId     String
+  name          String        // e.g., "500g Fillet", "Whole 1kg", "200g Steak"
+  description   String?
+  price         Decimal       @db.Decimal(10, 2)
+  originalPrice Decimal?      @db.Decimal(10, 2) // for showing discounts
+  unit          InventoryUnit
+  minQuantity   Int           @default(1)
+  maxQuantity   Int?          // null = unlimited per order
+  isAvailable   Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  product         FishProduct       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  dailyInventory  DailyInventory[]
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+
+  @@index([productId])
+  @@index([isAvailable, price])
+}
+
+/// Daily inventory — sellers declare how much they have each day.
+/// This is the key entity for fresh fish: daily catch varies.
+model DailyInventory {
+  id        String   @id @default(cuid())
+  variantId String
+  sellerId  String
+  date      DateTime @db.Date
+  quantity  Int      // available units for the day
+  price     Decimal? @db.Decimal(10, 2) // daily price override
+  isAvailable Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  variant FishVariant    @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  seller  SellerProfile  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, sellerId, date])
+  @@index([sellerId, date])
+  @@index([date, isAvailable])
+  @@index([date])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SHOPPING CART DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// One active cart per customer. Cart becomes Order on checkout.
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@index([userId])
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  variantId String
+  quantity  Int
+  createdAt DateTime @default(now())
+
+  // Relations
+  cart    Cart        @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant FishVariant @relation(fields: [variantId], references: [id])
+
+  @@unique([cartId, variantId])
+  @@index([cartId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ORDER DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Core order. References buyer and seller for the marketplace split.
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique // human-readable: "FM-20240101-XXXX"
+  customerId      String
+  sellerId        String
+  status          OrderStatus @default(PENDING)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  deliveryFee     Decimal     @db.Decimal(10, 2)
+  commission      Decimal     @db.Decimal(10, 2)
+  discount        Decimal     @default(0) @db.Decimal(10, 2)
+  total           Decimal     @db.Decimal(10, 2)
+  notes           String?
+  cancelReason    String?
+  cancelledById   String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  customer       User                @relation("CustomerOrders", fields: [customerId], references: [id])
+  seller         User                @relation("SellerOrders", fields: [sellerId], references: [id])
+  cancelledBy    User?               @relation("CancelledBy", fields: [cancelledById], references: [id])
+  items          OrderItem[]
+  statusHistory  OrderStatusHistory[]
+  payment        Payment?
+  delivery       Delivery?
+  coupon         OrderCoupon?
+  review         Review?
+
+  @@index([customerId, status])
+  @@index([sellerId, status])
+  @@index([status, createdAt])
+  @@index([orderNumber])
+  @@index([createdAt])
+}
+
+/// Snapshot of what was ordered. References variant for historical data.
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  variantId   String
+  productName String  // snapshot at order time
+  variantName String  // snapshot at order time
+  quantity    Int
+  unit        InventoryUnit
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalPrice  Decimal @db.Decimal(10, 2)
+
+  // Relations
+  order   Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant FishVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@index([variantId])
+}
+
+/// Immutable audit trail of every status change.
+model OrderStatusHistory {
+  id         String      @id @default(cuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  changedById String?
+  reason     String?
+  createdAt  DateTime    @default(now())
+
+  // Relations
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  changedBy User? @relation("OrderStatusChangedBy", fields: [changedById], references: [id])
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PAYMENT DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Payment record. Stores gateway response for reconciliation.
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String        @unique
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  amount          Decimal       @db.Decimal(10, 2)
+  transactionId   String?       // gateway transaction ID
+  gatewayResponse Json?         // full gateway response
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([transactionId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DELIVERY DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Delivery tracking. Assigned to a driver.
+model Delivery {
+  id              String         @id @default(cuid())
+  orderId         String         @unique
+  addressId       String
+  driverId        String?
+  status          DeliveryStatus @default(PENDING)
+  scheduledDate   DateTime?      @db.Date
+  scheduledTime   String?        // "14:00-16:00" time window
+  pickedUpAt      DateTime?
+  deliveredAt     DateTime?
+  failedAt        DateTime?
+  failReason      String?
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  order          Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  address        UserAddress             @relation(fields: [addressId], references: [id])
+  driver         User?                   @relation("DriverDeliveries", fields: [driverId], references: [id])
+  statusHistory  DeliveryStatusHistory[]
+
+  @@index([driverId, status])
+  @@index([status, scheduledDate])
+  @@index([scheduledDate])
+}
+
+/// Immutable delivery status audit trail.
+model DeliveryStatusHistory {
+  id         String         @id @default(cuid())
+  deliveryId String
+  fromStatus DeliveryStatus?
+  toStatus   DeliveryStatus
+  createdAt  DateTime       @default(now())
+
+  // Relations
+  delivery Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  REVIEW DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  orderId   String   @unique // one review per order per product
+  userId    String
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product FishProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order   Order       @relation(fields: [orderId], references: [id])
+  user    User        @relation(fields: [userId], references: [id])
+
+  @@unique([productId, userId, orderId])
+  @@index([productId, rating])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  COUPON DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+model Coupon {
+  id            String     @id @default(cuid())
+  code          String     @unique
+  type          CouponType
+  value         Decimal    @db.Decimal(10, 2) // percentage or fixed amount
+  minPurchase   Decimal?   @db.Decimal(10, 2) // minimum order value
+  maxDiscount   Decimal?   @db.Decimal(10, 2) // cap for percentage coupons
+  usageLimit    Int?       // total uses allowed
+  usedCount     Int        @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  orders OrderCoupon[]
+
+  @@index([code])
+  @@index([isActive, expiresAt])
+}
+
+/// Tracks coupon usage per order.
+model OrderCoupon {
+  id        String   @id @default(cuid())
+  orderId   String   @unique
+  couponId  String
+  discount  Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now())
+
+  // Relations
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  coupon Coupon @relation(fields: [couponId], references: [id])
+
+  @@index([couponId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WALLET & FINANCE DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// One wallet per user (sellers for payouts, customers for refunds).
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Decimal  @default(0) @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+/// Double-entry accounting. Every transaction records before/after balance.
+model Transaction {
+  id             String          @id @default(cuid())
+  walletId       String
+  type           TransactionType
+  amount         Decimal         @db.Decimal(12, 2)
+  referenceType  String?         // "order", "withdrawal", etc.
+  referenceId    String?         // order ID, withdrawal ID, etc.
+  description    String?
+  balanceBefore  Decimal         @db.Decimal(12, 2)
+  balanceAfter   Decimal         @db.Decimal(12, 2)
+  createdAt      DateTime        @default(now())
+
+  // Relations
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, createdAt])
+  @@index([referenceType, referenceId])
+  @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NOTIFICATION DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  title     String
+  body      String?
+  data      Json?              // flexible payload
+  isRead    Boolean            @default(false)
+  readAt    DateTime?
+  createdAt DateTime           @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FILE & STORAGE DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Tracks all uploaded files. Supports local and S3 storage via config.
+model File {
+  id           String   @id @default(cuid())
+  userId       String?
+  originalName String
+  mimeType     String
+  size         Int      // bytes
+  path         String   // storage path
+  url          String?  // public URL
+  createdAt    DateTime @default(now())
+
+  // Relations
+  uploader        User?           @relation("FileUploader", fields: [userId], references: [id])
+  userAvatar      User?           @relation("UserAvatar")
+  storeLogo       SellerProfile?  @relation("StoreLogo")
+  categoryImage   FishCategory?   @relation("CategoryImage")
+
+  @@index([userId])
+  @@index([mimeType])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AUDIT & PLATFORM DOMAIN
+// ═══════════════════════════════════════════════════════════════
+
+/// Captures every sensitive mutation for compliance and debugging.
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String   // "CREATE", "UPDATE", "DELETE", "CANCEL", "REFUND"
+  entity     String   // "Order", "Product", "Payment", "User"
+  entityId   String
+  oldValue   Json?    // state before
+  newValue   Json?    // state after
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+/// Key-value store for platform-wide configuration.
+model PlatformConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+}

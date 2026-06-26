@@ -1,4 +1,4 @@
-import { COMMISSION_RATE, DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../constants';
+import { COMMISSION_RATE, DEFAULT_DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '../constants';
 
 export function formatCurrency(value: number, locale = 'pt-BR', currency = 'BRL'): string {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
@@ -32,7 +32,9 @@ export function truncate(text: string, maxLength: number): string {
 
 export function generateId(length = 12): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+  return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join(
+    '',
+  );
 }
 
 export function calculateCommission(subtotal: number): number {
@@ -40,5 +42,5 @@ export function calculateCommission(subtotal: number): number {
 }
 
 export function calculateDeliveryFee(subtotal: number): number {
-  return subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+  return subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : DEFAULT_DELIVERY_FEE;
 }

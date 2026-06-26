@@ -9,8 +9,13 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint', 'simple-import-sort', 'unused-imports'],
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+  plugins: ['@typescript-eslint', 'import', 'simple-import-sort', 'unused-imports'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:import/typescript',
+    'prettier',
+  ],
   rules: {
     '@typescript-eslint/no-unused-vars': [
       'error',

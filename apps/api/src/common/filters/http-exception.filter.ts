@@ -8,32 +8,46 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-@Catch()
+import { createErrorResponse } from '../utils';
+
+@Catch(HttpException)
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const status = exception.getStatus();
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    const exceptionResponse = exception.getResponse();
     let message = 'Internal server error';
+    let errors: Record<string, string[]> | undefined;
 
-    if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const exceptionResponse = exception.getResponse();
-      message = typeof exceptionResponse === 'string' ? exceptionResponse : (exceptionResponse as Record<string, unknown>).message as string;
+    if (typeof exceptionResponse === 'string') {
+      message = exceptionResponse;
+    } else if (typeof exceptionResponse === 'object') {
+      const resp = exceptionResponse as Record<string, unknown>;
+
+      if (Array.isArray(resp.message)) {
+        message = 'Validation failed';
+        errors = { general: resp.message as string[] };
+      } else {
+        message = (resp.message as string) || message;
+      }
     }
 
-    this.logger.error(`${request.method} ${request.url} - ${status} - ${message}`, exception instanceof Error ? exception.stack : '');
+    if (status >= 500) {
+      this.logger.error(
+        `${request.method} ${request.url} - ${status} - ${message}`,
+        exception.stack,
+      );
+    } else {
+      this.logger.warn(`${request.method} ${request.url} - ${status} - ${message}`);
+    }
 
-    response.status(status).json({
-      success: false,
-      statusCode: status,
-      message,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-    });
+    const body = createErrorResponse(status as HttpStatus, message, errors, request.url);
+
+    response.status(status).json(body);
   }
 }

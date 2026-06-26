@@ -1,31 +1,30 @@
-export const COMMISSION_RATE = 0.12; // 12% marketplace commission
-
-export const DELIVERY_FEE = 5.99; // Base delivery fee in currency
-
-export const FREE_DELIVERY_THRESHOLD = 50; // Free delivery for orders above this amount
+export const COMMISSION_RATE = 0.12;
+export const DEFAULT_DELIVERY_FEE = 5.99;
+export const FREE_DELIVERY_THRESHOLD = 50;
 
 export const ORDER_STATUSES = [
-  'pending',
-  'confirmed',
-  'preparing',
-  'out-for-delivery',
-  'delivered',
-  'cancelled',
-  'refunded',
+  'PENDING',
+  'CONFIRMED',
+  'PREPARING',
+  'READY_FOR_PICKUP',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'CANCELLED',
+  'REFUNDED',
 ] as const;
 
 export const PRODUCT_CATEGORIES = [
-  'white-fish',
-  'blue-fish',
-  'shellfish',
-  'crustaceans',
-  'cephalopods',
-  'freshwater',
-  'processed',
-  'other',
+  'WHITE_FISH',
+  'BLUE_FISH',
+  'SHELLFISH',
+  'CRUSTACEANS',
+  'CEPHALOPODS',
+  'FRESHWATER',
+  'PROCESSED',
+  'OTHER',
 ] as const;
 
-export const USER_ROLES = ['customer', 'seller', 'admin'] as const;
+export const USER_ROLES = ['CUSTOMER', 'SELLER', 'DRIVER', 'ADMIN'] as const;
 
 export const PAGINATION_DEFAULTS = {
   page: 1,

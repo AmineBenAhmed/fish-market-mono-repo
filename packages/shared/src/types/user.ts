@@ -1,6 +1,6 @@
-export type UserRole = 'customer' | 'seller' | 'admin';
+export type UserRole = 'CUSTOMER' | 'SELLER' | 'DRIVER' | 'ADMIN';
 
-export type UserStatus = 'active' | 'inactive' | 'suspended';
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'BANNED';
 
 export interface GeoLocation {
   lat: number;
@@ -9,6 +9,7 @@ export interface GeoLocation {
 
 export interface Address {
   id: string;
+  label?: string;
   street: string;
   number: string;
   complement?: string;
@@ -31,4 +32,18 @@ export interface User {
   addresses: Address[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SellerProfile {
+  id: string;
+  userId: string;
+  storeName: string;
+  storeDescription?: string;
+  deliveryRadius: number;
+  preparationTime: number;
+  isActive: boolean;
+  city: string;
+  state: string;
+  lat?: number;
+  lng?: number;
 }

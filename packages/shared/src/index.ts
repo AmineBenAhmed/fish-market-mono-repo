@@ -1,11 +1,4 @@
-// ─── Types ─────────────────────────────────────────────────
-export type {
-  User,
-  UserRole,
-  UserStatus,
-  Address,
-  GeoLocation,
-} from './types/user';
+export type { User, UserRole, UserStatus, Address, GeoLocation, SellerProfile } from './types/user';
 
 export type {
   Product,
@@ -13,14 +6,20 @@ export type {
   ProductStatus,
   ProductVariant,
   Inventory,
+  InventoryUnit,
+  Preservation,
 } from './types/product';
 
 export type {
   Order,
   OrderItem,
   OrderStatus,
+  OrderStatusTransition,
   PaymentInfo,
+  PaymentMethod,
+  PaymentStatus,
   DeliveryInfo,
+  DeliveryStatus,
 } from './types/order';
 
 export type {
@@ -31,10 +30,9 @@ export type {
   DateRangeFilter,
 } from './types/common';
 
-// ─── Constants ─────────────────────────────────────────────
 export {
   COMMISSION_RATE,
-  DELIVERY_FEE,
+  DEFAULT_DELIVERY_FEE,
   FREE_DELIVERY_THRESHOLD,
   ORDER_STATUSES,
   PRODUCT_CATEGORIES,
@@ -42,7 +40,6 @@ export {
   PAGINATION_DEFAULTS,
 } from './constants';
 
-// ─── Utilities ─────────────────────────────────────────────
 export {
   formatCurrency,
   formatDate,

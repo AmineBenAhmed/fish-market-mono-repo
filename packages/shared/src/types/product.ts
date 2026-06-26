@@ -1,18 +1,22 @@
 export type ProductCategory =
-  | 'white-fish'
-  | 'blue-fish'
-  | 'shellfish'
-  | 'crustaceans'
-  | 'cephalopods'
-  | 'freshwater'
-  | 'processed'
-  | 'other';
+  | 'WHITE_FISH'
+  | 'BLUE_FISH'
+  | 'SHELLFISH'
+  | 'CRUSTACEANS'
+  | 'CEPHALOPODS'
+  | 'FRESHWATER'
+  | 'PROCESSED'
+  | 'OTHER';
 
-export type ProductStatus = 'available' | 'sold-out' | 'unavailable';
+export type ProductStatus = 'AVAILABLE' | 'SOLD_OUT' | 'UNAVAILABLE';
+
+export type InventoryUnit = 'KG' | 'G' | 'UNIT' | 'DOZEN';
+
+export type Preservation = 'FRESH' | 'CHILLED' | 'FROZEN' | 'SALTED' | 'SMOKED';
 
 export interface Inventory {
   quantity: number;
-  unit: 'kg' | 'g' | 'unit' | 'dozen';
+  unit: InventoryUnit;
 }
 
 export interface ProductVariant {
@@ -20,18 +24,23 @@ export interface ProductVariant {
   name: string;
   price: number;
   originalPrice?: number;
+  unit: InventoryUnit;
   inventory: Inventory;
+  isAvailable: boolean;
 }
 
 export interface Product {
   id: string;
   sellerId: string;
   name: string;
-  description: string;
+  description?: string;
   category: ProductCategory;
   images: string[];
   variants: ProductVariant[];
   status: ProductStatus;
+  preservation: Preservation;
+  catchDate?: string;
+  origin?: string;
   rating: number;
   reviewCount: number;
   isPromoted: boolean;

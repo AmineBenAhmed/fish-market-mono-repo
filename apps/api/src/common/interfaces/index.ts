@@ -14,3 +14,5 @@ export interface PaginationQuery {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
+
+export type { ApiResponseWrapper, PaginatedResponse } from './api-response.interface';

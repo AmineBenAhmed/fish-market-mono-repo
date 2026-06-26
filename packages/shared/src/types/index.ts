@@ -1,18 +1,27 @@
-export type { User, UserRole, UserStatus, Address, GeoLocation } from './user';
+export type { User, UserRole, UserStatus, Address, GeoLocation, SellerProfile } from './user';
+
 export type {
   Product,
   ProductCategory,
   ProductStatus,
   ProductVariant,
   Inventory,
+  InventoryUnit,
+  Preservation,
 } from './product';
+
 export type {
   Order,
   OrderItem,
   OrderStatus,
+  OrderStatusTransition,
   PaymentInfo,
+  PaymentMethod,
+  PaymentStatus,
   DeliveryInfo,
+  DeliveryStatus,
 } from './order';
+
 export type {
   ApiResponse,
   PaginatedResponse,
