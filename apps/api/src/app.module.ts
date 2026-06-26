@@ -8,9 +8,13 @@ import { JwtAuthGuard } from './common/guards';
 import { LoggingInterceptor } from './common/interceptors';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { HealthModule } from './modules/health/health.module';
+import { ListingsModule } from './modules/listings/listings.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
+import { ProductsModule } from './modules/products/products.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { SellersModule } from './modules/sellers/sellers.module';
 import { UserSettingsModule } from './modules/user-settings/user-settings.module';
@@ -37,6 +41,10 @@ import { UsersModule } from './modules/users/users.module';
     SellersModule,
     DriversModule,
     UserSettingsModule,
+    CategoriesModule,
+    ProductsModule,
+    ListingsModule,
+    MarketplaceModule,
   ],
   providers: [
     {

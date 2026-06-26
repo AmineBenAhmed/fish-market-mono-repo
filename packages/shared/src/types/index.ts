@@ -24,13 +24,15 @@ export type {
 } from './auth';
 
 export type {
-  Product,
-  ProductCategory,
-  ProductStatus,
-  ProductVariant,
-  Inventory,
+  FishCategory,
+  FishProduct,
+  FishVariant,
   InventoryUnit,
+  ListingStatus,
+  MarketplaceQuery,
   Preservation,
+  QualityGrade,
+  SellerListing,
 } from './product';
 
 export type {

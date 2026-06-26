@@ -7,7 +7,7 @@
 //  1. String CUIDs everywhere — avoids auto-increment leaks,
 //     works across microservices, makes sharding trivial.
 //
-//  2. Soft delete with deletedAt on User and FishProduct —
+//  2. Soft delete with deletedAt on User only —
 //     orders reference historical data that must not disappear.
 //
 //  3. OrderStatusHistory and DeliveryStatusHistory are
@@ -96,21 +96,10 @@ enum DeliveryStatus {
   RETURNED         // Returned to seller
 }
 
-enum ProductStatus {
-  AVAILABLE
-  SOLD_OUT
-  UNAVAILABLE
-}
-
-enum FishCategorySlug {
-  WHITE_FISH
-  BLUE_FISH
-  SHELLFISH
-  CRUSTACEANS
-  CEPHALOPODS
-  FRESHWATER
-  PROCESSED
-  OTHER
+enum QualityGrade {
+  PREMIUM
+  STANDARD
+  ECONOMY
 }
 
 enum InventoryUnit {
@@ -126,6 +115,12 @@ enum Preservation {
   FROZEN
   SALTED
   SMOKED
+}
+
+enum ListingStatus {
+  ACTIVE
+  OUT_OF_STOCK
+  EXPIRED
 }
 
 enum TransactionType {
@@ -300,8 +295,7 @@ model SellerProfile {
   // Relations
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeLogo       File?           @relation("StoreLogo", fields: [storeLogoFileId], references: [id], onDelete: SetNull)
-  products        FishProduct[]
-  dailyInventories DailyInventory[]
+  listings        SellerListing[]
 
   @@index([city, state])
   @@index([isActive, verificationStatus])
@@ -360,25 +354,44 @@ model UserAddress {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  PRODUCT DOMAIN
+//  PRODUCT DOMAIN — Catalog + Daily Listings
+// ═══════════════════════════════════════════════════════════════
+//
+//  Architecture notes:
+//
+//  1. FishProduct is the MASTER CATALOG — not seller-specific.
+//     It defines the fish type (e.g., "Sea Bass", "Sardines").
+//
+//  2. FishVariant defines the sellable units of a product
+//     (e.g., "Whole 1kg", "Fillet 500g", "Box 2kg").
+//
+//  3. SellerListing is the per-seller, per-day, per-variant
+//     declaration of price + stock. Inventory resets daily.
+//
+//  4. Past listings are kept for audit and analytics but
+//     are automatically marked EXPIRED after the day ends.
+//
+//  5. Price, quantity, and availability are DECOUPLED from
+//     the product — they live on SellerListing only.
+//
 // ═══════════════════════════════════════════════════════════════
 
 /// Hierarchical fish categories. Self-referencing for subcategories.
 model FishCategory {
-  id          String            @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  slug        FishCategorySlug  @unique
+  slug        String    @unique
   description String?
-  imageFileId String?  @unique
+  imageFileId String?   @unique
   parentId    String?
-  sortOrder   Int               @default(0)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Relations
-  parent     FishCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  parent     FishCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children   FishCategory[] @relation("CategoryHierarchy")
-  image      File?          @relation("CategoryImage", fields: [imageFileId], references: [id], onDelete: SetNull)
+  image      File?         @relation("CategoryImage", fields: [imageFileId], references: [id], onDelete: SetNull)
   products   FishProduct[]
 
   @@index([parentId])
@@ -386,85 +399,82 @@ model FishCategory {
   @@index([sortOrder])
 }
 
-/// A seller's fish product listing. Soft-deletable.
+/// Master catalog of fish types. NOT seller-specific.
+/// Represents what CAN be sold (e.g., Sea Bass, Sardines, Shrimp).
 model FishProduct {
-  id            String           @id @default(cuid())
-  sellerId      String
-  categoryId    String
-  name          String
-  slug          String
-  description   String?
-  catchDate     DateTime?        // when the fish was caught (freshness)
-  origin        String?          // where it was caught
-  preservation  Preservation?    @default(FRESH)
-  status        ProductStatus    @default(AVAILABLE)
-  isPromoted    Boolean          @default(false)
-  rating        Float            @default(0)
-  reviewCount   Int              @default(0)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  deletedAt     DateTime?
+  id             String        @id @default(cuid())
+  categoryId     String
+  name           String
+  slug           String        @unique
+  description    String?
+  origin         String?       // general origin info
+  preservation   Preservation? @default(FRESH)
+  qualityGrade   QualityGrade  @default(STANDARD)
+  unitType       InventoryUnit @default(KG) // default selling unit
+  marketPriceMin Decimal?      @db.Decimal(10, 2) // reference price floor
+  marketPriceMax Decimal?      @db.Decimal(10, 2) // reference price ceiling
+  isActive       Boolean       @default(true)
+  imageFileId    String?       @unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Relations
-  seller        SellerProfile  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  category      FishCategory   @relation(fields: [categoryId], references: [id])
-  variants      FishVariant[]
-  reviews       Review[]
+  category   FishCategory   @relation(fields: [categoryId], references: [id])
+  image      File?          @relation("ProductImage", fields: [imageFileId], references: [id], onDelete: SetNull)
+  variants   FishVariant[]
+  reviews    Review[]
+  listings   SellerListing[]
 
-  @@unique([sellerId, slug])
-  @@index([sellerId, status])
-  @@index([categoryId, status])
-  @@index([status, createdAt])
+  @@index([categoryId, isActive])
+  @@index([slug])
   @@index([name])
-  @@index([deletedAt])
 }
 
-/// Product variants — different sizes, cuts, or weights of the same fish.
+/// Sellable units of a product (e.g., "Whole 1kg", "Fillet 500g").
 model FishVariant {
-  id            String        @id @default(cuid())
-  productId     String
-  name          String        // e.g., "500g Fillet", "Whole 1kg", "200g Steak"
-  description   String?
-  price         Decimal       @db.Decimal(10, 2)
-  originalPrice Decimal?      @db.Decimal(10, 2) // for showing discounts
-  unit          InventoryUnit
-  minQuantity   Int           @default(1)
-  maxQuantity   Int?          // null = unlimited per order
-  isAvailable   Boolean       @default(true)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id          String        @id @default(cuid())
+  productId   String
+  name        String        // e.g., "500g Fillet", "Whole 1kg", "Box 2kg"
+  description String?
+  unit        InventoryUnit
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   // Relations
-  product         FishProduct       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  dailyInventory  DailyInventory[]
-  cartItems       CartItem[]
-  orderItems      OrderItem[]
+  product      FishProduct      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  listings     SellerListing[]
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
 
   @@index([productId])
-  @@index([isAvailable, price])
 }
 
-/// Daily inventory — sellers declare how much they have each day.
-/// This is the key entity for fresh fish: daily catch varies.
-model DailyInventory {
-  id        String   @id @default(cuid())
-  variantId String
+/// Daily seller listing — the core of fresh fish commerce.
+/// Every seller publishes their available stock per variant per day.
+/// Inventory resets daily. Past listings are marked EXPIRED.
+model SellerListing {
+  id        String        @id @default(cuid())
   sellerId  String
-  date      DateTime @db.Date
-  quantity  Int      // available units for the day
-  price     Decimal? @db.Decimal(10, 2) // daily price override
-  isAvailable Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  productId String
+  variantId String
+  date      DateTime      @db.Date
+  price     Decimal       @db.Decimal(10, 2)
+  quantity  Int           // units available for the day
+  status    ListingStatus @default(ACTIVE)
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   // Relations
-  variant FishVariant    @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  seller  SellerProfile  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  seller  SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  product  FishProduct  @relation(fields: [productId], references: [id])
+  variant  FishVariant  @relation(fields: [variantId], references: [id])
 
   @@unique([variantId, sellerId, date])
-  @@index([sellerId, date])
-  @@index([date, isAvailable])
-  @@index([date])
+  @@index([sellerId, date, status])
+  @@index([productId, date, status])
+  @@index([date, status])
+  @@index([status])
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -796,6 +806,7 @@ model File {
   userAvatar      User?           @relation("UserAvatar")
   storeLogo       SellerProfile?  @relation("StoreLogo")
   categoryImage   FishCategory?   @relation("CategoryImage")
+  productImage    FishProduct?    @relation("ProductImage")
 
   @@index([userId])
   @@index([mimeType])
