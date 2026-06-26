@@ -1,10 +1,42 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
+import { AuthGuard } from './components/guards/auth-guard';
+import { DashboardShell } from './components/layout/shell';
+import { AnalyticsPage } from './features/analytics/analytics-page';
+import { LoginPage } from './features/auth/login-page';
+import { DashboardPage } from './features/dashboard/dashboard-page';
+import { DeliveriesPage } from './features/deliveries/deliveries-page';
+import { DriversPage } from './features/drivers/drivers-page';
+import { NotificationsPage } from './features/notifications/notifications-page';
+import { OrderDetailPage } from './features/orders/order-detail-page';
+import { OrdersPage } from './features/orders/orders-page';
+import { PaymentsPage } from './features/payments/payments-page';
+import { SellersPage } from './features/sellers/sellers-page';
+import { UsersPage } from './features/users/users-page';
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<div>FishMarket Admin</div>} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          element={
+            <AuthGuard>
+              <DashboardShell />
+            </AuthGuard>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="sellers" element={<SellersPage />} />
+          <Route path="drivers" element={<DriversPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/:id" element={<OrderDetailPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
+          <Route path="deliveries" element={<DeliveriesPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

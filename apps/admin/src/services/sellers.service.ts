@@ -1,0 +1,22 @@
+import type { SellerProfile } from '../types';
+import { api, unwrap } from './api';
+
+export const sellersService = {
+  async getSellers(params?: { page?: number; limit?: number; status?: string; search?: string }) {
+    const { data } = await api.get('/admin/sellers', { params });
+    return data.data;
+  },
+
+  async getSeller(id: string): Promise<SellerProfile> {
+    const { data } = await api.get(`/admin/sellers/${id}`);
+    return unwrap<SellerProfile>(data);
+  },
+
+  async approve(id: string): Promise<void> {
+    await api.patch(`/sellers/${id}/approve`);
+  },
+
+  async reject(id: string): Promise<void> {
+    await api.patch(`/sellers/${id}/reject`);
+  },
+};

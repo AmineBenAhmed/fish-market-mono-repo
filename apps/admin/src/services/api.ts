@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -17,12 +17,47 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('auth-token');
+      localStorage.removeItem('auth-user');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   },
 );
+
+export function unwrap<T>(response: { data: { success: boolean; data: T } }): T {
+  return response.data.data;
+}
+
+export function unwrapPaginated<T>(response: {
+  data: {
+    success: boolean;
+    data: {
+      data: T[];
+      meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+      };
+    };
+  };
+}): {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+} {
+  return response.data.data;
+}
 
 export { api };
