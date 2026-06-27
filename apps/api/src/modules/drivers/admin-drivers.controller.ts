@@ -12,6 +12,23 @@ export class AdminDriversController {
 
   @Get()
   @Roles('ADMIN')
+  @ApiOperation({ summary: 'List all drivers with pagination and filters' })
+  async findAll(
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.driversService.findAll({
+      status,
+      search,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  @Get('available')
+  @Roles('ADMIN')
   @ApiOperation({ summary: 'List available drivers' })
   async findAvailable(@Query('zoneId') zoneId?: string) {
     return this.driversService.findAvailable(zoneId);

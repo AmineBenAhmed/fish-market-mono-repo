@@ -1,5 +1,5 @@
-import type { DashboardStats, DriverProfile, Order } from '../types';
-import { api, unwrap, unwrapPaginated } from './api';
+import type { DriverProfile, Order } from '../types';
+import { api, unwrapPaginated } from './api';
 
 export const dashboardService = {
   async getOrdersToday(): Promise<number> {
@@ -20,10 +20,5 @@ export const dashboardService = {
   async getDrivers(): Promise<number> {
     const result = await api.get('/admin/drivers', { params: { limit: 1 } });
     return unwrapPaginated<DriverProfile>(result).meta.total;
-  },
-
-  async getStats(): Promise<DashboardStats> {
-    const result = await api.get('/admin/dashboard/stats');
-    return unwrap<DashboardStats>(result);
   },
 };

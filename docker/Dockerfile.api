@@ -11,14 +11,28 @@ COPY apps/api ./apps/api
 
 RUN pnpm install --frozen-lockfile
 
+RUN pnpm --filter @fishmarket/api exec prisma generate
+
 RUN pnpm --filter @fishmarket/api build
 
 RUN pnpm --filter @fishmarket/api --prod deploy /app/dist
 
+RUN PRISMA_SRC=$(find /app/node_modules/.pnpm/@prisma+client* \
+    -name ".prisma" -type d -maxdepth 3 2>/dev/null | head -1) && \
+    PRISMA_CLIENT_DIR=$(find /app/dist/node_modules/.pnpm/@prisma+client*/node_modules/@prisma/client \
+    -maxdepth 0 -type d 2>/dev/null | head -1) && \
+    PRISMA_DST=$(dirname "$(dirname "$PRISMA_CLIENT_DIR")" 2>/dev/null) && \
+    if [ -n "$PRISMA_SRC" ] && [ -n "$PRISMA_DST" ]; then \
+      echo "Copying $PRISMA_SRC -> $PRISMA_DST"; \
+      cp -r "$PRISMA_SRC" "$PRISMA_DST/"; \
+    else \
+      echo "WARNING: Could not find prisma generated files"; \
+      echo "SRC: $PRISMA_SRC"; \
+      echo "DST: $PRISMA_DST"; \
+    fi
+
 # ─── Production Stage ──────────────────────────────────────
 FROM node:20-alpine AS runner
-
-RUN corepack enable && corepack prepare pnpm@9 --activate
 
 WORKDIR /app
 

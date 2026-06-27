@@ -7,6 +7,17 @@ export const authService = {
     return data.data as { user: User; accessToken: string; refreshToken: string };
   },
 
+  async register(dto: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    role?: string;
+  }) {
+    const { data } = await api.post('/auth/register', dto);
+    return data.data as { user: User; accessToken: string; refreshToken: string };
+  },
+
   async getMe(): Promise<User> {
     const { data } = await api.get('/auth/me');
     return unwrap<User>(data);

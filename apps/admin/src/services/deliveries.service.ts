@@ -1,4 +1,4 @@
-import type { Delivery, DriverProfile } from '../types';
+import type { Delivery } from '../types';
 import { api, unwrap, unwrapPaginated } from './api';
 
 export const deliveriesService = {
@@ -33,10 +33,5 @@ export const deliveriesService = {
 
   async cancelDelivery(deliveryId: string, reason: string): Promise<void> {
     await api.post(`/admin/deliveries/${deliveryId}/cancel`, { reason });
-  },
-
-  async getAvailableDrivers() {
-    const result = await api.get('/admin/deliveries/drivers');
-    return unwrapPaginated<DriverProfile>(result);
   },
 };

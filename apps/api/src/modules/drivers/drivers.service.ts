@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DriverStatus } from '@prisma/client';
+import { DriverStatus, Prisma } from '@prisma/client';
 
+import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 
@@ -8,9 +9,46 @@ import { UpdateDriverDto } from './dto/update-driver.dto';
 export class DriversService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getProfile(userId: string) {
-    const profile = await this.prisma.driverProfile.findUnique({
-      where: { userId },
+  async findAll(filters: { status?: string; search?: string; page?: number; limit?: number }) {
+    const where: Prisma.DriverProfileWhereInput = {};
+
+    if (filters.status) {
+      where.status = filters.status as DriverStatus;
+    }
+    if (filters.search) {
+      where.OR = [
+        { user: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+        { user: { email: { contains: filters.search, mode: 'insensitive' as const } } },
+      ];
+    }
+
+    const { page, limit, skip } = parsePagination(filters.page, filters.limit);
+
+    const [data, total] = await Promise.all([
+      this.prisma.driverProfile.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, phone: true, role: true, status: true },
+          },
+          zone: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.driverProfile.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: createPaginationMeta(total, page, limit),
+    };
+  }
+
+  async getProfile(id: string) {
+    const profile = await this.prisma.driverProfile.findFirst({
+      where: { OR: [{ id }, { userId: id }] },
       include: { zone: true },
     });
 
@@ -21,9 +59,9 @@ export class DriversService {
     return profile;
   }
 
-  async updateProfile(userId: string, dto: UpdateDriverDto) {
-    const profile = await this.prisma.driverProfile.findUnique({
-      where: { userId },
+  async updateProfile(id: string, dto: UpdateDriverDto) {
+    const profile = await this.prisma.driverProfile.findFirst({
+      where: { OR: [{ id }, { userId: id }] },
     });
 
     if (!profile) {
@@ -31,7 +69,7 @@ export class DriversService {
     }
 
     return this.prisma.driverProfile.update({
-      where: { userId },
+      where: { id: profile.id },
       data: {
         ...(dto.city !== undefined && { city: dto.city }),
         ...(dto.state !== undefined && { state: dto.state }),
@@ -45,9 +83,9 @@ export class DriversService {
     });
   }
 
-  async setOnlineStatus(userId: string, status: 'ONLINE' | 'OFFLINE') {
-    const profile = await this.prisma.driverProfile.findUnique({
-      where: { userId },
+  async setOnlineStatus(id: string, status: 'ONLINE' | 'OFFLINE') {
+    const profile = await this.prisma.driverProfile.findFirst({
+      where: { OR: [{ id }, { userId: id }] },
     });
 
     if (!profile) {
@@ -55,7 +93,7 @@ export class DriversService {
     }
 
     return this.prisma.driverProfile.update({
-      where: { userId },
+      where: { id: profile.id },
       data: {
         status: status as DriverStatus,
         isAvailable: status === 'ONLINE',

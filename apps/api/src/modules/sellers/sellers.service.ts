@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { SellerVerificationStatus } from '@prisma/client';
+import { Prisma, SellerVerificationStatus } from '@prisma/client';
 
+import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplySellerDto } from './dto/apply-seller.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
@@ -8,6 +9,43 @@ import { UpdateSellerDto } from './dto/update-seller.dto';
 @Injectable()
 export class SellersService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findAll(filters: { status?: string; search?: string; page?: number; limit?: number }) {
+    const where: Prisma.SellerProfileWhereInput = {};
+
+    if (filters.status) {
+      where.verificationStatus = filters.status as SellerVerificationStatus;
+    }
+    if (filters.search) {
+      where.OR = [
+        { storeName: { contains: filters.search, mode: 'insensitive' as const } },
+        { user: { name: { contains: filters.search, mode: 'insensitive' as const } } },
+        { user: { email: { contains: filters.search, mode: 'insensitive' as const } } },
+      ];
+    }
+
+    const { page, limit, skip } = parsePagination(filters.page, filters.limit);
+
+    const [data, total] = await Promise.all([
+      this.prisma.sellerProfile.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, email: true, name: true, phone: true, role: true, status: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.sellerProfile.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: createPaginationMeta(total, page, limit),
+    };
+  }
 
   async apply(userId: string, dto: ApplySellerDto) {
     const existing = await this.prisma.sellerProfile.findUnique({
@@ -103,9 +141,9 @@ export class SellersService {
     });
   }
 
-  async updateVerification(userId: string, status: 'APPROVED' | 'REJECTED') {
+  async updateVerification(id: string, status: 'APPROVED' | 'REJECTED') {
     const profile = await this.prisma.sellerProfile.findUnique({
-      where: { userId },
+      where: { id },
     });
 
     if (!profile) {
@@ -121,7 +159,7 @@ export class SellersService {
     }
 
     const updated = await this.prisma.sellerProfile.update({
-      where: { userId },
+      where: { id: profile.id },
       data: updateData,
     });
 

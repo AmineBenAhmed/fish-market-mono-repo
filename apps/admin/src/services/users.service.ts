@@ -1,16 +1,10 @@
 import type { User } from '../types';
-import { api, unwrap } from './api';
+import { api, unwrap, unwrapPaginated } from './api';
 
 export const usersService = {
-  async getUsers(params?: {
-    page?: number;
-    limit?: number;
-    role?: string;
-    search?: string;
-    status?: string;
-  }) {
-    const { data } = await api.get('/admin/users', { params });
-    return data.data;
+  async getUsers(params?: { page?: number; limit?: number; role?: string; search?: string }) {
+    const result = await api.get('/admin/users', { params });
+    return unwrapPaginated<User>(result);
   },
 
   async getUser(id: string): Promise<User> {

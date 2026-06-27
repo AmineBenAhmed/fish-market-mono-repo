@@ -1,11 +1,18 @@
-import { Button } from '@fishmarket/ui';
+import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Check, Store, X } from 'lucide-react';
-import { useState } from 'react';
+import { Ban, Check, MoreHorizontal, Search, Store, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { DataTable } from '../../components/data-table/data-table';
+import { PageHeader } from '../../components/shared/page-header';
 import { Badge } from '../../components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card } from '../../components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -13,25 +20,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import { formatDate } from '../../lib/utils';
-import { sellersService } from '../../services';
+import { formatDateShort, statusColor } from '../../lib/utils';
+import { sellersService, usersService } from '../../services';
 import type { SellerProfile } from '../../types';
 
-const statusBadge: Record<string, string> = {
-  PENDING: 'bg-amber-100 text-amber-800',
-  APPROVED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-800',
-};
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export function SellersPage() {
-  const [status, setStatus] = useState('all');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['sellers', { status, page }],
+    queryKey: ['sellers', { status: statusFilter, page, search: debouncedSearch }],
     queryFn: () =>
-      sellersService.getSellers({ status: status !== 'all' ? status : undefined, page }),
+      sellersService.getSellers({
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        page,
+        limit: 20,
+        search: debouncedSearch || undefined,
+      }),
   });
 
   const approveMutation = useMutation({
@@ -44,118 +63,180 @@ export function SellersPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
   });
 
-  const sellers: SellerProfile[] = data?.data ?? [];
+  const suspendMutation = useMutation({
+    mutationFn: (userId: string) => usersService.updateStatus(userId, 'SUSPENDED'),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
+  });
+
+  const activateMutation = useMutation({
+    mutationFn: (userId: string) => usersService.updateStatus(userId, 'ACTIVE'),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
+  });
+
+  const sellers = data?.data ?? [];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Sellers</h2>
-        <p className="text-muted-foreground">Manage seller accounts and approvals</p>
-      </div>
+      <PageHeader title="Sellers" description="Manage seller accounts and approvals" />
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">All Sellers</CardTitle>
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, email, phone or address..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-10"
+              />
+            </div>
             <Select
-              value={status}
+              value={statusFilter}
               onValueChange={(v) => {
-                setStatus(v);
+                setStatusFilter(v);
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="PENDING">Pending</SelectItem>
                 <SelectItem value="APPROVED">Approved</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        </CardHeader>
-        <CardContent>
+
           <DataTable
             columns={[
               {
-                key: 'storeName',
-                header: 'Store',
+                key: 'name',
+                header: 'Seller Name',
                 render: (s: SellerProfile) => (
-                  <div className="flex items-center gap-2">
-                    <Store className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{s.storeName}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+                      <Store className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{s.user?.name || s.storeName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.storeName}</p>
+                    </div>
                   </div>
                 ),
               },
               {
-                key: 'status',
-                header: 'Status',
+                key: 'phone',
+                header: 'Phone',
                 render: (s: SellerProfile) => (
-                  <Badge className={statusBadge[s.status]}>{s.status}</Badge>
+                  <span className="text-sm text-muted-foreground">{s.user?.phone || '-'}</span>
                 ),
-              },
-              { key: 'city', header: 'Location', render: (s: SellerProfile) => s.city || '-' },
-              {
-                key: 'rating',
-                header: 'Rating',
-                render: (s: SellerProfile) => (s.rating ? `${s.rating.toFixed(1)} ⭐` : '-'),
-              },
-              {
-                key: 'totalOrders',
-                header: 'Orders',
-                render: (s: SellerProfile) => s.totalOrders || 0,
               },
               {
                 key: 'createdAt',
-                header: 'Joined',
-                render: (s: SellerProfile) => formatDate(s.createdAt),
+                header: 'Join Date',
+                render: (s: SellerProfile) => (
+                  <span className="text-sm whitespace-nowrap">{formatDateShort(s.createdAt)}</span>
+                ),
+              },
+              {
+                key: 'orders',
+                header: 'Orders (Month)',
+                className: 'text-center',
+                render: () => <span className="text-sm text-muted-foreground">-</span>,
+              },
+              {
+                key: 'sales',
+                header: 'Sales (Month)',
+                className: 'text-center',
+                render: () => <span className="text-sm text-muted-foreground">-</span>,
+              },
+              {
+                key: 'verificationStatus',
+                header: 'Status',
+                render: (s: SellerProfile) => (
+                  <Badge className={statusColor(s.verificationStatus)}>
+                    {s.verificationStatus}
+                  </Badge>
+                ),
               },
               {
                 key: 'actions',
-                header: 'Actions',
-                render: (s: SellerProfile) => (
-                  <div className="flex gap-2">
-                    {s.status === 'PENDING' && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-emerald-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            approveMutation.mutate(s.id);
-                          }}
-                        >
-                          <Check className="h-4 w-4" />
+                header: '',
+                className: 'w-[50px]',
+                render: (s: SellerProfile) => {
+                  const userId = s.user?.id;
+                  const isSuspended = s.user?.status === 'SUSPENDED';
+
+                  return (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <span className="sr-only">Actions</span>
+                          <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            rejectMutation.mutate(s.id);
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                ),
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {s.verificationStatus === 'PENDING' && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => approveMutation.mutate(s.id)}
+                              disabled={approveMutation.isPending}
+                            >
+                              <Check className="mr-2 h-4 w-4 text-emerald-600" />
+                              Approve
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => rejectMutation.mutate(s.id)}
+                              disabled={rejectMutation.isPending}
+                            >
+                              <X className="mr-2 h-4 w-4 text-red-600" />
+                              Reject
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {s.verificationStatus === 'APPROVED' && userId && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              isSuspended
+                                ? activateMutation.mutate(userId)
+                                : suspendMutation.mutate(userId)
+                            }
+                            disabled={suspendMutation.isPending || activateMutation.isPending}
+                          >
+                            {isSuspended ? (
+                              <>
+                                <Check className="mr-2 h-4 w-4 text-emerald-600" />
+                                Reactivate
+                              </>
+                            ) : (
+                              <>
+                                <Ban className="mr-2 h-4 w-4" />
+                                Suspend
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                },
               },
             ]}
             data={sellers}
             isLoading={isLoading}
             error={error as Error | null}
-            emptyMessage="No sellers found."
+            emptyMessage="No sellers found matching your criteria."
             meta={data?.meta}
             onPageChange={setPage}
             keyExtractor={(s: SellerProfile) => s.id}
           />
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaClient } from '@prisma/client';
 
+import { Public } from '../../common/decorators';
 import { createSuccessResponse } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
@@ -16,6 +17,7 @@ class HealthStatus {
   };
 }
 
+@Public()
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {

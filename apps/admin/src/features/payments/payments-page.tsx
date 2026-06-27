@@ -3,6 +3,7 @@ import { CreditCard } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable } from '../../components/data-table/data-table';
+import { PageHeader } from '../../components/shared/page-header';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import {
@@ -30,10 +31,7 @@ export function PaymentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Payments</h2>
-        <p className="text-muted-foreground">Monitor payment transactions</p>
-      </div>
+      <PageHeader title="Payments" description="Monitor payment transactions" />
 
       <Card>
         <CardHeader>

@@ -20,9 +20,9 @@ export class RegisterDto {
   @IsOptional()
   phone?: string;
 
-  @IsEnum(['CUSTOMER', 'SELLER'] as const)
+  @IsEnum(['CUSTOMER', 'SELLER', 'ADMIN', 'DRIVER'] as const)
   @IsOptional()
-  role?: 'CUSTOMER' | 'SELLER';
+  role?: 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DRIVER';
 }
 
 export class LoginDto {

@@ -15,15 +15,18 @@ export interface SellerProfile {
   userId: string;
   storeName: string;
   storeDescription?: string;
-  storeLogo?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  city?: string;
-  state?: string;
+  storeLogoFileId?: string;
+  verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  isActive: boolean;
+  city: string;
+  state: string;
   deliveryZoneId?: string;
   commissionRate: number;
-  rating: number;
-  totalOrders: number;
-  totalRevenue: number;
+  deliveryRadius: number;
+  preparationTime: number;
+  businessName?: string;
+  taxId?: string;
+  pickupAddress?: string;
   user?: User;
   createdAt: string;
 }

@@ -50,7 +50,7 @@ export class OrdersController {
   @Roles('CUSTOMER', 'ADMIN')
   @ApiOperation({ summary: 'Get order details' })
   async findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
-    return this.ordersService.findOne(user.sub, id);
+    return this.ordersService.findOne(user.sub, id, user.role);
   }
 
   @Patch(':id/cancel')
@@ -63,6 +63,6 @@ export class OrdersController {
     @Param('id') id: string,
     @Body() dto: CancelOrderDto,
   ) {
-    return this.ordersService.cancelOrder(user.sub, id, dto);
+    return this.ordersService.cancelOrder(user.sub, id, dto, user.role);
   }
 }

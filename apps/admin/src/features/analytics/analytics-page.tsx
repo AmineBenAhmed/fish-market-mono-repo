@@ -1,5 +1,6 @@
 import { BarChart3, Store, TrendingUp, Users } from 'lucide-react';
 
+import { PageHeader } from '../../components/shared/page-header';
 import {
   Card,
   CardContent,
@@ -11,10 +12,7 @@ import {
 export function AnalyticsPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Analytics</h2>
-        <p className="text-muted-foreground">Marketplace performance insights (coming soon)</p>
-      </div>
+      <PageHeader title="Analytics" description="Marketplace performance insights" />
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

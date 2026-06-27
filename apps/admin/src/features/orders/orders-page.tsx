@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/data-table/data-table';
+import { PageHeader } from '../../components/shared/page-header';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import {
@@ -55,10 +56,7 @@ export function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Orders</h2>
-        <p className="text-muted-foreground">View and manage all marketplace orders</p>
-      </div>
+      <PageHeader title="Orders" description="View and manage all marketplace orders" />
 
       <Card>
         <CardHeader>

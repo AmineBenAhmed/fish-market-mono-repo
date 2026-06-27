@@ -3,6 +3,7 @@ import { Truck } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable } from '../../components/data-table/data-table';
+import { PageHeader } from '../../components/shared/page-header';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import {
@@ -30,10 +31,7 @@ export function DriversPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Drivers</h2>
-        <p className="text-muted-foreground">Manage delivery drivers</p>
-      </div>
+      <PageHeader title="Drivers" description="Manage delivery drivers" />
 
       <Card>
         <CardHeader>

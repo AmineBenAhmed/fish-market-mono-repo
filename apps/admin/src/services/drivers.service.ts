@@ -11,8 +11,4 @@ export const driversService = {
     const result = await api.get(`/admin/drivers/${id}`);
     return unwrap<DriverProfile>(result);
   },
-
-  async updateStatus(id: string, status: string): Promise<void> {
-    await api.patch(`/admin/drivers/${id}/status`, { status });
-  },
 };

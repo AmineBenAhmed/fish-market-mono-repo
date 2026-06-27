@@ -41,13 +41,13 @@ export function OrderDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/orders')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">{order.orderNumber}</h2>
-          <p className="text-muted-foreground">Order details</p>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{order.orderNumber}</h1>
+          <p className="text-sm text-muted-foreground">Order details</p>
         </div>
         <Badge className={statusColor(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
       </div>

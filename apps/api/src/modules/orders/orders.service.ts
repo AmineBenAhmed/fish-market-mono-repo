@@ -257,9 +257,14 @@ export class OrdersService {
     };
   }
 
-  async findOne(userId: string, orderId: string) {
+  async findOne(userId: string, orderId: string, userRole?: string) {
+    const where: Prisma.OrderWhereInput = { id: orderId };
+    if (userRole !== 'ADMIN') {
+      where.customerId = userId;
+    }
+
     const order = await this.prisma.order.findFirst({
-      where: { id: orderId, customerId: userId },
+      where,
       include: {
         childOrders: {
           include: {
@@ -280,9 +285,14 @@ export class OrdersService {
     return order;
   }
 
-  async cancelOrder(userId: string, orderId: string, dto: CancelOrderDto) {
+  async cancelOrder(userId: string, orderId: string, dto: CancelOrderDto, userRole?: string) {
+    const where: Prisma.OrderWhereInput = { id: orderId };
+    if (userRole !== 'ADMIN') {
+      where.customerId = userId;
+    }
+
     const order = await this.prisma.order.findFirst({
-      where: { id: orderId, customerId: userId },
+      where,
     });
 
     if (!order) {

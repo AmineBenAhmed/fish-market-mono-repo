@@ -8,30 +8,40 @@ import { Card, CardContent } from '../../components/ui/card';
 import { authService } from '../../services';
 import { useAuthStore } from '../../stores/auth';
 
-export function LoginPage() {
+export function RegisterPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const setToken = useAuthStore((s) => s.setToken);
   const setUser = useAuthStore((s) => s.setUser);
   const navigate = useNavigate();
 
-  const loginMutation = useMutation({
-    mutationFn: () => authService.login(email, password),
+  const registerMutation = useMutation({
+    mutationFn: () =>
+      authService.register({ name, email, password, phone: phone || undefined, role: 'SELLER' }),
     onSuccess: (data) => {
       setToken(data.accessToken);
       setUser(data.user);
       navigate('/', { replace: true });
     },
     onError: (err: any) => {
-      setError(err?.response?.data?.message || 'Login failed');
+      setError(err?.response?.data?.message || 'Registration failed');
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    loginMutation.mutate();
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    registerMutation.mutate();
   };
 
   return (
@@ -41,7 +51,7 @@ export function LoginPage() {
           <Fish className="h-8 w-8 text-white" />
         </div>
         <h1 className="text-2xl font-bold">FishMarket</h1>
-        <p className="text-muted-foreground">Seller Portal</p>
+        <p className="text-muted-foreground">Create your seller account</p>
       </div>
 
       <Card className="w-full max-w-sm">
@@ -52,6 +62,18 @@ export function LoginPage() {
                 {error}
               </div>
             )}
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Full Name</label>
+              <Input
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="h-12 text-base"
+                required
+              />
+            </div>
+
             <div className="space-y-1">
               <label className="text-sm font-medium">Email</label>
               <Input
@@ -63,29 +85,54 @@ export function LoginPage() {
                 required
               />
             </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Phone (optional)</label>
+              <Input
+                type="tel"
+                placeholder="+1 234 567 890"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
             <div className="space-y-1">
               <label className="text-sm font-medium">Password</label>
               <Input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Min. 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12 text-base"
                 required
               />
             </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Confirm Password</label>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-12 text-base"
+                required
+              />
+            </div>
+
             <Button
               type="submit"
               className="w-full h-12 text-base"
-              disabled={loginMutation.isPending}
+              disabled={registerMutation.isPending}
             >
-              {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
+              {registerMutation.isPending ? 'Creating account...' : 'Create Account'}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:underline font-medium">
-                Sign up
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-600 hover:underline font-medium">
+                Sign in
               </Link>
             </p>
           </form>

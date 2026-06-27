@@ -17,7 +17,6 @@ import { TransformInterceptor } from './common/interceptors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['log', 'error', 'warn', 'debug', 'verbose'],
     bufferLogs: true,
   });
 
@@ -73,8 +72,6 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(API_DOCS_PATH, app, document);
-
-  app.useLogger(app.get(Logger));
 
   const port = process.env.PORT || 4000;
   await app.listen(port);
