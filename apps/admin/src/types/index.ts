@@ -17,7 +17,7 @@ export interface SellerProfile {
   storeName: string;
   storeDescription?: string;
   storeLogoFileId?: string;
-  verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   isActive: boolean;
   city: string;
   state: string;

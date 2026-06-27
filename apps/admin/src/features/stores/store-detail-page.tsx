@@ -84,7 +84,7 @@ export function StoreDetailPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Store Not Found" description="The requested store could not be loaded">
-          <Button variant="outline" onClick={() => navigate('/sellers')}>
+          <Button variant="outline" onClick={() => navigate('/stores')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Stores
           </Button>
@@ -97,7 +97,7 @@ export function StoreDetailPage() {
               <p className="text-sm text-muted-foreground mt-1">
                 {(error as Error)?.message || 'Store not found'}
               </p>
-              <Button variant="outline" className="mt-4" onClick={() => navigate('/sellers')}>
+              <Button variant="outline" className="mt-4" onClick={() => navigate('/stores')}>
                 Return to Stores
               </Button>
             </div>
@@ -132,7 +132,7 @@ export function StoreDetailPage() {
         title={store.storeName}
         description={`Store details • ${store.user?.name || store.storeName}`}
       >
-        <Button variant="outline" onClick={() => navigate('/sellers')}>
+        <Button variant="outline" onClick={() => navigate('/stores')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Stores
         </Button>
@@ -304,7 +304,7 @@ export function StoreDetailPage() {
         </div>
 
         <div className="flex justify-end gap-4 mt-6">
-          <Button variant="outline" type="button" onClick={() => navigate('/sellers')}>
+          <Button variant="outline" type="button" onClick={() => navigate('/stores')}>
             Cancel
           </Button>
           <Button type="submit" disabled={updateMutation.isPending}>

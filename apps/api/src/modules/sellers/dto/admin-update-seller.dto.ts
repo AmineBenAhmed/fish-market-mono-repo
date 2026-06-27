@@ -1,4 +1,6 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+
+import { SellerVerificationStatus } from '@prisma/client';
 
 export class AdminUpdateSellerDto {
   @IsString()
@@ -37,4 +39,8 @@ export class AdminUpdateSellerDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsEnum(SellerVerificationStatus)
+  @IsOptional()
+  verificationStatus?: SellerVerificationStatus;
 }

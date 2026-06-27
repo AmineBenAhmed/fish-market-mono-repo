@@ -43,6 +43,7 @@ export const sellersService = {
       businessDoc?: string;
       taxId?: string;
       isActive?: boolean;
+      verificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
     },
   ): Promise<SellerProfile> {
     const result = await api.patch(`/admin/sellers/${id}`, data);

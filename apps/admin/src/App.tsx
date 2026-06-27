@@ -30,9 +30,9 @@ function App() {
         >
           <Route index element={<DashboardPage />} />
           <Route path="users" element={<UsersPage />} />
-          <Route path="sellers" element={<SellersPage />} />
-          <Route path="sellers/new" element={<StoreCreatePage />} />
-          <Route path="sellers/:id" element={<StoreDetailPage />} />
+          <Route path="stores" element={<SellersPage />} />
+          <Route path="stores/new" element={<StoreCreatePage />} />
+          <Route path="stores/:id" element={<StoreDetailPage />} />
           <Route path="drivers" element={<DriversPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />

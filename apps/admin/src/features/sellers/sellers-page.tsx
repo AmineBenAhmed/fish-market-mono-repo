@@ -1,6 +1,6 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Ban, Check, Eye, MoreHorizontal, Plus, Search, Store, X } from 'lucide-react';
+import { Eye, MoreHorizontal, Plus, Search, Store } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { formatDateShort, statusColor } from '../../lib/utils';
-import { sellersService, usersService } from '../../services';
+import { sellersService } from '../../services';
 import type { SellerProfile } from '../../types';
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -56,32 +56,43 @@ export function SellersPage() {
       }),
   });
 
-  const approveMutation = useMutation({
-    mutationFn: (id: string) => sellersService.approve(id),
+  const statusMutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+    }) => sellersService.update(id, { verificationStatus: status }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
   });
 
-  const rejectMutation = useMutation({
-    mutationFn: (id: string) => sellersService.reject(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
-  });
-
-  const suspendMutation = useMutation({
-    mutationFn: (userId: string) => usersService.updateStatus(userId, 'SUSPENDED'),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
-  });
-
-  const activateMutation = useMutation({
-    mutationFn: (userId: string) => usersService.updateStatus(userId, 'ACTIVE'),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
-  });
+  const getStatusOptions = (current: string) => {
+    switch (current) {
+      case 'PENDING':
+        return [
+          { value: 'APPROVED' as const, label: 'Approve', className: 'text-emerald-600' },
+          { value: 'REJECTED' as const, label: 'Reject', className: 'text-red-600' },
+        ];
+      case 'APPROVED':
+        return [{ value: 'SUSPENDED' as const, label: 'Suspend', className: 'text-red-600' }];
+      case 'SUSPENDED':
+        return [{ value: 'APPROVED' as const, label: 'Reactivate', className: 'text-emerald-600' }];
+      case 'REJECTED':
+        return [
+          { value: 'PENDING' as const, label: 'Reset to Pending', className: 'text-amber-600' },
+        ];
+      default:
+        return [];
+    }
+  };
 
   const sellers = data?.data ?? [];
 
   return (
     <div className="space-y-6">
       <PageHeader title="Stores" description="Manage seller stores and accounts">
-        <Button onClick={() => navigate('/sellers/new')}>
+        <Button onClick={() => navigate('/stores/new')}>
           <Plus className="mr-2 h-4 w-4" />
           New Store
         </Button>
@@ -93,7 +104,7 @@ export function SellersPage() {
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, phone or address..."
+                placeholder="Search by store name, city or state..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -117,53 +128,52 @@ export function SellersPage() {
                 <SelectItem value="PENDING">Pending</SelectItem>
                 <SelectItem value="APPROVED">Approved</SelectItem>
                 <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="SUSPENDED">Suspended</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <DataTable
-            onRowClick={(s: SellerProfile) => navigate(`/sellers/${s.id}`)}
+            onRowClick={(s: SellerProfile) => navigate(`/stores/${s.id}`)}
             columns={[
               {
-                key: 'name',
-                header: 'Seller Name',
+                key: 'store',
+                header: 'Store',
                 render: (s: SellerProfile) => (
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
                       <Store className="h-4 w-4 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium truncate">{s.user?.name || s.storeName}</p>
-                      <p className="text-xs text-muted-foreground truncate">{s.storeName}</p>
+                      <p className="font-medium truncate">{s.storeName}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {s.city}
+                        {s.state ? `, ${s.state}` : ''}
+                      </p>
                     </div>
                   </div>
                 ),
               },
               {
-                key: 'phone',
-                header: 'Phone',
+                key: 'commissionRate',
+                header: 'Commission',
                 render: (s: SellerProfile) => (
-                  <span className="text-sm text-muted-foreground">{s.user?.phone || '-'}</span>
+                  <span className="text-sm">{(s.commissionRate * 100).toFixed(0)}%</span>
+                ),
+              },
+              {
+                key: 'preparationTime',
+                header: 'Prep Time',
+                render: (s: SellerProfile) => (
+                  <span className="text-sm">{s.preparationTime} min</span>
                 ),
               },
               {
                 key: 'createdAt',
-                header: 'Join Date',
+                header: 'Created',
                 render: (s: SellerProfile) => (
                   <span className="text-sm whitespace-nowrap">{formatDateShort(s.createdAt)}</span>
                 ),
-              },
-              {
-                key: 'orders',
-                header: 'Orders (Month)',
-                className: 'text-center',
-                render: () => <span className="text-sm text-muted-foreground">-</span>,
-              },
-              {
-                key: 'sales',
-                header: 'Sales (Month)',
-                className: 'text-center',
-                render: () => <span className="text-sm text-muted-foreground">-</span>,
               },
               {
                 key: 'verificationStatus',
@@ -176,66 +186,33 @@ export function SellersPage() {
               },
               {
                 key: 'actions',
-                header: '',
-                className: 'w-[50px]',
+                header: 'Actions',
+                className: 'w-[140px]',
                 render: (s: SellerProfile) => {
-                  const userId = s.user?.id;
-                  const isSuspended = s.user?.status === 'SUSPENDED';
-
+                  const options = getStatusOptions(s.verificationStatus);
                   return (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <span className="sr-only">Actions</span>
-                          <MoreHorizontal className="h-4 w-4" />
+                        <Button variant="outline" size="sm" className="h-8 text-xs">
+                          <MoreHorizontal className="mr-1 h-3 w-3" />
+                          Change Status
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/sellers/${s.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/stores/${s.id}`)}>
                           <Eye className="mr-2 h-4 w-4" />
                           View Store
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {s.verificationStatus === 'PENDING' && (
-                          <>
-                            <DropdownMenuItem
-                              onClick={() => approveMutation.mutate(s.id)}
-                              disabled={approveMutation.isPending}
-                            >
-                              <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                              Approve
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => rejectMutation.mutate(s.id)}
-                              disabled={rejectMutation.isPending}
-                            >
-                              <X className="mr-2 h-4 w-4 text-red-600" />
-                              Reject
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {s.verificationStatus === 'APPROVED' && userId && (
+                        {options.length > 0 && <DropdownMenuSeparator />}
+                        {options.map((opt) => (
                           <DropdownMenuItem
-                            onClick={() =>
-                              isSuspended
-                                ? activateMutation.mutate(userId)
-                                : suspendMutation.mutate(userId)
-                            }
-                            disabled={suspendMutation.isPending || activateMutation.isPending}
+                            key={opt.value}
+                            onClick={() => statusMutation.mutate({ id: s.id, status: opt.value })}
+                            disabled={statusMutation.isPending}
                           >
-                            {isSuspended ? (
-                              <>
-                                <Check className="mr-2 h-4 w-4 text-emerald-600" />
-                                Reactivate
-                              </>
-                            ) : (
-                              <>
-                                <Ban className="mr-2 h-4 w-4" />
-                                Suspend
-                              </>
-                            )}
+                            <span className={opt.className}>{opt.label}</span>
                           </DropdownMenuItem>
-                        )}
+                        ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   );
@@ -245,7 +222,7 @@ export function SellersPage() {
             data={sellers}
             isLoading={isLoading}
             error={error as Error | null}
-            emptyMessage="No sellers found matching your criteria."
+            emptyMessage="No stores found matching your criteria."
             meta={data?.meta}
             onPageChange={setPage}
             keyExtractor={(s: SellerProfile) => s.id}

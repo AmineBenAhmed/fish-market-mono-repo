@@ -38,7 +38,7 @@ export function StoreCreatePage() {
     mutationFn: (data: Parameters<typeof sellersService.create>[0]) => sellersService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sellers'] });
-      navigate('/sellers');
+      navigate('/stores');
     },
   });
 
@@ -85,7 +85,7 @@ export function StoreCreatePage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Create Store" description="Create a new seller store">
-        <Button variant="outline" onClick={() => navigate('/sellers')}>
+        <Button variant="outline" onClick={() => navigate('/stores')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Stores
         </Button>
@@ -287,7 +287,7 @@ export function StoreCreatePage() {
         </div>
 
         <div className="flex justify-end gap-4 mt-6">
-          <Button variant="outline" type="button" onClick={() => navigate('/sellers')}>
+          <Button variant="outline" type="button" onClick={() => navigate('/stores')}>
             Cancel
           </Button>
           <Button type="submit" disabled={createMutation.isPending || !lookedUpUser}>

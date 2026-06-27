@@ -111,19 +111,29 @@ export class SellersService {
       throw new NotFoundException('Seller profile not found');
     }
 
+    const data: Record<string, unknown> = {};
+
+    if (dto.storeName !== undefined) data.storeName = dto.storeName;
+    if (dto.storeDescription !== undefined) data.storeDescription = dto.storeDescription;
+    if (dto.deliveryRadius !== undefined) data.deliveryRadius = dto.deliveryRadius;
+    if (dto.preparationTime !== undefined) data.preparationTime = dto.preparationTime;
+    if (dto.pickupAddress !== undefined) data.pickupAddress = dto.pickupAddress;
+    if (dto.businessName !== undefined) data.businessName = dto.businessName;
+    if (dto.businessDoc !== undefined) data.businessDoc = dto.businessDoc;
+    if (dto.taxId !== undefined) data.taxId = dto.taxId;
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    if (dto.verificationStatus !== undefined) {
+      data.verificationStatus = dto.verificationStatus as SellerVerificationStatus;
+      if (dto.verificationStatus === 'APPROVED') {
+        data.isActive = true;
+      } else if (dto.verificationStatus === 'SUSPENDED' || dto.verificationStatus === 'REJECTED') {
+        data.isActive = false;
+      }
+    }
+
     return this.prisma.sellerProfile.update({
       where: { id },
-      data: {
-        ...(dto.storeName !== undefined && { storeName: dto.storeName }),
-        ...(dto.storeDescription !== undefined && { storeDescription: dto.storeDescription }),
-        ...(dto.deliveryRadius !== undefined && { deliveryRadius: dto.deliveryRadius }),
-        ...(dto.preparationTime !== undefined && { preparationTime: dto.preparationTime }),
-        ...(dto.pickupAddress !== undefined && { pickupAddress: dto.pickupAddress }),
-        ...(dto.businessName !== undefined && { businessName: dto.businessName }),
-        ...(dto.businessDoc !== undefined && { businessDoc: dto.businessDoc }),
-        ...(dto.taxId !== undefined && { taxId: dto.taxId }),
-        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-      },
+      data,
     });
   }
 
@@ -203,7 +213,7 @@ export class SellersService {
     });
   }
 
-  async updateVerification(id: string, status: 'APPROVED' | 'REJECTED') {
+  async updateVerification(id: string, status: SellerVerificationStatus) {
     const profile = await this.prisma.sellerProfile.findUnique({
       where: { id },
     });
@@ -213,11 +223,13 @@ export class SellersService {
     }
 
     const updateData: Record<string, unknown> = {
-      verificationStatus: status as SellerVerificationStatus,
+      verificationStatus: status,
     };
 
     if (status === 'APPROVED') {
       updateData.isActive = true;
+    } else if (status === 'SUSPENDED' || status === 'REJECTED') {
+      updateData.isActive = false;
     }
 
     const updated = await this.prisma.sellerProfile.update({
