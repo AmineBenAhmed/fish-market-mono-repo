@@ -3,18 +3,18 @@ import type { SellerProfile } from '../types';
 
 export const sellerService = {
   async listStores(): Promise<SellerProfile[]> {
-    const { data } = await api.get('/sellers');
-    return unwrap<SellerProfile[]>(data);
+    const res = await api.get('/sellers');
+    return unwrap<SellerProfile[]>(res);
   },
 
   async getProfile(): Promise<SellerProfile> {
-    const { data } = await api.get('/sellers/me');
-    return unwrap<SellerProfile>(data);
+    const res = await api.get('/sellers/me');
+    return unwrap<SellerProfile>(res);
   },
 
   async updateProfile(profile: Partial<SellerProfile>) {
-    const { data } = await api.patch('/sellers/me', profile);
-    return unwrap<SellerProfile>(data);
+    const res = await api.patch('/sellers/me', profile);
+    return unwrap<SellerProfile>(res);
   },
 
   async apply(data: {
