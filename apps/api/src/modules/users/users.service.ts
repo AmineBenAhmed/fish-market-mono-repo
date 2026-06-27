@@ -31,6 +31,7 @@ export class UsersService {
         where,
         select: {
           id: true,
+          code: true,
           email: true,
           name: true,
           phone: true,
@@ -59,6 +60,7 @@ export class UsersService {
       where: { id },
       select: {
         id: true,
+        code: true,
         email: true,
         name: true,
         phone: true,
@@ -74,6 +76,30 @@ export class UsersService {
 
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  async findByCode(code: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { code },
+      select: {
+        id: true,
+        code: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        status: true,
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found with this code');
     }
 
     return user;

@@ -1,6 +1,6 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Ban, Check, MoreHorizontal, User, X } from 'lucide-react';
+import { Ban, Check, MoreHorizontal, PenIcon, User, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataTable } from '../../components/data-table/data-table';
@@ -101,6 +101,13 @@ export function UsersPage() {
                 ),
               },
               {
+                key: 'code',
+                header: 'Code',
+                render: (u: UserType) => (
+                  <span className="font-mono text-xs font-medium">{u.code || '-'}</span>
+                ),
+              },
+              {
                 key: 'email',
                 header: 'Email',
                 render: (u: UserType) => <span className="text-muted-foreground">{u.email}</span>,
@@ -134,9 +141,9 @@ export function UsersPage() {
                 render: (u: UserType) => (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <Button variant="ghost" size="sm" className="h-12 w-12 p-0">
                         <span className="sr-only">Actions</span>
-                        <MoreHorizontal className="h-4 w-4" />
+                        <PenIcon className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

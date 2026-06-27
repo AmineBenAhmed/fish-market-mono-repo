@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  code?: string;
   email: string;
   name: string;
   role: 'CUSTOMER' | 'SELLER' | 'DRIVER' | 'ADMIN';
@@ -20,15 +21,19 @@ export interface SellerProfile {
   isActive: boolean;
   city: string;
   state: string;
+  lat?: number;
+  lng?: number;
   deliveryZoneId?: string;
   commissionRate: number;
   deliveryRadius: number;
   preparationTime: number;
   businessName?: string;
+  businessDoc?: string;
   taxId?: string;
   pickupAddress?: string;
   user?: User;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface DriverProfile {

@@ -1,7 +1,8 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Ban, Check, MoreHorizontal, Search, Store, X } from 'lucide-react';
+import { Ban, Check, Eye, MoreHorizontal, Plus, Search, Store, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/data-table/data-table';
 import { PageHeader } from '../../components/shared/page-header';
@@ -11,6 +12,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
 import {
@@ -40,6 +42,7 @@ export function SellersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading, error } = useQuery({
@@ -77,7 +80,12 @@ export function SellersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Sellers" description="Manage seller accounts and approvals" />
+      <PageHeader title="Stores" description="Manage seller stores and accounts">
+        <Button onClick={() => navigate('/sellers/new')}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Store
+        </Button>
+      </PageHeader>
 
       <Card>
         <div className="p-6 space-y-6">
@@ -114,6 +122,7 @@ export function SellersPage() {
           </div>
 
           <DataTable
+            onRowClick={(s: SellerProfile) => navigate(`/sellers/${s.id}`)}
             columns={[
               {
                 key: 'name',
@@ -182,6 +191,11 @@ export function SellersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => navigate(`/sellers/${s.id}`)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Store
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         {s.verificationStatus === 'PENDING' && (
                           <>
                             <DropdownMenuItem

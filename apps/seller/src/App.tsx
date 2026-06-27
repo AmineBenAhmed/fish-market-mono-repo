@@ -7,6 +7,7 @@ import { ListingsPage } from './features/listings/listings-page';
 import { OrdersPage } from './features/orders/orders-page';
 import { EarningsPage } from './features/earnings/earnings-page';
 import { SettingsPage } from './features/settings/settings-page';
+import { StorePage } from './features/store/store-page';
 import { NotificationsPage } from './features/notifications/notifications-page';
 import { LoginPage } from './features/auth/login-page';
 import { RegisterPage } from './features/auth/register-page';
@@ -29,6 +30,7 @@ function App() {
           <Route path="orders" element={<OrdersPage />} />
           <Route path="earnings" element={<EarningsPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="store" element={<StorePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Routes>

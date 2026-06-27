@@ -12,6 +12,11 @@ export const usersService = {
     return unwrap<User>(data);
   },
 
+  async findByCode(code: string): Promise<User> {
+    const result = await api.get(`/admin/users/code/${code}`);
+    return unwrap<User>(result);
+  },
+
   async updateStatus(id: string, status: string): Promise<void> {
     await api.patch(`/admin/users/${id}/status`, { status });
   },

@@ -201,6 +201,7 @@ enum NotificationType {
 /// Core identity. Soft-deletable to preserve historical references.
 model User {
   id             String   @id @default(cuid())
+  code           String?  @unique
   email          String   @unique
   passwordHash   String
   name           String

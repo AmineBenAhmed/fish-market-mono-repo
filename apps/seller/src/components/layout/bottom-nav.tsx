@@ -1,4 +1,4 @@
-import { Home, ClipboardList, ShoppingCart, Wallet, User } from 'lucide-react';
+import { Home, ClipboardList, ShoppingCart, Store, Wallet } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const items = [
@@ -6,7 +6,7 @@ const items = [
   { to: '/listings', icon: ClipboardList, label: 'Listings' },
   { to: '/orders', icon: ShoppingCart, label: 'Orders' },
   { to: '/earnings', icon: Wallet, label: 'Earnings' },
-  { to: '/settings', icon: User, label: 'Store' },
+  { to: '/store', icon: Store, label: 'Store' },
 ];
 
 export function BottomNav() {

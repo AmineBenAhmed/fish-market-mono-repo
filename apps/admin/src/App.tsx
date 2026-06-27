@@ -12,6 +12,8 @@ import { OrderDetailPage } from './features/orders/order-detail-page';
 import { OrdersPage } from './features/orders/orders-page';
 import { PaymentsPage } from './features/payments/payments-page';
 import { SellersPage } from './features/sellers/sellers-page';
+import { StoreCreatePage } from './features/stores/store-create-page';
+import { StoreDetailPage } from './features/stores/store-detail-page';
 import { UsersPage } from './features/users/users-page';
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="sellers" element={<SellersPage />} />
+          <Route path="sellers/new" element={<StoreCreatePage />} />
+          <Route path="sellers/:id" element={<StoreDetailPage />} />
           <Route path="drivers" element={<DriversPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />

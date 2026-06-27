@@ -18,6 +18,13 @@ export class AdminUsersController {
     return this.usersService.findAll(query);
   }
 
+  @Get('code/:code')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Find user by code' })
+  async findByCode(@Param('code') code: string) {
+    return this.usersService.findByCode(code);
+  }
+
   @Get(':id')
   @Roles('ADMIN')
   @ApiOperation({ summary: 'Get user by id' })

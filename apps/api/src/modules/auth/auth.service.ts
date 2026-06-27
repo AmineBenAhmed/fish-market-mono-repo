@@ -23,6 +23,19 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly SALT_ROUNDS = 12;
 
+  private async generateCode(): Promise<string> {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    for (let attempt = 0; attempt < 10; attempt++) {
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const existing = await this.prisma.user.findUnique({ where: { code } });
+      if (!existing) return code;
+    }
+    throw new Error('Failed to generate unique user code');
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -38,11 +51,13 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
+    const code = await this.generateCode();
 
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         passwordHash,
+        code,
         name: dto.name,
         phone: dto.phone,
         role: (dto.role as UserRole) || 'CUSTOMER',

@@ -11,16 +11,23 @@ export interface SellerProfile {
   userId: string;
   storeName: string;
   storeDescription?: string;
-  storeLogo?: string;
-  status: string;
-  city?: string;
-  state?: string;
-  commissionRate: number;
+  storeLogoFileId?: string;
+  verificationStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  isActive: boolean;
+  city: string;
+  state: string;
+  lat?: number;
+  lng?: number;
   deliveryZoneId?: string;
-  rating: number;
-  totalOrders: number;
-  totalRevenue: number;
+  commissionRate: number;
+  deliveryRadius: number;
+  preparationTime: number;
+  businessName?: string;
+  businessDoc?: string;
+  taxId?: string;
+  pickupAddress?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Listing {
