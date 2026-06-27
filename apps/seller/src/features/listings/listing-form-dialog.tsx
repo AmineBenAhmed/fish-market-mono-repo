@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Input } from '@fishmarket/ui';
+import { Loader2, Store as StoreIcon } from 'lucide-react';
 
 import {
   Select,
@@ -17,8 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
-import { cloudinaryService, storesService } from '../../services';
+import { cloudinaryService, productsService, storesService } from '../../services';
 import type { Store } from '../../types';
+import type { FishProduct } from '../../services/products.service';
 import { ImageUpload } from './image-upload';
 
 const FISH_CATEGORIES = [
@@ -68,6 +70,7 @@ interface UploadedImage {
 
 export interface ListingFormSubmitData {
   category: string;
+  productId: string;
   description: string;
   price: number;
   quantity: number;
@@ -96,6 +99,7 @@ export function ListingFormDialog({
   editListing,
 }: ListingFormDialogProps) {
   const [stores, setStores] = useState<Store[]>([]);
+  const [products, setProducts] = useState<FishProduct[]>([]);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
 
@@ -108,6 +112,8 @@ export function ListingFormDialog({
   const [storeId, setStoreId] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [creatingStore, setCreatingStore] = useState(false);
+  const [newStoreName, setNewStoreName] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -115,8 +121,26 @@ export function ListingFormDialog({
         .getStores()
         .then(setStores)
         .catch(() => {});
+      productsService
+        .getActive()
+        .then(setProducts)
+        .catch(() => {});
     }
   }, [open]);
+
+  async function handleCreateStore() {
+    if (!newStoreName.trim()) return;
+    setCreatingStore(true);
+    try {
+      const store = await storesService.create({ name: newStoreName.trim() });
+      setStores((prev) => [...prev, store]);
+      setStoreId(store.id);
+      setNewStoreName('');
+    } catch {
+      // ignore
+    }
+    setCreatingStore(false);
+  }
 
   useEffect(() => {
     if (editListing && open) {
@@ -185,8 +209,12 @@ export function ListingFormDialog({
       setUploadingImages(false);
     }
 
+    const matchedProduct = products.find((p) => p.name === category);
+    const effectiveProductId = matchedProduct?.id ?? '';
+
     onSubmit({
       category,
+      productId: effectiveProductId,
       description,
       price: Number(price),
       quantity: Number(quantity),
@@ -345,18 +373,44 @@ export function ListingFormDialog({
                 <label className="text-sm font-medium">
                   Store <span className="text-destructive">*</span>
                 </label>
-                <Select value={storeId} onValueChange={setStoreId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select store" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stores.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {stores.length === 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/30 text-sm text-muted-foreground">
+                      <StoreIcon className="h-4 w-4 shrink-0" />
+                      <span>No stores yet. Create one to list your fish.</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Store name"
+                        value={newStoreName}
+                        onChange={(e) => setNewStoreName(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleCreateStore}
+                        disabled={creatingStore || !newStoreName.trim()}
+                        className="h-9 shrink-0"
+                      >
+                        {creatingStore ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Create'}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Select value={storeId} onValueChange={setStoreId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select store" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(stores ?? []).map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 {errors.storeId && <p className="text-xs text-destructive">{errors.storeId}</p>}
               </div>
 

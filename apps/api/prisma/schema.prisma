@@ -527,6 +527,7 @@ model SellerListing {
   unit       String?
   currency   String          @default("TND")
   coverImageId String?   @unique
+  imageUrls  String[]
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 

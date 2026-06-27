@@ -20,6 +20,7 @@ import { CloudinaryService } from './cloudinary.service';
         });
         return cloudinary;
       },
+      inject: [ConfigService],
     },
   ],
   exports: [CloudinaryService],

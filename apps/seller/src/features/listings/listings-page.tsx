@@ -133,7 +133,7 @@ export function ListingsPage() {
   const createMutation = useMutation({
     mutationFn: (data: ListingFormSubmitData) => {
       return listingsService.create({
-        productId: 'manual',
+        productId: data.productId,
         date: new Date().toISOString(),
         price: data.price,
         quantity: data.quantity,
@@ -300,7 +300,7 @@ export function ListingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Stores</SelectItem>
-                    {stores.map((s: SellerStore) => (
+                    {(stores ?? []).map((s: SellerStore) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
                       </SelectItem>

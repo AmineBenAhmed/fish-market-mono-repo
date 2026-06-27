@@ -9,3 +9,4 @@ export { notificationsService } from './notifications.service';
 export { catalogService } from './catalog.service';
 export { filesService } from './files.service';
 export { cloudinaryService } from './cloudinary.service';
+export { productsService } from './products.service';

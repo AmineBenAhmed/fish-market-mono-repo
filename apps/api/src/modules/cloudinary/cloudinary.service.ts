@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
+import type { UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
 
 @Injectable()
 export class CloudinaryService {
-  constructor(@Inject('CLOUDINARY') private readonly cloudinary: typeof cloudinary) {}
+  constructor(@Inject('CLOUDINARY') private readonly cloudinary: any) {}
 
   async uploadFile(
     filePath: string,

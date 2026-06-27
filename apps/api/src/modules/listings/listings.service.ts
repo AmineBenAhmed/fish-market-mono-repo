@@ -84,6 +84,7 @@ export class ListingsService {
         currency: dto.currency ?? 'TND',
         notes: dto.notes,
         coverImageId,
+        imageUrls: dto.cloudinaryUrls ?? [],
         images: dto.imageIds?.length
           ? {
               create: dto.imageIds.map((fileId, i) => ({
@@ -366,6 +367,7 @@ export class ListingsService {
         ...(dto.imageIds !== undefined && dto.imageIds.length > 0
           ? { images: { create: dto.imageIds.map((fileId, i) => ({ fileId, sortOrder: i })) } }
           : {}),
+        ...(dto.cloudinaryUrls !== undefined && { imageUrls: dto.cloudinaryUrls }),
       },
       include: this.listingInclude,
     });

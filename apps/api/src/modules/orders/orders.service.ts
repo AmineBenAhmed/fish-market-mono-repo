@@ -159,6 +159,12 @@ export class OrdersService {
         for (const cartItem of so.items) {
           await this.inventoryReservation.reserve(tx, cartItem.listingId, cartItem.quantity);
 
+          if (!cartItem.listing.variantId || !cartItem.listing.variant) {
+            throw new BadRequestException(
+              `Listing ${cartItem.listingId} is missing variant information`,
+            );
+          }
+
           await tx.orderItem.create({
             data: {
               orderId: created.id,

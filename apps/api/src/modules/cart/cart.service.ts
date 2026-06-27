@@ -78,6 +78,10 @@ export class CartService {
       throw new BadRequestException(`Insufficient stock. Available: ${listing.quantity}`);
     }
 
+    if (!listing.variantId) {
+      throw new BadRequestException('Listing must have a variant');
+    }
+
     const existing = await this.prisma.cartItem.findUnique({
       where: { cartId_variantId: { cartId: cart.id, variantId: listing.variantId } },
     });
