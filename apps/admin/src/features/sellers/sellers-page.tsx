@@ -1,6 +1,6 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Eye, MoreHorizontal, Plus, Search, Store } from 'lucide-react';
+import { Eye, PenIcon, Plus, Search, Store } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -67,25 +67,15 @@ export function SellersPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sellers'] }),
   });
 
-  const getStatusOptions = (current: string) => {
-    switch (current) {
-      case 'PENDING':
-        return [
-          { value: 'APPROVED' as const, label: 'Approve', className: 'text-emerald-600' },
-          { value: 'REJECTED' as const, label: 'Reject', className: 'text-red-600' },
-        ];
-      case 'APPROVED':
-        return [{ value: 'SUSPENDED' as const, label: 'Suspend', className: 'text-red-600' }];
-      case 'SUSPENDED':
-        return [{ value: 'APPROVED' as const, label: 'Reactivate', className: 'text-emerald-600' }];
-      case 'REJECTED':
-        return [
-          { value: 'PENDING' as const, label: 'Reset to Pending', className: 'text-amber-600' },
-        ];
-      default:
-        return [];
-    }
-  };
+  const allStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
+
+  const getStatusOptions = (current: string) =>
+    allStatuses
+      .filter((s) => s !== current)
+      .map((value) => ({
+        value,
+        className: statusColor(value),
+      }));
 
   const sellers = data?.data ?? [];
 
@@ -193,9 +183,8 @@ export function SellersPage() {
                   return (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-8 text-xs">
-                          <MoreHorizontal className="mr-1 h-3 w-3" />
-                          Change Status
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <PenIcon className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -203,14 +192,14 @@ export function SellersPage() {
                           <Eye className="mr-2 h-4 w-4" />
                           View Store
                         </DropdownMenuItem>
-                        {options.length > 0 && <DropdownMenuSeparator />}
+                        <DropdownMenuSeparator />
                         {options.map((opt) => (
                           <DropdownMenuItem
                             key={opt.value}
                             onClick={() => statusMutation.mutate({ id: s.id, status: opt.value })}
                             disabled={statusMutation.isPending}
                           >
-                            <span className={opt.className}>{opt.label}</span>
+                            <span className={opt.className}>{opt.value}</span>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
