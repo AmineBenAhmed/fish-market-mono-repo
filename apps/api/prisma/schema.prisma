@@ -100,6 +100,13 @@ enum DeliveryStatus {
   CANCELLED        // Cancelled
 }
 
+enum FishSize {
+  SMALL
+  MEDIUM
+  LARGE
+  EXTRA_LARGE
+}
+
 enum QualityGrade {
   PREMIUM
   STANDARD
@@ -481,19 +488,31 @@ model SellerListing {
   id        String        @id @default(cuid())
   sellerId  String
   productId String
-  variantId String
+  variantId String?
   date      DateTime      @db.Date
   price     Decimal       @db.Decimal(10, 2)
   quantity  Int           // units available for the day
   status    ListingStatus @default(ACTIVE)
   notes     String?
+  title     String?
+  description String?
+  catchDate   DateTime?
+  availabilityDate DateTime?
+  origin     String?
+  condition  Preservation    @default(FRESH)
+  averageWeight Decimal?     @db.Decimal(8, 2)
+  unit       String?
+  currency   String          @default("TND")
+  coverImageId String?   @unique
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
   // Relations
-  seller     SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  product    FishProduct   @relation(fields: [productId], references: [id])
-  variant    FishVariant   @relation(fields: [variantId], references: [id])
+  seller     SellerProfile   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  product    FishProduct     @relation(fields: [productId], references: [id])
+  variant    FishVariant?    @relation(fields: [variantId], references: [id])
+  coverImage File?           @relation("ListingCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+  images     ListingImage[]
   cartItems  CartItem[]
   orderItems OrderItem[]
 
@@ -502,6 +521,21 @@ model SellerListing {
   @@index([productId, date, status])
   @@index([date, status])
   @@index([status])
+}
+
+/// Images attached to a listing. Up to 4 per listing.
+model ListingImage {
+  id        String   @id @default(cuid())
+  listingId String
+  fileId    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  listing SellerListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  file    File          @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, fileId])
+  @@index([listingId])
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -906,6 +940,8 @@ model File {
   storeLogo       SellerProfile?  @relation("StoreLogo")
   categoryImage   FishCategory?   @relation("CategoryImage")
   productImage    FishProduct?    @relation("ProductImage")
+  listingCoverImage SellerListing? @relation("ListingCoverImage")
+  listingImages     ListingImage[]
 
   @@index([userId])
   @@index([mimeType])

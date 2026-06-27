@@ -30,20 +30,57 @@ export interface SellerProfile {
   updatedAt: string;
 }
 
+export interface ListingImage {
+  id: string;
+  listingId: string;
+  fileId: string;
+  sortOrder: number;
+  file: {
+    id: string;
+    url: string;
+    originalName: string;
+    mimeType: string;
+  };
+}
+
 export interface Listing {
   id: string;
   sellerId: string;
   productId: string;
   variantId?: string;
-  productName: string;
-  variantName: string;
+  productName?: string;
+  variantName?: string;
   price: number;
   quantity: number;
   unit: string;
   status: string;
   date: string;
-  image?: string;
+  title?: string;
+  description?: string;
+  catchDate?: string;
+  availabilityDate?: string;
+  origin?: string;
+  condition?: string;
+  averageWeight?: number;
+  currency?: string;
+  notes?: string;
+  coverImage?: { id: string; url: string } | null;
+  coverImageId?: string | null;
+  images: ListingImage[];
+  product?: {
+    id: string;
+    name: string;
+    slug: string;
+    category: { id: string; name: string; slug: string };
+    image?: string;
+  };
+  variant?: {
+    id: string;
+    name: string;
+    unit: string;
+  } | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface OrderItem {
@@ -105,6 +142,7 @@ export interface Product {
   slug: string;
   description?: string;
   image?: string;
+  category?: { id: string; name: string };
   variants: ProductVariant[];
 }
 
@@ -130,13 +168,15 @@ export interface ApiResponse<T = unknown> {
 
 export interface PaginatedResponse<T> {
   success: boolean;
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
+  data: {
+    data: T[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
   };
 }

@@ -1,11 +1,22 @@
-import { IsDateString, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { Preservation } from '@prisma/client';
+import {
+  IsArray,
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateListingDto {
   @IsString()
   productId!: string;
 
   @IsString()
-  variantId!: string;
+  @IsOptional()
+  variantId?: string;
 
   @IsDateString()
   date!: string;
@@ -15,10 +26,54 @@ export class CreateListingDto {
   price!: number;
 
   @IsNumber()
-  @Min(0)
+  @Min(1)
   quantity!: number;
 
   @IsString()
   @IsOptional()
+  @MaxLength(200)
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(1000)
+  description?: string;
+
+  @IsDateString()
+  @IsOptional()
+  catchDate?: string;
+
+  @IsDateString()
+  @IsOptional()
+  availabilityDate?: string;
+
+  @IsString()
+  @IsOptional()
+  origin?: string;
+
+  @IsEnum(Preservation)
+  @IsOptional()
+  condition?: Preservation;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  averageWeight?: number;
+
+  @IsString()
+  @IsOptional()
+  unit?: string;
+
+  @IsString()
+  @IsOptional()
+  currency?: string;
+
+  @IsString()
+  @IsOptional()
   notes?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  imageIds?: string[];
 }

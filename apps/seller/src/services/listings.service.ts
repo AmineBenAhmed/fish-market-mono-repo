@@ -1,34 +1,88 @@
-import { api, unwrap, unwrapPaginated } from './api';
+import { api, unwrap } from './api';
 import type { Listing } from '../types';
 
+export interface TodayListingsQuery {
+  search?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt' | 'price' | 'quantity';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface CreateListingData {
+  productId: string;
+  variantId?: string;
+  date: string;
+  price: number;
+  quantity: number;
+  title?: string;
+  description?: string;
+  catchDate?: string;
+  availabilityDate?: string;
+  origin?: string;
+  condition?: string;
+  averageWeight?: number;
+  unit?: string;
+  currency?: string;
+  notes?: string;
+  imageIds?: string[];
+}
+
+export interface UpdateListingData {
+  price?: number;
+  quantity?: number;
+  status?: string;
+  title?: string;
+  description?: string;
+  catchDate?: string;
+  availabilityDate?: string;
+  origin?: string;
+  condition?: string;
+  averageWeight?: number;
+  unit?: string;
+  currency?: string;
+  notes?: string;
+  imageIds?: string[];
+}
+
 export const listingsService = {
-  async getToday(): Promise<Listing[]> {
-    const { data } = await api.get('/seller/listings/today');
-    return unwrap<Listing[]>(data);
+  async getToday(params?: TodayListingsQuery) {
+    const { data } = await api.get('/seller/listings/today', { params });
+    return unwrap<{ data: Listing[]; meta: any }>(data);
   },
 
   async getHistory(params?: { page?: number; limit?: number }) {
     const { data } = await api.get('/seller/listings/history', { params });
-    return unwrapPaginated<Listing>(data);
+    return unwrap<{ data: Listing[]; meta: any }>(data);
   },
 
-  async create(listing: {
-    productId: string;
-    variantId?: string;
-    price: number;
-    quantity: number;
-  }) {
+  async getYesterday() {
+    const { data } = await api.get('/seller/listings/yesterday');
+    return unwrap<Listing[]>(data);
+  },
+
+  async duplicateYesterday() {
+    const { data } = await api.post('/seller/listings/duplicate-yesterday');
+    return unwrap<Listing[]>(data);
+  },
+
+  async getOne(id: string) {
+    const { data } = await api.get(`/seller/listings/${id}`);
+    return unwrap<Listing>(data);
+  },
+
+  async create(listing: CreateListingData) {
     const { data } = await api.post('/seller/listings', listing);
     return unwrap<Listing>(data);
   },
 
-  async update(id: string, updates: { price?: number; quantity?: number; status?: string }) {
+  async update(id: string, updates: UpdateListingData) {
     const { data } = await api.patch(`/seller/listings/${id}`, updates);
     return unwrap<Listing>(data);
   },
 
-  async reduceStock(id: string, quantity: number) {
-    const { data } = await api.patch(`/seller/listings/${id}/reduce-stock`, { quantity });
+  async markSoldOut(id: string) {
+    const { data } = await api.patch(`/seller/listings/${id}/sold-out`);
     return unwrap<Listing>(data);
   },
 

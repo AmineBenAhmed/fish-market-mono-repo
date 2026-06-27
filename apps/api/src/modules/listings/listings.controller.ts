@@ -36,9 +36,26 @@ export class ListingsController {
   @Get('today')
   @Roles('SELLER', 'ADMIN')
   @ApiOperation({ summary: "Get today's listings for the current seller" })
-  @ApiResponse({ status: 200, description: "Today's listings" })
-  async findToday(@CurrentUser() user: JwtPayload) {
-    return this.listingsService.findToday(user.sub);
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'sortBy', required: false, type: String })
+  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
+  async findToday(
+    @CurrentUser() user: JwtPayload,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+  ) {
+    return this.listingsService.findToday(user.sub, {
+      search,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      sortBy: sortBy as 'createdAt' | 'price' | 'quantity' | 'productName' | undefined,
+      sortOrder: sortOrder as 'asc' | 'desc' | undefined,
+    });
   }
 
   @Get('history')
@@ -46,7 +63,6 @@ export class ListingsController {
   @ApiOperation({ summary: 'Get listing history for the current seller' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Listing history' })
   async findHistory(
     @CurrentUser() user: JwtPayload,
     @Query('page') page?: string,
@@ -58,9 +74,31 @@ export class ListingsController {
     });
   }
 
+  @Get('yesterday')
+  @Roles('SELLER', 'ADMIN')
+  @ApiOperation({ summary: "Get yesterday's listings for duplication" })
+  async findYesterday(@CurrentUser() user: JwtPayload) {
+    return this.listingsService.findYesterday(user.sub);
+  }
+
+  @Post('duplicate-yesterday')
+  @Roles('SELLER', 'ADMIN')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Duplicate yesterday listings to today' })
+  async duplicateYesterday(@CurrentUser() user: JwtPayload) {
+    return this.listingsService.duplicateYesterday(user.sub);
+  }
+
+  @Get(':id')
+  @Roles('SELLER', 'ADMIN')
+  @ApiOperation({ summary: 'Get listing details' })
+  async findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.listingsService.findOne(user.sub, id);
+  }
+
   @Patch(':id')
   @Roles('SELLER', 'ADMIN')
-  @ApiOperation({ summary: 'Update a listing (price, quantity, status)' })
+  @ApiOperation({ summary: 'Update a listing' })
   @ApiResponse({ status: 200, description: 'Listing updated' })
   async update(
     @CurrentUser() user: JwtPayload,
@@ -79,15 +117,11 @@ export class ListingsController {
     return { message: 'Listing deleted' };
   }
 
-  @Patch(':id/reduce-stock')
+  @Patch(':id/sold-out')
   @Roles('SELLER', 'ADMIN')
-  @ApiOperation({ summary: 'Reduce stock by a quantity (e.g., after manual sale)' })
-  @ApiResponse({ status: 200, description: 'Stock reduced' })
-  async reduceStock(
-    @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
-    @Body('quantity') quantity: number,
-  ) {
-    return this.listingsService.reduceStock(user.sub, id, quantity);
+  @ApiOperation({ summary: 'Mark a listing as sold out' })
+  @ApiResponse({ status: 200, description: 'Listing marked as sold out' })
+  async markSoldOut(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.listingsService.markSoldOut(user.sub, id);
   }
 }

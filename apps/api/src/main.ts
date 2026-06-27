@@ -1,6 +1,8 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import express from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { join } from 'path';
 import compression from 'compression';
 import helmet from 'helmet';
 
@@ -38,6 +40,9 @@ async function bootstrap() {
     }),
   );
   app.use(compression());
+
+  const uploadsDir = join(process.cwd(), 'uploads');
+  app.use('/uploads', express.static(uploadsDir));
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -10,9 +10,9 @@ import { listingsService, ordersService, walletService } from '../../services';
 export function HomePage() {
   const navigate = useNavigate();
 
-  const { data: listings, isLoading: listingsLoading } = useQuery({
-    queryKey: ['seller', 'listings', 'today'],
-    queryFn: listingsService.getToday,
+  const { data: listingsResult, isLoading: listingsLoading } = useQuery({
+    queryKey: ['seller', 'listings', 'today-home'],
+    queryFn: () => listingsService.getToday({ limit: 50 }),
   });
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
@@ -25,13 +25,15 @@ export function HomePage() {
     queryFn: walletService.getWallet,
   });
 
-  const activeListings = listings?.filter((l) => l.status === 'ACTIVE') ?? [];
+  const listings = listingsResult?.data ?? [];
+
+  const activeListings = listings.filter((l) => l.status === 'ACTIVE') ?? [];
   const pendingOrders =
     ordersData?.data?.filter((o) => o.status === 'PENDING' || o.status === 'CONFIRMED') ?? [];
   const readyOrders = ordersData?.data?.filter((o) => o.status === 'READY_FOR_PICKUP') ?? [];
   const orders = ordersData?.data ?? [];
 
-  const totalRemaining = listings?.reduce((sum, l) => sum + l.quantity, 0) ?? 0;
+  const totalRemaining = listings.reduce((sum, l) => sum + l.quantity, 0) ?? 0;
   const todayEarnings = orders
     .filter((o) => o.status === 'DELIVERED' || o.status === 'READY_FOR_PICKUP')
     .reduce((sum, o) => sum + Number(o.total), 0);
@@ -106,14 +108,19 @@ export function HomePage() {
               {listings.slice(0, 4).map((listing) => (
                 <div key={listing.id} className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-sm">{listing.productName}</p>
+                    <p className="font-medium text-sm">
+                      {listing.product?.name ?? listing.title ?? 'Fish'}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {listing.variantName} · {listing.quantity} {listing.unit}
+                      {listing.variant?.name ?? ''} · {listing.quantity}{' '}
+                      {listing.unit || listing.variant?.unit || ''}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">{formatCurrency(Number(listing.price))}</p>
-                    <p className="text-xs text-muted-foreground">/{listing.unit}</p>
+                    <p className="text-xs text-muted-foreground">
+                      /{listing.unit || listing.variant?.unit || ''}
+                    </p>
                   </div>
                 </div>
               ))}

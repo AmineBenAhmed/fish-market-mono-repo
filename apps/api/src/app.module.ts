@@ -21,6 +21,7 @@ import { DeliveryFeeModule } from './modules/delivery-fee/delivery-fee.module';
 import { DeliveryZoneModule } from './modules/delivery-zones/delivery-zone.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { EventsModule } from './modules/events/events.module';
+import { FilesModule } from './modules/files/files.module';
 import { HealthModule } from './modules/health/health.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { ListingsModule } from './modules/listings/listings.module';
@@ -91,6 +92,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
     DeliveryZoneModule,
     BillingModule,
     DeliveriesModule,
+    FilesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

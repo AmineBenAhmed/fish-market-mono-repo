@@ -8,6 +8,18 @@ import { UpdateListingDto } from './dto/update-listing.dto';
 export class ListingsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private listingInclude = {
+    product: {
+      include: { category: true },
+    },
+    variant: true,
+    coverImage: true,
+    images: {
+      include: { file: true },
+      orderBy: { sortOrder: 'asc' as const },
+    },
+  };
+
   async create(userId: string, dto: CreateListingDto) {
     const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
@@ -26,14 +38,6 @@ export class ListingsService {
       throw new BadRequestException('Cannot create listings for past dates');
     }
 
-    const variant = await this.prisma.fishVariant.findUnique({
-      where: { id: dto.variantId },
-    });
-
-    if (!variant) {
-      throw new NotFoundException('Variant not found');
-    }
-
     const product = await this.prisma.fishProduct.findUnique({
       where: { id: dto.productId },
     });
@@ -42,44 +46,61 @@ export class ListingsService {
       throw new NotFoundException('Product not found or inactive');
     }
 
-    const existing = await this.prisma.sellerListing.findUnique({
-      where: {
-        variantId_sellerId_date: {
-          variantId: dto.variantId,
-          sellerId: profile.id,
-          date: listingDate,
-        },
-      },
-    });
-
-    if (existing) {
-      return this.prisma.sellerListing.update({
-        where: { id: existing.id },
-        data: {
-          price: dto.price,
-          quantity: dto.quantity,
-          notes: dto.notes,
-          status: 'ACTIVE',
-        },
-        include: { product: true, variant: true },
+    if (dto.variantId) {
+      const variant = await this.prisma.fishVariant.findUnique({
+        where: { id: dto.variantId },
       });
+      if (!variant) {
+        throw new NotFoundException('Variant not found');
+      }
     }
 
-    return this.prisma.sellerListing.create({
+    const coverImageId = dto.imageIds?.[0] ?? null;
+
+    const listing = await this.prisma.sellerListing.create({
       data: {
         sellerId: profile.id,
         productId: dto.productId,
-        variantId: dto.variantId,
+        variantId: dto.variantId ?? null,
         date: listingDate,
         price: dto.price,
         quantity: dto.quantity,
+        title: dto.title,
+        description: dto.description,
+        catchDate: dto.catchDate ? new Date(dto.catchDate) : null,
+        availabilityDate: dto.availabilityDate ? new Date(dto.availabilityDate) : listingDate,
+        origin: dto.origin,
+        condition: dto.condition ?? 'FRESH',
+        averageWeight: dto.averageWeight ?? null,
+        unit: dto.unit,
+        currency: dto.currency ?? 'TND',
         notes: dto.notes,
+        coverImageId,
+        images: dto.imageIds?.length
+          ? {
+              create: dto.imageIds.map((fileId, i) => ({
+                fileId,
+                sortOrder: i,
+              })),
+            }
+          : undefined,
       },
-      include: { product: true, variant: true },
+      include: this.listingInclude,
     });
+
+    return listing;
   }
 
-  async findToday(userId: string) {
+  async findToday(
+    userId: string,
+    options?: {
+      search?: string;
+      page?: number;
+      limit?: number;
+      sortBy?: 'createdAt' | 'price' | 'quantity';
+      sortOrder?: 'asc' | 'desc';
+    },
+  ) {
     const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -94,18 +115,135 @@ export class ListingsService {
 
     await this.expireOldListings();
 
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      sellerId: profile.id,
+      date: today,
+      status: { not: 'EXPIRED' },
+    };
+
+    if (options?.search) {
+      where.OR = [
+        { title: { contains: options.search, mode: 'insensitive' } },
+        { description: { contains: options.search, mode: 'insensitive' } },
+        { notes: { contains: options.search, mode: 'insensitive' } },
+        { product: { name: { contains: options.search, mode: 'insensitive' } } },
+        { product: { category: { name: { contains: options.search, mode: 'insensitive' } } } },
+        { origin: { contains: options.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const orderBy: any = {};
+    if (options?.sortBy === 'price') {
+      orderBy.price = options.sortOrder ?? 'desc';
+    } else if (options?.sortBy === 'quantity') {
+      orderBy.quantity = options.sortOrder ?? 'desc';
+    } else {
+      orderBy.createdAt = options?.sortOrder ?? 'desc';
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.sellerListing.findMany({
+        where,
+        include: this.listingInclude,
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      this.prisma.sellerListing.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: skip + limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
+  }
+
+  async findYesterday(userId: string) {
+    const profile = await this.prisma.sellerProfile.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Seller profile not found');
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
     return this.prisma.sellerListing.findMany({
       where: {
         sellerId: profile.id,
-        date: today,
-        status: { not: 'EXPIRED' },
+        date: yesterday,
       },
-      include: {
-        product: { include: { category: true } },
-        variant: true,
-      },
+      include: this.listingInclude,
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async duplicateYesterday(userId: string) {
+    const yesterdayListings = await this.findYesterday(userId);
+
+    if (!yesterdayListings.length) {
+      throw new BadRequestException('No listings from yesterday to duplicate');
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const created: any[] = [];
+
+    for (const listing of yesterdayListings) {
+      const existing = await this.prisma.sellerListing.findFirst({
+        where: {
+          sellerId: listing.sellerId,
+          productId: listing.productId,
+          variantId: listing.variantId,
+          date: today,
+        },
+      });
+
+      if (existing) continue;
+
+      const dup = await this.prisma.sellerListing.create({
+        data: {
+          sellerId: listing.sellerId,
+          productId: listing.productId,
+          variantId: listing.variantId,
+          date: today,
+          price: listing.price,
+          quantity: listing.quantity,
+          title: listing.title,
+          description: listing.description,
+          catchDate: null,
+          availabilityDate: today,
+          origin: listing.origin,
+          condition: listing.condition,
+          averageWeight: listing.averageWeight,
+          unit: listing.unit,
+          currency: listing.currency,
+          notes: listing.notes,
+          status: 'ACTIVE',
+        },
+        include: this.listingInclude,
+      });
+
+      created.push(dup);
+    }
+
+    return created;
   }
 
   async findHistory(userId: string, pagination: { page: number; limit: number }) {
@@ -123,10 +261,7 @@ export class ListingsService {
     const [data, total] = await Promise.all([
       this.prisma.sellerListing.findMany({
         where: { sellerId: profile.id },
-        include: {
-          product: { include: { category: true } },
-          variant: true,
-        },
+        include: this.listingInclude,
         orderBy: { date: 'desc' },
         skip,
         take: pagination.limit,
@@ -149,10 +284,27 @@ export class ListingsService {
     };
   }
 
+  async findOne(userId: string, listingId: string) {
+    const listing = await this.findOwned(userId, listingId);
+
+    return this.prisma.sellerListing.findUnique({
+      where: { id: listingId },
+      include: {
+        ...this.listingInclude,
+        product: {
+          include: {
+            category: true,
+            variants: true,
+          },
+        },
+      },
+    });
+  }
+
   async update(userId: string, listingId: string, dto: UpdateListingDto) {
     const listing = await this.findOwned(userId, listingId);
 
-    if (dto.status === 'EXPIRED' || listing.status === 'EXPIRED') {
+    if (listing.status === 'EXPIRED') {
       throw new BadRequestException('Cannot modify expired listing');
     }
 
@@ -160,15 +312,55 @@ export class ListingsService {
       throw new BadRequestException('Quantity cannot be negative');
     }
 
+    const coverImageId = dto.imageIds?.[0] ?? undefined;
+
+    await this.prisma.listingImage.deleteMany({ where: { listingId } });
+
     return this.prisma.sellerListing.update({
       where: { id: listingId },
       data: {
         ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.quantity !== undefined && { quantity: dto.quantity }),
         ...(dto.status !== undefined && { status: dto.status }),
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.catchDate !== undefined && { catchDate: new Date(dto.catchDate) }),
+        ...(dto.availabilityDate !== undefined && {
+          availabilityDate: new Date(dto.availabilityDate),
+        }),
+        ...(dto.origin !== undefined && { origin: dto.origin }),
+        ...(dto.condition !== undefined && { condition: dto.condition }),
+        ...(dto.averageWeight !== undefined && { averageWeight: dto.averageWeight }),
+        ...(dto.unit !== undefined && { unit: dto.unit }),
+        ...(dto.currency !== undefined && { currency: dto.currency }),
         ...(dto.notes !== undefined && { notes: dto.notes }),
+        ...(dto.imageIds !== undefined && { coverImageId: coverImageId ?? null }),
+        ...(dto.imageIds !== undefined && dto.imageIds.length > 0
+          ? {
+              images: {
+                create: dto.imageIds.map((fileId, i) => ({
+                  fileId,
+                  sortOrder: i,
+                })),
+              },
+            }
+          : {}),
       },
-      include: { product: true, variant: true },
+      include: this.listingInclude,
+    });
+  }
+
+  async markSoldOut(userId: string, listingId: string) {
+    const listing = await this.findOwned(userId, listingId);
+
+    if (listing.status === 'EXPIRED') {
+      throw new BadRequestException('Cannot modify expired listing');
+    }
+
+    return this.prisma.sellerListing.update({
+      where: { id: listingId },
+      data: { status: 'OUT_OF_STOCK', quantity: 0 },
+      include: this.listingInclude,
     });
   }
 
@@ -177,34 +369,6 @@ export class ListingsService {
 
     await this.prisma.sellerListing.delete({
       where: { id: listingId },
-    });
-  }
-
-  async reduceStock(userId: string, listingId: string, quantity: number) {
-    const listing = await this.findOwned(userId, listingId);
-
-    if (listing.status === 'EXPIRED') {
-      throw new BadRequestException('Cannot modify expired listing');
-    }
-
-    if (quantity <= 0) {
-      throw new BadRequestException('Quantity must be positive');
-    }
-
-    if (quantity > listing.quantity) {
-      throw new BadRequestException('Insufficient stock');
-    }
-
-    const newQuantity = listing.quantity - quantity;
-    const newStatus = newQuantity === 0 ? 'OUT_OF_STOCK' : listing.status;
-
-    return this.prisma.sellerListing.update({
-      where: { id: listingId },
-      data: {
-        quantity: newQuantity,
-        ...(newStatus === 'OUT_OF_STOCK' && { status: 'OUT_OF_STOCK' }),
-      },
-      include: { product: true, variant: true },
     });
   }
 

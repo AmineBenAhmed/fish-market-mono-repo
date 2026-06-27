@@ -11,4 +11,9 @@ export const catalogService = {
     const { data } = await api.get('/products');
     return unwrap<Product[]>(data);
   },
+
+  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+    const { data } = await api.get('/products', { params: { categoryId } });
+    return unwrap<Product[]>(data);
+  },
 };

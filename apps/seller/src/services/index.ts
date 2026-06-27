@@ -6,3 +6,4 @@ export { ordersService } from './orders.service';
 export { walletService } from './wallet.service';
 export { notificationsService } from './notifications.service';
 export { catalogService } from './catalog.service';
+export { filesService } from './files.service';

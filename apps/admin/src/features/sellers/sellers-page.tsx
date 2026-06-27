@@ -196,10 +196,10 @@ export function SellersPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-12 w-12 p-0"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <PenIcon className="h-4 w-4" />
+                          <PenIcon className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -210,6 +210,7 @@ export function SellersPage() {
                         <DropdownMenuSeparator />
                         {options.map((opt) => (
                           <DropdownMenuItem
+                            className="flex items-center justify-center text-center"
                             key={opt.value}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -217,7 +218,7 @@ export function SellersPage() {
                             }}
                             disabled={statusMutation.isPending}
                           >
-                            <span className={opt.className}>{opt.value}</span>
+                            <span className={`p-1 rounded-sm`}>{opt.value}</span>
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
