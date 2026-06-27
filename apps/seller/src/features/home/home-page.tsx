@@ -12,7 +12,7 @@ export function HomePage() {
 
   const { data: listingsResult, isLoading: listingsLoading } = useQuery({
     queryKey: ['seller', 'listings', 'today-home'],
-    queryFn: () => listingsService.getToday({ limit: 50 }),
+    queryFn: () => listingsService.getToday(),
   });
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
@@ -25,7 +25,7 @@ export function HomePage() {
     queryFn: walletService.getWallet,
   });
 
-  const listings = listingsResult?.data ?? [];
+  const listings = Array.isArray(listingsResult) ? listingsResult : [];
 
   const activeListings = listings.filter((l) => l.status === 'ACTIVE') ?? [];
   const pendingOrders =

@@ -1,18 +1,20 @@
-import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowUpDown,
-  ClipboardCopy,
+  Calendar,
   Fish,
   Loader2,
   MoreHorizontal,
   Plus,
   Search,
   ShoppingBag,
+  Store as StoreIcon,
   Trash2,
   XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+import { Button, Input } from '@fishmarket/ui';
 
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader } from '../../components/ui/card';
@@ -31,23 +33,47 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 import { Skeleton } from '../../components/ui/skeleton';
-import { formatCurrency, formatRelativeTime } from '../../lib/utils';
-import { listingsService } from '../../services';
-import type { CreateListingData, UpdateListingData } from '../../services/listings.service';
-import type { Listing } from '../../types';
-import { ListingFormDialog, type ListingFormSubmitData } from './listing-form-dialog';
+import { formatCurrency, formatDate } from '../../lib/utils';
+import { listingsService, storesService } from '../../services';
+import type { Listing, Store as SellerStore } from '../../types';
+import { ListingFormDialog } from './listing-form-dialog';
+import type { ListingFormSubmitData } from './listing-form-dialog';
 
-const ITEMS_PER_PAGE = 15;
+const FISH_CATEGORIES = [
+  'Sardine',
+  'Sea Bream (Dorade)',
+  'Sea Bass (Loup de Mer)',
+  'Red Mullet (Rouget)',
+  'Mackerel (Maquereau)',
+  'Anchovy',
+  'Grouper',
+  'Tuna',
+  'Bonito',
+  'Horse Mackerel',
+  'Octopus',
+  'Squid',
+  'Shrimp',
+  'Crab',
+  'Cuttlefish',
+  'Mussels',
+  'Clams',
+  'Other',
+];
 
 function statusBadgeClass(status: string) {
   return status === 'ACTIVE'
-    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+    ? 'bg-emerald-100 text-emerald-800'
     : status === 'OUT_OF_STOCK'
-      ? 'bg-gray-100 text-gray-500 border-gray-200'
-      : status === 'EXPIRED'
-        ? 'bg-red-100 text-red-800 border-red-200'
-        : 'bg-gray-100 text-gray-700';
+      ? 'bg-gray-100 text-gray-500'
+      : 'bg-red-100 text-red-800';
 }
 
 function statusLabel(status: string) {
@@ -55,46 +81,72 @@ function statusLabel(status: string) {
 }
 
 export function ListingsPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const [showForm, setShowForm] = useState(false);
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Listing | null>(null);
+
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [storeFilter, setStoreFilter] = useState('all');
+  const [fromDate, setFromDate] = useState(
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  );
+  const [toDate, setToDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<'createdAt' | 'price' | 'quantity'>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const queryClient = useQueryClient();
+  const { data: storesData } = useQuery({
+    queryKey: ['seller', 'stores'],
+    queryFn: () => storesService.getStores(),
+  });
 
-  const queryKey = ['seller', 'listings', 'today', { search, page, sortBy, sortOrder }];
+  const stores = storesData ?? [];
 
   const { data: result, isLoading } = useQuery({
-    queryKey,
+    queryKey: [
+      'seller',
+      'listings',
+      'all',
+      { search, categoryFilter, storeFilter, fromDate, toDate, page },
+    ],
     queryFn: () =>
-      listingsService.getToday({
+      listingsService.getAll({
         search: search || undefined,
+        category: categoryFilter !== 'all' ? categoryFilter : undefined,
+        storeId: storeFilter !== 'all' ? storeFilter : undefined,
+        fromDate: fromDate || undefined,
+        toDate: toDate || undefined,
         page,
-        limit: ITEMS_PER_PAGE,
-        sortBy,
-        sortOrder,
+        limit: 30,
       }),
   });
 
-  const { data: yesterdayListings } = useQuery({
-    queryKey: ['seller', 'listings', 'yesterday'],
-    queryFn: () => listingsService.getYesterday().catch(() => [] as Listing[]),
-    retry: false,
-  });
-
-  const listings = Array.isArray(result) ? result : (result?.data ?? []);
-  const meta = Array.isArray(result) ? undefined : result?.meta;
+  const listings = result?.data ?? [];
+  const meta = result?.meta;
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['seller', 'listings'] });
   }
 
   const createMutation = useMutation({
-    mutationFn: (data: ListingFormSubmitData) =>
-      listingsService.create({ ...data, date: new Date().toISOString() } as CreateListingData),
+    mutationFn: (data: ListingFormSubmitData) => {
+      return listingsService.create({
+        productId: 'manual',
+        date: new Date().toISOString(),
+        price: data.price,
+        quantity: data.quantity,
+        storeId: data.storeId,
+        title: data.category,
+        description: data.description,
+        origin: data.origin,
+        condition: data.condition,
+        unit: 'Kg',
+        currency: 'TND',
+        cloudinaryUrls: data.cloudinaryUrls,
+      });
+    },
     onSuccess: () => {
       invalidate();
       setShowForm(false);
@@ -104,7 +156,15 @@ export function ListingsPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ListingFormSubmitData }) =>
-      listingsService.update(id, data as UpdateListingData),
+      listingsService.update(id, {
+        title: data.category,
+        description: data.description,
+        price: data.price,
+        quantity: data.quantity,
+        storeId: data.storeId,
+        origin: data.origin,
+        condition: data.condition,
+      }),
     onSuccess: () => {
       invalidate();
       setShowForm(false);
@@ -122,14 +182,7 @@ export function ListingsPage() {
     onSuccess: () => invalidate(),
   });
 
-  const duplicateMutation = useMutation({
-    mutationFn: () => listingsService.duplicateYesterday(),
-    onSuccess: () => {
-      invalidate();
-    },
-  });
-
-  function handleSubmit(data: ListingFormSubmitData) {
+  function handleFormSubmit(data: ListingFormSubmitData) {
     if (editingListing) {
       updateMutation.mutate({ id: editingListing.id, data });
     } else {
@@ -137,34 +190,16 @@ export function ListingsPage() {
     }
   }
 
-  function toggleSort(field: 'createdAt' | 'price' | 'quantity') {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
+  function resetFilters() {
+    setSearch('');
+    setCategoryFilter('all');
+    setStoreFilter('all');
+    setFromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    setToDate(new Date().toISOString().split('T')[0]);
+    setPage(1);
   }
 
-  function SortHeader({
-    field,
-    label,
-  }: {
-    field: 'createdAt' | 'price' | 'quantity';
-    label: string;
-  }) {
-    return (
-      <button
-        className="flex items-center gap-1 font-medium text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
-        onClick={() => toggleSort(field)}
-      >
-        {label}
-        <ArrowUpDown className="h-3 w-3" />
-      </button>
-    );
-  }
-
-  if (isLoading) {
+  if (isLoading && listings.length === 0) {
     return (
       <div className="space-y-4 pt-2">
         <Skeleton className="h-10 w-48" />
@@ -178,73 +213,136 @@ export function ListingsPage() {
     <div className="space-y-4 pt-2">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl font-bold">Today's Listings</h2>
-          <p className="text-sm text-muted-foreground">Manage your daily fish inventory</p>
+          <h2 className="text-xl font-bold">Listings</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage your fish listings from the last 7 days
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {yesterdayListings && yesterdayListings.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => duplicateMutation.mutate()}
-              disabled={duplicateMutation.isPending}
-            >
-              <ClipboardCopy className="h-4 w-4 mr-1" />
-              Copy Yesterday
-            </Button>
-          )}
-          <Button
-            onClick={() => {
-              setEditingListing(null);
-              setShowForm(true);
-            }}
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Listing
-          </Button>
-        </div>
+        <Button
+          onClick={() => {
+            setEditingListing(null);
+            setShowForm(true);
+          }}
+          size="sm"
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Add Listing
+        </Button>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search listings..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="pl-10 h-9 text-sm"
-              />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search listings..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  className="pl-10 h-9 text-sm"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => {
+                      setFromDate(e.target.value);
+                      setPage(1);
+                    }}
+                    className="h-9 w-36 text-sm"
+                  />
+                  <span className="text-muted-foreground text-sm">—</span>
+                  <Input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => {
+                      setToDate(e.target.value);
+                      setPage(1);
+                    }}
+                    className="h-9 w-36 text-sm"
+                  />
+                </div>
+                <Select
+                  value={categoryFilter}
+                  onValueChange={(v) => {
+                    setCategoryFilter(v);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-44 text-sm">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {FISH_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={storeFilter}
+                  onValueChange={(v) => {
+                    setStoreFilter(v);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-44 text-sm">
+                    <SelectValue placeholder="Store" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Stores</SelectItem>
+                    {stores.map((s: SellerStore) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(search || categoryFilter !== 'all' || storeFilter !== 'all') && (
+                  <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs">
+                    Clear filters
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {!listings || listings.length === 0 ? (
+          {listings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
                 <ShoppingBag className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground font-medium">No listings for today</p>
+              <p className="text-muted-foreground font-medium">No listings found</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Add your first fish listing to start selling
+                {search || categoryFilter !== 'all' || storeFilter !== 'all'
+                  ? 'Try adjusting your filters'
+                  : 'Add your first fish listing'}
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4"
-                onClick={() => {
-                  setEditingListing(null);
-                  setShowForm(true);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add Listing
-              </Button>
+              {search || categoryFilter !== 'all' || storeFilter !== 'all' ? (
+                <Button variant="outline" size="sm" className="mt-4" onClick={resetFilters}>
+                  Clear filters
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setShowForm(true)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Listing
+                </Button>
+              )}
             </div>
           ) : (
             <>
@@ -252,29 +350,20 @@ export function ListingsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground w-12">
-                        #
-                      </th>
                       <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground">
-                        Fish
+                        Fish Category
+                      </th>
+                      <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
+                        Store
+                      </th>
+                      <th className="text-right px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground">
+                        Price
                       </th>
                       <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground hidden md:table-cell">
-                        Category
-                      </th>
-                      <th className="text-right px-4 py-3">
-                        <SortHeader field="price" label="Price" />
-                      </th>
-                      <th className="text-right px-4 py-3 hidden sm:table-cell">
-                        <SortHeader field="quantity" label="Qty" />
-                      </th>
-                      <th className="text-left px-4 py-3 hidden sm:table-cell font-medium text-xs uppercase tracking-wider text-muted-foreground">
-                        Unit
+                        Created
                       </th>
                       <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground">
                         Status
-                      </th>
-                      <th className="text-left px-4 py-3 hidden lg:table-cell">
-                        <SortHeader field="createdAt" label="Created" />
                       </th>
                       <th className="text-right px-4 py-3 w-14">
                         <span className="sr-only">Actions</span>
@@ -282,27 +371,25 @@ export function ListingsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {listings.map((listing, i) => (
+                    {listings.map((listing: Listing) => (
                       <tr
                         key={listing.id}
-                        className="border-b last:border-b-0 hover:bg-muted/50 transition-colors"
+                        className="border-b last:border-b-0 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/listings/${listing.id}`)}
                       >
-                        <td className="px-4 py-3 text-sm text-muted-foreground w-12">
-                          {(page - 1) * ITEMS_PER_PAGE + i + 1}
-                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                               {listing.coverImage?.url ? (
                                 <img
                                   src={listing.coverImage.url}
-                                  alt={listing.product?.name ?? ''}
+                                  alt=""
                                   className="h-full w-full object-cover"
                                 />
                               ) : listing.images?.[0]?.file?.url ? (
                                 <img
                                   src={listing.images[0].file.url}
-                                  alt={listing.product?.name ?? ''}
+                                  alt=""
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
@@ -313,41 +400,31 @@ export function ListingsPage() {
                               <p className="text-sm font-medium truncate">
                                 {listing.title || listing.product?.name || 'Fish'}
                               </p>
-                              {listing.description && (
-                                <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                  {listing.description}
-                                </p>
-                              )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 hidden md:table-cell">
-                          <span className="text-sm text-muted-foreground">
-                            {listing.product?.category?.name ?? '—'}
-                          </span>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <div className="flex items-center gap-1.5">
+                            <StoreIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                              {listing.store?.name || '—'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="text-sm font-semibold">
                             {formatCurrency(Number(listing.price))}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-right hidden sm:table-cell">
-                          <span
-                            className={`text-sm font-medium ${Number(listing.quantity) <= 0 ? 'text-destructive' : ''}`}
-                          >
-                            {listing.quantity}
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <span className="text-sm text-muted-foreground whitespace-nowrap">
+                            {formatDate(listing.createdAt)}
                           </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">
-                          {listing.unit || listing.variant?.unit || '—'}
                         </td>
                         <td className="px-4 py-3">
                           <Badge className={statusBadgeClass(listing.status)}>
                             {statusLabel(listing.status)}
                           </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground hidden lg:table-cell whitespace-nowrap">
-                          {formatRelativeTime(listing.createdAt)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <DropdownMenu>
@@ -363,17 +440,21 @@ export function ListingsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
                               <DropdownMenuItem
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setEditingListing(listing);
                                   setShowForm(true);
                                 }}
                               >
                                 <Fish className="mr-2 h-4 w-4" />
-                                Edit Listing
+                                Edit
                               </DropdownMenuItem>
                               {listing.status === 'ACTIVE' && (
                                 <DropdownMenuItem
-                                  onClick={() => soldOutMutation.mutate(listing.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    soldOutMutation.mutate(listing.id);
+                                  }}
                                   disabled={soldOutMutation.isPending}
                                 >
                                   <XCircle className="mr-2 h-4 w-4" />
@@ -383,7 +464,10 @@ export function ListingsPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onClick={() => setDeleteConfirm(listing)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirm(listing);
+                                }}
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
@@ -453,7 +537,7 @@ export function ListingsPage() {
           setShowForm(open);
           if (!open) setEditingListing(null);
         }}
-        onSubmit={handleSubmit}
+        onSubmit={handleFormSubmit}
         isPending={createMutation.isPending || updateMutation.isPending}
         editListing={editingListing}
       />
@@ -467,7 +551,7 @@ export function ListingsPage() {
               <strong>
                 {deleteConfirm?.title || deleteConfirm?.product?.name || 'this listing'}
               </strong>
-              ? This action cannot be undone.
+              ?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -484,7 +568,7 @@ export function ListingsPage() {
               }}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
               Delete
             </Button>
           </DialogFooter>

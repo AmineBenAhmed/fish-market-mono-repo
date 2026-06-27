@@ -32,7 +32,7 @@ export class UpdateListingDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(1000)
+  @MaxLength(2000)
   description?: string;
 
   @IsDateString()
@@ -68,8 +68,17 @@ export class UpdateListingDto {
   @IsOptional()
   notes?: string;
 
+  @IsString()
+  @IsOptional()
+  storeId?: string;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   imageIds?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  cloudinaryUrls?: string[];
 }

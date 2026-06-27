@@ -1,6 +1,14 @@
-import { Button, Input } from '@fishmarket/ui';
 import { useEffect, useState } from 'react';
 
+import { Button, Input } from '@fishmarket/ui';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -9,16 +17,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/ui/select';
-import { catalogService } from '../../services';
-import type { Category, Product } from '../../types';
+import { cloudinaryService, storesService } from '../../services';
+import type { Store } from '../../types';
 import { ImageUpload } from './image-upload';
+
+const FISH_CATEGORIES = [
+  'Sardine',
+  'Sea Bream (Dorade)',
+  'Sea Bass (Loup de Mer)',
+  'Red Mullet (Rouget)',
+  'Mackerel (Maquereau)',
+  'Anchovy',
+  'Grouper',
+  'Tuna',
+  'Bonito',
+  'Horse Mackerel',
+  'Octopus',
+  'Squid',
+  'Shrimp',
+  'Crab',
+  'Cuttlefish',
+  'Mussels',
+  'Clams',
+  'Other',
+];
 
 const CONDITIONS = ['FRESH', 'FROZEN', 'CHILLED'] as const;
 const ORIGINS = [
@@ -36,7 +58,6 @@ const ORIGINS = [
   'Chebba',
   'Kerkennah',
 ];
-const UNITS = ['Kg', 'Box', 'Crate', 'Piece', 'Dozens'];
 
 interface UploadedImage {
   id: string;
@@ -45,40 +66,19 @@ interface UploadedImage {
   previewUrl: string;
 }
 
-interface ListingFormData {
-  categoryId: string;
-  productId: string;
-  title: string;
+export interface ListingFormSubmitData {
+  category: string;
   description: string;
-  price: string;
-  currency: string;
-  unit: string;
-  quantity: string;
-  averageWeight: string;
-  size: string;
-  condition: string;
-  catchDate: string;
-  availabilityDate: string;
-  origin: string;
-  notes: string;
-}
-
-export type ListingFormSubmitData = {
-  productId: string;
   price: number;
   quantity: number;
-  unit?: string;
-  title?: string;
-  description?: string;
-  catchDate?: string;
-  availabilityDate?: string;
-  origin?: string;
-  condition?: string;
-  averageWeight?: number;
-  currency?: string;
-  notes?: string;
+  condition: string;
+  origin: string;
+  storeId: string;
   imageIds?: string[];
-};
+  cloudinaryUrls?: string[];
+  unit?: string;
+  currency?: string;
+}
 
 interface ListingFormDialogProps {
   open: boolean;
@@ -95,73 +95,38 @@ export function ListingFormDialog({
   isPending,
   editListing,
 }: ListingFormDialogProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
-  const [form, setForm] = useState<ListingFormData>({
-    categoryId: '',
-    productId: '',
-    title: '',
-    description: '',
-    price: '',
-    currency: 'TND',
-    unit: 'Kg',
-    quantity: '',
-    averageWeight: '',
-    size: '',
-    condition: 'FRESH',
-    catchDate: '',
-    availabilityDate: new Date().toISOString().split('T')[0],
-    origin: '',
-    notes: '',
-  });
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [condition, setCondition] = useState('FRESH');
+  const [origin, setOrigin] = useState('');
+  const [storeId, setStoreId] = useState('');
 
-  const [errors, setErrors] = useState<Partial<Record<keyof ListingFormData, string>>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    catalogService
-      .getCategories()
-      .then(setCategories)
-      .catch(() => {});
-    catalogService
-      .getProducts()
-      .then(setProducts)
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (form.categoryId) {
-      setFilteredProducts(products.filter((p) => p.category?.id === form.categoryId));
-      setForm((prev) => ({ ...prev, productId: '' }));
-    } else {
-      setFilteredProducts(products);
+    if (open) {
+      storesService
+        .getStores()
+        .then(setStores)
+        .catch(() => {});
     }
-  }, [form.categoryId, products]);
+  }, [open]);
 
   useEffect(() => {
-    if (editListing) {
-      const product = editListing.product;
-      setForm({
-        categoryId: product?.category?.id ?? '',
-        productId: editListing.productId ?? '',
-        title: editListing.title ?? '',
-        description: editListing.description ?? '',
-        price: String(editListing.price ?? ''),
-        currency: editListing.currency ?? 'TND',
-        unit: editListing.unit ?? 'Kg',
-        quantity: String(editListing.quantity ?? ''),
-        averageWeight: editListing.averageWeight ? String(editListing.averageWeight) : '',
-        size: '',
-        condition: editListing.condition ?? 'FRESH',
-        catchDate: editListing.catchDate ? editListing.catchDate.split('T')[0] : '',
-        availabilityDate: editListing.availabilityDate
-          ? editListing.availabilityDate.split('T')[0]
-          : new Date().toISOString().split('T')[0],
-        origin: editListing.origin ?? '',
-        notes: editListing.notes ?? '',
-      });
+    if (editListing && open) {
+      setCategory(editListing.product?.category?.name ?? editListing.title ?? '');
+      setDescription(editListing.description ?? '');
+      setPrice(String(editListing.price ?? ''));
+      setQuantity(String(editListing.quantity ?? ''));
+      setCondition(editListing.condition ?? 'FRESH');
+      setOrigin(editListing.origin ?? '');
+      setStoreId(editListing.storeId ?? '');
 
       if (editListing.images?.length) {
         setImages(
@@ -173,259 +138,180 @@ export function ListingFormDialog({
           })),
         );
       }
-    } else {
+    } else if (open) {
       resetForm();
     }
   }, [editListing, open]);
 
   function resetForm() {
-    setForm({
-      categoryId: '',
-      productId: '',
-      title: '',
-      description: '',
-      price: '',
-      currency: 'TND',
-      unit: 'Kg',
-      quantity: '',
-      averageWeight: '',
-      size: '',
-      condition: 'FRESH',
-      catchDate: '',
-      availabilityDate: new Date().toISOString().split('T')[0],
-      origin: '',
-      notes: '',
-    });
+    setCategory('');
+    setDescription('');
+    setPrice('');
+    setQuantity('');
+    setCondition('FRESH');
+    setOrigin('');
+    setStoreId('');
     setImages([]);
     setErrors({});
   }
 
   function validate(): boolean {
-    const errs: Partial<Record<keyof ListingFormData, string>> = {};
-
-    if (!form.productId) errs.productId = 'Please select a fish product';
-    if (!form.price || Number(form.price) <= 0) errs.price = 'Price must be greater than 0';
-    if (!form.quantity || Number(form.quantity) <= 0)
-      errs.quantity = 'Quantity must be greater than 0';
-    if (images.length > 4) errs.notes = 'Maximum 4 photos allowed';
-
+    const errs: Record<string, string> = {};
+    if (!category) errs.category = 'Please select a fish category';
+    if (!price || Number(price) <= 0) errs.price = 'Price must be greater than 0';
+    if (!quantity || Number(quantity) <= 0) errs.quantity = 'Quantity must be greater than 0';
+    if (!storeId) errs.storeId = 'Please select a store';
+    if (images.length > 4) errs.images = 'Maximum 4 photos allowed';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
 
+    let cloudinaryUrls: string[] | undefined;
+
+    if (images.length > 0) {
+      setUploadingImages(true);
+      try {
+        const results = await Promise.all(images.map((img) => cloudinaryService.upload(img.file)));
+        cloudinaryUrls = results.map((r) => r.url);
+      } catch {
+        setErrors({ images: 'Failed to upload images' });
+        setUploadingImages(false);
+        return;
+      }
+      setUploadingImages(false);
+    }
+
     onSubmit({
-      productId: form.productId,
-      price: Number(form.price),
-      quantity: Number(form.quantity),
-      unit: form.unit,
-      title: form.title || undefined,
-      description: form.description || undefined,
-      catchDate: form.catchDate || undefined,
-      availabilityDate: form.availabilityDate || undefined,
-      origin: form.origin || undefined,
-      condition: form.condition || undefined,
-      averageWeight: form.averageWeight ? Number(form.averageWeight) : undefined,
-      currency: form.currency || undefined,
-      notes: form.notes || undefined,
-      imageIds: images.map((img) => img.id),
+      category,
+      description,
+      price: Number(price),
+      quantity: Number(quantity),
+      condition,
+      origin,
+      storeId,
+      cloudinaryUrls,
     });
   }
 
+  const isPendingOrUploading = isPending || uploadingImages;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[70vw] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editListing ? 'Edit Listing' : 'New Listing'}</DialogTitle>
           <DialogDescription>
-            {editListing
-              ? 'Update your daily fish listing details'
-              : "Add today's fish inventory for your buyers"}
+            {editListing ? 'Update your fish listing' : 'Add your fish inventory for buyers'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Fish Category
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <Select
-                  value={form.categoryId}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, categoryId: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(categories ?? []).map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                Fish Information
+              </h4>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Fish Type <span className="text-destructive">*</span>
+                  Fish Category <span className="text-destructive">*</span>
                 </label>
-                <Select
-                  value={form.productId}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, productId: v }))}
-                >
+                <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select fish" />
+                    <SelectValue placeholder="Select fish category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(filteredProducts ?? []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
+                    {FISH_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.productId && <p className="text-xs text-destructive">{errors.productId}</p>}
+                {errors.category && <p className="text-xs text-destructive">{errors.category}</p>}
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Listing Title</label>
-                <Input
-                  placeholder="e.g. Fresh Sea Bream"
-                  value={form.title}
-                  onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
-                <Input
-                  placeholder="e.g. Wild caught, premium quality"
-                  value={form.description}
-                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                <textarea
+                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  placeholder="Describe your fish, quality, catch details..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Pricing & Quantity
-            </h4>
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">
                   Selling Price <span className="text-destructive">*</span>
                 </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={form.price}
-                  onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-24">
+                    <Select value="TND" defaultValue="TND">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TND">TND</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 {errors.price && <p className="text-xs text-destructive">{errors.price}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Currency</label>
-                <Select
-                  value={form.currency}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, currency: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="TND">TND</SelectItem>
-                    <SelectItem value="EUR">EUR</SelectItem>
-                    <SelectItem value="USD">USD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Price Unit</label>
-                <Select
-                  value={form.unit}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, unit: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UNITS.map((u) => (
-                      <SelectItem key={u} value={u}>
-                        per {u}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">
                   Available Quantity <span className="text-destructive">*</span>
                 </label>
-                <Input
-                  type="number"
-                  min="1"
-                  placeholder="1"
-                  value={form.quantity}
-                  onChange={(e) => setForm((prev) => ({ ...prev, quantity: e.target.value }))}
-                />
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                    />
+                  </div>
+                  <div className="w-28">
+                    <Select defaultValue="Kg">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Kg">Kg</SelectItem>
+                        <SelectItem value="Piece">Piece</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 {errors.quantity && <p className="text-xs text-destructive">{errors.quantity}</p>}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Quantity Unit</label>
-                <Select
-                  value={form.unit}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, unit: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {UNITS.map((u) => (
-                      <SelectItem key={u} value={u}>
-                        {u}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Product Details
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Average Weight</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="e.g. 1.5"
-                  value={form.averageWeight}
-                  onChange={(e) => setForm((prev) => ({ ...prev, averageWeight: e.target.value }))}
-                />
-              </div>
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                Details & Origin
+              </h4>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Condition</label>
-                <Select
-                  value={form.condition}
-                  onValueChange={(v) => setForm((prev) => ({ ...prev, condition: v }))}
-                >
+                <Select value={condition} onValueChange={setCondition}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -438,68 +324,48 @@ export function ListingFormDialog({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Freshness & Origin
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Catch Date</label>
-                <Input
-                  type="date"
-                  value={form.catchDate}
-                  onChange={(e) => setForm((prev) => ({ ...prev, catchDate: e.target.value }))}
-                />
+                <label className="text-sm font-medium">Fishing Area / Origin</label>
+                <Select value={origin} onValueChange={setOrigin}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select origin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ORIGINS.map((o) => (
+                      <SelectItem key={o} value={o}>
+                        {o}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium">Availability Date</label>
-                <Input
-                  type="date"
-                  value={form.availabilityDate}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, availabilityDate: e.target.value }))
-                  }
-                />
+                <label className="text-sm font-medium">
+                  Store <span className="text-destructive">*</span>
+                </label>
+                <Select value={storeId} onValueChange={setStoreId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select store" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.storeId && <p className="text-xs text-destructive">{errors.storeId}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Photos (max 4)</label>
+                <ImageUpload images={images} onChange={setImages} maxImages={4} />
+                {errors.images && <p className="text-xs text-destructive">{errors.images}</p>}
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Fishing Area / Origin</label>
-              <Select
-                value={form.origin}
-                onValueChange={(v) => setForm((prev) => ({ ...prev, origin: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select origin" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ORIGINS.map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {o}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              Photos
-            </h4>
-            <ImageUpload images={images} onChange={setImages} maxImages={4} />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Notes for Buyers</label>
-            <textarea
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              placeholder="e.g. Fresh catch from this morning"
-              value={form.notes}
-              onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-            />
           </div>
 
           <DialogFooter>
@@ -507,12 +373,18 @@ export function ListingFormDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              disabled={isPending}
+              disabled={isPendingOrUploading}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? 'Saving...' : editListing ? 'Update Listing' : 'Add Listing'}
+            <Button type="submit" disabled={isPendingOrUploading}>
+              {isPendingOrUploading
+                ? uploadingImages
+                  ? 'Uploading images...'
+                  : 'Saving...'
+                : editListing
+                  ? 'Update Listing'
+                  : 'Add Listing'}
             </Button>
           </DialogFooter>
         </form>

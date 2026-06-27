@@ -27,51 +27,55 @@ export class ListingsController {
   @Post()
   @Roles('SELLER', 'ADMIN')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a daily listing as a seller' })
+  @ApiOperation({ summary: 'Create a daily listing' })
   @ApiResponse({ status: 201, description: 'Listing created' })
   async create(@CurrentUser() user: JwtPayload, @Body() dto: CreateListingDto) {
     return this.listingsService.create(user.sub, dto);
   }
 
-  @Get('today')
+  @Get()
   @Roles('SELLER', 'ADMIN')
-  @ApiOperation({ summary: "Get today's listings for the current seller" })
+  @ApiOperation({ summary: 'Get listings with filters (date range, category, store, search)' })
+  @ApiQuery({ name: 'fromDate', required: false, type: String })
+  @ApiQuery({ name: 'toDate', required: false, type: String })
+  @ApiQuery({ name: 'category', required: false, type: String })
+  @ApiQuery({ name: 'storeId', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'sortBy', required: false, type: String })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
-  async findToday(
+  async findAll(
     @CurrentUser() user: JwtPayload,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+    @Query('category') category?: string,
+    @Query('storeId') storeId?: string,
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: string,
   ) {
-    return this.listingsService.findToday(user.sub, {
+    return this.listingsService.findAll(user.sub, {
+      fromDate,
+      toDate,
+      category,
+      storeId,
       search,
       page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
-      sortBy: sortBy as 'createdAt' | 'price' | 'quantity' | 'productName' | undefined,
+      limit: limit ? parseInt(limit, 10) : 30,
+      sortBy: sortBy as 'createdAt' | 'price' | 'quantity' | undefined,
       sortOrder: sortOrder as 'asc' | 'desc' | undefined,
     });
   }
 
-  @Get('history')
+  @Get('today')
   @Roles('SELLER', 'ADMIN')
-  @ApiOperation({ summary: 'Get listing history for the current seller' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  async findHistory(
-    @CurrentUser() user: JwtPayload,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.listingsService.findHistory(user.sub, {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 20,
-    });
+  @ApiOperation({ summary: "Get today's listings" })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  async findToday(@CurrentUser() user: JwtPayload, @Query('search') search?: string) {
+    return this.listingsService.findToday(user.sub, { search });
   }
 
   @Get('yesterday')
@@ -91,7 +95,7 @@ export class ListingsController {
 
   @Get(':id')
   @Roles('SELLER', 'ADMIN')
-  @ApiOperation({ summary: 'Get listing details' })
+  @ApiOperation({ summary: 'Get listing details with bought quantity' })
   async findOne(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.listingsService.findOne(user.sub, id);
   }
@@ -99,7 +103,6 @@ export class ListingsController {
   @Patch(':id')
   @Roles('SELLER', 'ADMIN')
   @ApiOperation({ summary: 'Update a listing' })
-  @ApiResponse({ status: 200, description: 'Listing updated' })
   async update(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
@@ -111,7 +114,6 @@ export class ListingsController {
   @Delete(':id')
   @Roles('SELLER', 'ADMIN')
   @ApiOperation({ summary: 'Delete a listing' })
-  @ApiResponse({ status: 200, description: 'Listing deleted' })
   async remove(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     await this.listingsService.remove(user.sub, id);
     return { message: 'Listing deleted' };
@@ -120,7 +122,6 @@ export class ListingsController {
   @Patch(':id/sold-out')
   @Roles('SELLER', 'ADMIN')
   @ApiOperation({ summary: 'Mark a listing as sold out' })
-  @ApiResponse({ status: 200, description: 'Listing marked as sold out' })
   async markSoldOut(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.listingsService.markSoldOut(user.sub, id);
   }

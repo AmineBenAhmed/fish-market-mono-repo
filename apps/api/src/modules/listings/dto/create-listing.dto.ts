@@ -18,6 +18,10 @@ export class CreateListingDto {
   @IsOptional()
   variantId?: string;
 
+  @IsString()
+  @IsOptional()
+  storeId?: string;
+
   @IsDateString()
   date!: string;
 
@@ -36,7 +40,7 @@ export class CreateListingDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(1000)
+  @MaxLength(2000)
   description?: string;
 
   @IsDateString()
@@ -76,4 +80,9 @@ export class CreateListingDto {
   @IsString({ each: true })
   @IsOptional()
   imageIds?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  cloudinaryUrls?: string[];
 }

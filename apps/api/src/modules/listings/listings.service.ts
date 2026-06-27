@@ -13,10 +13,17 @@ export class ListingsService {
       include: { category: true },
     },
     variant: true,
+    store: true,
     coverImage: true,
     images: {
       include: { file: true },
       orderBy: { sortOrder: 'asc' as const },
+    },
+    orderItems: {
+      select: {
+        quantity: true,
+        totalPrice: true,
+      },
     },
   };
 
@@ -28,6 +35,15 @@ export class ListingsService {
 
     if (!profile || !profile.isActive) {
       throw new BadRequestException('Seller profile is not active');
+    }
+
+    if (dto.storeId) {
+      const store = await this.prisma.store.findFirst({
+        where: { id: dto.storeId, sellerId: profile.id },
+      });
+      if (!store) {
+        throw new BadRequestException('Store not found or does not belong to you');
+      }
     }
 
     const listingDate = new Date(dto.date);
@@ -46,20 +62,12 @@ export class ListingsService {
       throw new NotFoundException('Product not found or inactive');
     }
 
-    if (dto.variantId) {
-      const variant = await this.prisma.fishVariant.findUnique({
-        where: { id: dto.variantId },
-      });
-      if (!variant) {
-        throw new NotFoundException('Variant not found');
-      }
-    }
-
     const coverImageId = dto.imageIds?.[0] ?? null;
 
     const listing = await this.prisma.sellerListing.create({
       data: {
         sellerId: profile.id,
+        storeId: dto.storeId ?? null,
         productId: dto.productId,
         variantId: dto.variantId ?? null,
         date: listingDate,
@@ -91,16 +99,93 @@ export class ListingsService {
     return listing;
   }
 
-  async findToday(
+  async findAll(
     userId: string,
-    options?: {
+    options: {
+      fromDate?: string;
+      toDate?: string;
+      category?: string;
+      storeId?: string;
       search?: string;
-      page?: number;
-      limit?: number;
+      page: number;
+      limit: number;
       sortBy?: 'createdAt' | 'price' | 'quantity';
       sortOrder?: 'asc' | 'desc';
     },
   ) {
+    const profile = await this.prisma.sellerProfile.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Seller profile not found');
+    }
+
+    const skip = (options.page - 1) * options.limit;
+
+    const where: any = {
+      sellerId: profile.id,
+    };
+
+    if (options.fromDate || options.toDate) {
+      where.date = {};
+      if (options.fromDate) where.date.gte = new Date(options.fromDate);
+      if (options.toDate) where.date.lte = new Date(options.toDate);
+    }
+
+    if (options.category) {
+      where.product = { category: { name: { contains: options.category, mode: 'insensitive' } } };
+    }
+
+    if (options.storeId) {
+      where.storeId = options.storeId;
+    }
+
+    if (options.search) {
+      where.OR = [
+        { title: { contains: options.search, mode: 'insensitive' } },
+        { description: { contains: options.search, mode: 'insensitive' } },
+        { notes: { contains: options.search, mode: 'insensitive' } },
+        { origin: { contains: options.search, mode: 'insensitive' } },
+        { product: { name: { contains: options.search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const orderBy: any = {};
+    if (options.sortBy === 'price') {
+      orderBy.price = options.sortOrder ?? 'desc';
+    } else if (options.sortBy === 'quantity') {
+      orderBy.quantity = options.sortOrder ?? 'desc';
+    } else {
+      orderBy.createdAt = options.sortOrder ?? 'desc';
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.sellerListing.findMany({
+        where,
+        include: this.listingInclude,
+        orderBy,
+        skip,
+        take: options.limit,
+      }),
+      this.prisma.sellerListing.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(total / options.limit),
+        hasNextPage: skip + options.limit < total,
+        hasPreviousPage: options.page > 1,
+      },
+    };
+  }
+
+  async findToday(userId: string, options?: { search?: string }) {
     const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -115,10 +200,6 @@ export class ListingsService {
 
     await this.expireOldListings();
 
-    const page = options?.page ?? 1;
-    const limit = options?.limit ?? 20;
-    const skip = (page - 1) * limit;
-
     const where: any = {
       sellerId: profile.id,
       date: today,
@@ -129,44 +210,15 @@ export class ListingsService {
       where.OR = [
         { title: { contains: options.search, mode: 'insensitive' } },
         { description: { contains: options.search, mode: 'insensitive' } },
-        { notes: { contains: options.search, mode: 'insensitive' } },
         { product: { name: { contains: options.search, mode: 'insensitive' } } },
-        { product: { category: { name: { contains: options.search, mode: 'insensitive' } } } },
-        { origin: { contains: options.search, mode: 'insensitive' } },
       ];
     }
 
-    const orderBy: any = {};
-    if (options?.sortBy === 'price') {
-      orderBy.price = options.sortOrder ?? 'desc';
-    } else if (options?.sortBy === 'quantity') {
-      orderBy.quantity = options.sortOrder ?? 'desc';
-    } else {
-      orderBy.createdAt = options?.sortOrder ?? 'desc';
-    }
-
-    const [data, total] = await Promise.all([
-      this.prisma.sellerListing.findMany({
-        where,
-        include: this.listingInclude,
-        orderBy,
-        skip,
-        take: limit,
-      }),
-      this.prisma.sellerListing.count({ where }),
-    ]);
-
-    return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: skip + limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return this.prisma.sellerListing.findMany({
+      where,
+      include: this.listingInclude,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findYesterday(userId: string) {
@@ -184,10 +236,7 @@ export class ListingsService {
     yesterday.setHours(0, 0, 0, 0);
 
     return this.prisma.sellerListing.findMany({
-      where: {
-        sellerId: profile.id,
-        date: yesterday,
-      },
+      where: { sellerId: profile.id, date: yesterday },
       include: this.listingInclude,
       orderBy: { createdAt: 'desc' },
     });
@@ -210,7 +259,6 @@ export class ListingsService {
         where: {
           sellerId: listing.sellerId,
           productId: listing.productId,
-          variantId: listing.variantId,
           date: today,
         },
       });
@@ -220,15 +268,13 @@ export class ListingsService {
       const dup = await this.prisma.sellerListing.create({
         data: {
           sellerId: listing.sellerId,
+          storeId: listing.storeId,
           productId: listing.productId,
-          variantId: listing.variantId,
           date: today,
           price: listing.price,
           quantity: listing.quantity,
           title: listing.title,
           description: listing.description,
-          catchDate: null,
-          availabilityDate: today,
           origin: listing.origin,
           condition: listing.condition,
           averageWeight: listing.averageWeight,
@@ -246,59 +292,29 @@ export class ListingsService {
     return created;
   }
 
-  async findHistory(userId: string, pagination: { page: number; limit: number }) {
-    const profile = await this.prisma.sellerProfile.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!profile) {
-      throw new NotFoundException('Seller profile not found');
-    }
-
-    const skip = (pagination.page - 1) * pagination.limit;
-
-    const [data, total] = await Promise.all([
-      this.prisma.sellerListing.findMany({
-        where: { sellerId: profile.id },
-        include: this.listingInclude,
-        orderBy: { date: 'desc' },
-        skip,
-        take: pagination.limit,
-      }),
-      this.prisma.sellerListing.count({
-        where: { sellerId: profile.id },
-      }),
-    ]);
-
-    return {
-      data,
-      meta: {
-        total,
-        page: pagination.page,
-        limit: pagination.limit,
-        totalPages: Math.ceil(total / pagination.limit),
-        hasNextPage: skip + pagination.limit < total,
-        hasPreviousPage: pagination.page > 1,
-      },
-    };
-  }
-
   async findOne(userId: string, listingId: string) {
-    const listing = await this.findOwned(userId, listingId);
-
-    return this.prisma.sellerListing.findUnique({
+    const listing = await this.prisma.sellerListing.findFirst({
       where: { id: listingId },
       include: {
         ...this.listingInclude,
-        product: {
-          include: {
-            category: true,
-            variants: true,
-          },
-        },
+        product: { include: { category: true, variants: true } },
       },
     });
+
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+
+    const boughtQty = listing.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    const boughtTotal = listing.orderItems.reduce((sum, item) => sum + Number(item.totalPrice), 0);
+
+    const { orderItems, ...listingData } = listing;
+
+    return {
+      ...listingData,
+      boughtQuantity: boughtQty,
+      boughtTotal,
+    };
   }
 
   async update(userId: string, listingId: string, dto: UpdateListingDto) {
@@ -312,9 +328,20 @@ export class ListingsService {
       throw new BadRequestException('Quantity cannot be negative');
     }
 
+    if (dto.storeId) {
+      const store = await this.prisma.store.findFirst({
+        where: { id: dto.storeId, sellerId: listing.sellerId },
+      });
+      if (!store) {
+        throw new BadRequestException('Store not found');
+      }
+    }
+
     const coverImageId = dto.imageIds?.[0] ?? undefined;
 
-    await this.prisma.listingImage.deleteMany({ where: { listingId } });
+    if (dto.imageIds !== undefined) {
+      await this.prisma.listingImage.deleteMany({ where: { listingId } });
+    }
 
     return this.prisma.sellerListing.update({
       where: { id: listingId },
@@ -322,6 +349,7 @@ export class ListingsService {
         ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.quantity !== undefined && { quantity: dto.quantity }),
         ...(dto.status !== undefined && { status: dto.status }),
+        ...(dto.storeId !== undefined && { storeId: dto.storeId }),
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.catchDate !== undefined && { catchDate: new Date(dto.catchDate) }),
@@ -336,14 +364,7 @@ export class ListingsService {
         ...(dto.notes !== undefined && { notes: dto.notes }),
         ...(dto.imageIds !== undefined && { coverImageId: coverImageId ?? null }),
         ...(dto.imageIds !== undefined && dto.imageIds.length > 0
-          ? {
-              images: {
-                create: dto.imageIds.map((fileId, i) => ({
-                  fileId,
-                  sortOrder: i,
-                })),
-              },
-            }
+          ? { images: { create: dto.imageIds.map((fileId, i) => ({ fileId, sortOrder: i })) } }
           : {}),
       },
       include: this.listingInclude,
@@ -366,10 +387,7 @@ export class ListingsService {
 
   async remove(userId: string, listingId: string): Promise<void> {
     await this.findOwned(userId, listingId);
-
-    await this.prisma.sellerListing.delete({
-      where: { id: listingId },
-    });
+    await this.prisma.sellerListing.delete({ where: { id: listingId } });
   }
 
   async expireOldListings(): Promise<void> {
@@ -377,10 +395,7 @@ export class ListingsService {
     today.setHours(0, 0, 0, 0);
 
     await this.prisma.sellerListing.updateMany({
-      where: {
-        date: { lt: today },
-        status: { not: 'EXPIRED' },
-      },
+      where: { date: { lt: today }, status: { not: 'EXPIRED' } },
       data: { status: 'EXPIRED' },
     });
   }

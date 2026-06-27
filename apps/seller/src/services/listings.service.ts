@@ -1,7 +1,11 @@
 import { api, unwrap } from './api';
 import type { Listing } from '../types';
 
-export interface TodayListingsQuery {
+export interface ListingsQuery {
+  fromDate?: string;
+  toDate?: string;
+  category?: string;
+  storeId?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -12,6 +16,7 @@ export interface TodayListingsQuery {
 export interface CreateListingData {
   productId: string;
   variantId?: string;
+  storeId?: string;
   date: string;
   price: number;
   quantity: number;
@@ -26,12 +31,14 @@ export interface CreateListingData {
   currency?: string;
   notes?: string;
   imageIds?: string[];
+  cloudinaryUrls?: string[];
 }
 
 export interface UpdateListingData {
   price?: number;
   quantity?: number;
   status?: string;
+  storeId?: string;
   title?: string;
   description?: string;
   catchDate?: string;
@@ -43,17 +50,18 @@ export interface UpdateListingData {
   currency?: string;
   notes?: string;
   imageIds?: string[];
+  cloudinaryUrls?: string[];
 }
 
 export const listingsService = {
-  async getToday(params?: TodayListingsQuery) {
-    const { data } = await api.get('/seller/listings/today', { params });
+  async getAll(params?: ListingsQuery) {
+    const { data } = await api.get('/seller/listings', { params });
     return unwrap<{ data: Listing[]; meta: any }>(data);
   },
 
-  async getHistory(params?: { page?: number; limit?: number }) {
-    const { data } = await api.get('/seller/listings/history', { params });
-    return unwrap<{ data: Listing[]; meta: any }>(data);
+  async getToday(params?: { search?: string }) {
+    const { data } = await api.get('/seller/listings/today', { params });
+    return unwrap<Listing[]>(data);
   },
 
   async getYesterday() {

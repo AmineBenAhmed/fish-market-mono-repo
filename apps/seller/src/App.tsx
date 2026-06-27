@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthGuard } from './components/guards/auth-guard';
 import { Shell } from './components/layout/shell';
 import { HomePage } from './features/home/home-page';
+import { ListingDetailPage } from './features/listings/listing-detail-page';
 import { ListingsPage } from './features/listings/listings-page';
 import { OrdersPage } from './features/orders/orders-page';
 import { EarningsPage } from './features/earnings/earnings-page';
@@ -27,6 +28,7 @@ function App() {
         >
           <Route index element={<HomePage />} />
           <Route path="listings" element={<ListingsPage />} />
+          <Route path="listings/:id" element={<ListingDetailPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="earnings" element={<EarningsPage />} />
           <Route path="settings" element={<SettingsPage />} />

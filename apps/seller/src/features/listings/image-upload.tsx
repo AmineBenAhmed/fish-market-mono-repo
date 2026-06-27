@@ -1,7 +1,5 @@
 import { ImagePlus, Trash2 } from 'lucide-react';
-import { useCallback, useState } from 'react';
-
-import { filesService } from '../../services';
+import { useCallback } from 'react';
 
 interface UploadedImage {
   id: string;
@@ -17,32 +15,21 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({ images, onChange, maxImages = 4 }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
-
   const handleFiles = useCallback(
-    async (files: FileList | null) => {
+    (files: FileList | null) => {
       if (!files?.length) return;
 
       const remaining = maxImages - images.length;
-      const toUpload = Array.from(files).slice(0, remaining);
+      const toAdd = Array.from(files).slice(0, remaining);
 
-      setUploading(true);
+      const newImages = toAdd.map((file) => ({
+        id: crypto.randomUUID(),
+        url: '',
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }));
 
-      for (const file of toUpload) {
-        const previewUrl = URL.createObjectURL(file);
-        const uploaded = await filesService.upload(file);
-        onChange([
-          ...images,
-          {
-            id: uploaded.id,
-            url: uploaded.url,
-            file,
-            previewUrl,
-          },
-        ]);
-      }
-
-      setUploading(false);
+      onChange([...images, ...newImages]);
     },
     [images, maxImages, onChange],
   );
@@ -115,20 +102,13 @@ export function ImageUpload({ images, onChange, maxImages = 4 }: ImageUploadProp
         ))}
         {images.length < maxImages && (
           <label className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors">
-            {uploading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            ) : (
-              <>
-                <ImagePlus className="h-6 w-6 text-muted-foreground" />
-                <span className="text-[10px] text-muted-foreground">Upload</span>
-              </>
-            )}
+            <ImagePlus className="h-6 w-6 text-muted-foreground" />
+            <span className="text-[10px] text-muted-foreground">Upload</span>
             <input
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
               className="sr-only"
               multiple
-              disabled={uploading}
               onChange={(e) => handleFiles(e.target.files)}
             />
           </label>
