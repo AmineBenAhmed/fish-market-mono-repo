@@ -13,6 +13,13 @@ import { SellersService } from './sellers.service';
 export class SellersController {
   constructor(private readonly sellersService: SellersService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Get all stores for the current seller' })
+  @ApiResponse({ status: 200, description: 'List of stores' })
+  async getMyStores(@CurrentUser() user: JwtPayload) {
+    return this.sellersService.findByUserId(user.sub);
+  }
+
   @Post('apply')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Apply to become a seller' })

@@ -189,6 +189,13 @@ export class SellersService {
     return profile;
   }
 
+  async findByUserId(userId: string) {
+    return this.prisma.sellerProfile.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getProfile(userId: string) {
     const profile = await this.prisma.sellerProfile.findUnique({
       where: { userId },

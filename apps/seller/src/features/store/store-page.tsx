@@ -1,6 +1,7 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Phone, Plus, Store, User } from 'lucide-react';
+import { AxiosError } from 'axios';
+import { ArrowLeft, MapPin, Plus, Store, User } from 'lucide-react';
 import { useState } from 'react';
 
 import { Badge } from '../../components/ui/badge';
@@ -8,37 +9,87 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatDate } from '../../lib/utils';
 import { sellerService } from '../../services';
+import type { SellerProfile } from '../../types';
+
+type View = 'list' | 'detail' | 'create';
+
+function statusBadgeClass(status: string) {
+  if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-800';
+  if (status === 'REJECTED') return 'bg-red-100 text-red-800';
+  return 'bg-amber-100 text-amber-800';
+}
+
+function statusLabel(status: string) {
+  if (status === 'PENDING') return 'Pending Approval';
+  if (status === 'APPROVED') return 'Approved';
+  if (status === 'REJECTED') return 'Rejected';
+  return status;
+}
 
 export function StorePage() {
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const [view, setView] = useState<View>('list');
+  const [selectedStore, setSelectedStore] = useState<SellerProfile | null>(null);
 
   const {
-    data: profile,
+    data: stores,
     isLoading,
     error,
+    isFetching,
   } = useQuery({
-    queryKey: ['seller', 'profile'],
-    queryFn: sellerService.getProfile,
+    queryKey: ['seller', 'stores'],
+    queryFn: sellerService.listStores,
     retry: false,
   });
 
-  const noProfile = error && !profile;
+  if (view === 'detail' && selectedStore) {
+    return (
+      <StoreDetail
+        store={selectedStore}
+        onBack={() => {
+          setView('list');
+          setSelectedStore(null);
+        }}
+      />
+    );
+  }
+
+  if (view === 'create') {
+    return <CreateStoreForm onBack={() => setView('list')} onSuccess={() => setView('list')} />;
+  }
 
   if (isLoading) {
     return (
       <div className="space-y-4 pt-2">
-        <Skeleton className="h-10 w-40" />
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
 
-  if (noProfile && !showForm) {
+  if (error && !stores) {
     return (
       <div className="space-y-4 pt-2">
-        <h2 className="text-xl font-bold">My Store</h2>
+        <h2 className="text-xl font-bold">My Stores</h2>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Store className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-destructive font-medium">Failed to load stores</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {(error as Error)?.message || 'An unexpected error occurred'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const storeList = stores || [];
+
+  if (storeList.length === 0) {
+    return (
+      <div className="space-y-4 pt-2">
+        <h2 className="text-xl font-bold">My Stores</h2>
         <Card>
           <CardContent className="py-12 text-center space-y-4">
             <Store className="h-16 w-16 text-muted-foreground mx-auto" />
@@ -48,31 +99,10 @@ export function StorePage() {
                 Create your store to start selling on FishMarket
               </p>
             </div>
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => setView('create')}>
               <Plus className="mr-2 h-4 w-4" />
-              Create Your Store
+              Add Store
             </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (noProfile && showForm) {
-    return <CreateStoreForm onBack={() => setShowForm(false)} />;
-  }
-
-  if (!profile) {
-    return (
-      <div className="space-y-4 pt-2">
-        <h2 className="text-xl font-bold">My Store</h2>
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Store className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-destructive font-medium">Failed to load store</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {(error as Error)?.message || 'Store not found'}
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -81,117 +111,253 @@ export function StorePage() {
 
   return (
     <div className="space-y-4 pt-2">
-      <h2 className="text-xl font-bold">My Store</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">My Stores</h2>
+        {storeList.every(
+          (s) => s.verificationStatus !== 'APPROVED' && s.verificationStatus !== 'PENDING',
+        ) && (
+          <Button onClick={() => setView('create')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Store
+          </Button>
+        )}
+      </div>
+
+      {isFetching && <p className="text-sm text-muted-foreground">Refreshing...</p>}
+
+      <div className="bg-white rounded-xl border overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b bg-gray-50">
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                Store Name
+              </th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                Status
+              </th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                City
+              </th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                Active
+              </th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                Created
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {storeList.map((store) => (
+              <tr
+                key={store.id}
+                onClick={() => {
+                  setSelectedStore(store);
+                  setView('detail');
+                }}
+                className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
+              >
+                <td className="px-4 py-3 font-medium">{store.storeName}</td>
+                <td className="px-4 py-3">
+                  <Badge className={statusBadgeClass(store.verificationStatus)}>
+                    {statusLabel(store.verificationStatus)}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  {store.city}
+                  {store.state ? `, ${store.state}` : ''}
+                </td>
+                <td className="px-4 py-3">
+                  <Badge
+                    className={
+                      store.isActive
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }
+                  >
+                    {store.isActive ? 'Yes' : 'No'}
+                  </Badge>
+                </td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">
+                  {formatDate(store.createdAt)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function StoreDetail({ store, onBack }: { store: SellerProfile; onBack: () => void }) {
+  return (
+    <div className="space-y-4 pt-2">
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="icon" onClick={onBack} className="shrink-0">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="text-xl font-bold truncate">{store.storeName}</h2>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Store className="h-4 w-4" />
+              Store Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Store Name</p>
+              <p className="font-semibold text-lg">{store.storeName}</p>
+            </div>
+            {store.storeDescription && (
+              <div>
+                <p className="text-sm text-muted-foreground">Description</p>
+                <p className="text-base">{store.storeDescription}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-muted-foreground">Store ID</p>
+              <p className="font-mono text-sm">{store.id}</p>
+            </div>
+            {store.storeLogoFileId && (
+              <div>
+                <p className="text-sm text-muted-foreground">Logo File ID</p>
+                <p className="font-mono text-sm">{store.storeLogoFileId}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MapPin className="h-4 w-4" />
+              Location
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">City</p>
+              <p className="font-medium">{store.city}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">State</p>
+              <p className="font-medium">{store.state}</p>
+            </div>
+            {store.lat !== null && store.lat !== undefined && (
+              <div>
+                <p className="text-sm text-muted-foreground">Latitude</p>
+                <p className="font-medium">{store.lat}</p>
+              </div>
+            )}
+            {store.lng !== null && store.lng !== undefined && (
+              <div>
+                <p className="text-sm text-muted-foreground">Longitude</p>
+                <p className="font-medium">{store.lng}</p>
+              </div>
+            )}
+            {store.pickupAddress && (
+              <div>
+                <p className="text-sm text-muted-foreground">Pickup Address</p>
+                <p className="font-medium">{store.pickupAddress}</p>
+              </div>
+            )}
+            {store.deliveryZoneId && (
+              <div>
+                <p className="text-sm text-muted-foreground">Delivery Zone ID</p>
+                <p className="font-mono text-sm">{store.deliveryZoneId}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <User className="h-4 w-4" />
+              Business Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {store.businessName && (
+              <div>
+                <p className="text-sm text-muted-foreground">Business Name</p>
+                <p className="font-medium">{store.businessName}</p>
+              </div>
+            )}
+            {store.businessDoc && (
+              <div>
+                <p className="text-sm text-muted-foreground">Business Document</p>
+                <p className="font-medium">{store.businessDoc}</p>
+              </div>
+            )}
+            {store.taxId && (
+              <div>
+                <p className="text-sm text-muted-foreground">Tax ID</p>
+                <p className="font-medium">{store.taxId}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">Operations</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Commission Rate</p>
+              <p className="font-medium">{(Number(store.commissionRate) * 100).toFixed(0)}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Delivery Radius</p>
+              <p className="font-medium">{store.deliveryRadius} km</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Preparation Time</p>
+              <p className="font-medium">{store.preparationTime} min</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Store className="h-4 w-4" />
-            Store Information
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">Status & Timeline</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Store Name</p>
-            <p className="font-semibold text-lg">{profile.storeName}</p>
-          </div>
-          {profile.storeDescription && (
+          <div className="flex items-center gap-6 flex-wrap">
             <div>
-              <p className="text-sm text-muted-foreground">Description</p>
-              <p className="text-base">{profile.storeDescription}</p>
+              <p className="text-sm text-muted-foreground">Verification</p>
+              <Badge className={statusBadgeClass(store.verificationStatus)}>
+                {statusLabel(store.verificationStatus)}
+              </Badge>
             </div>
-          )}
-          <div className="flex items-center gap-3">
-            <MapPin className="h-5 w-5 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-sm text-muted-foreground">Location</p>
-              <p className="font-medium">
-                {profile.city}
-                {profile.state ? `, ${profile.state}` : ''}
-              </p>
+              <p className="text-sm text-muted-foreground">Store Active</p>
+              <Badge
+                className={
+                  store.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'
+                }
+              >
+                {store.isActive ? 'Yes' : 'No'}
+              </Badge>
             </div>
           </div>
-          {profile.pickupAddress && (
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="text-sm text-muted-foreground">Pickup Address</p>
-              <p className="font-medium">{profile.pickupAddress}</p>
+              <p className="text-sm text-muted-foreground">Created</p>
+              <p className="font-medium">{formatDate(store.createdAt)}</p>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <User className="h-4 w-4" />
-            Business Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {profile.businessName && (
             <div>
-              <p className="text-sm text-muted-foreground">Business Name</p>
-              <p className="font-medium">{profile.businessName}</p>
+              <p className="text-sm text-muted-foreground">Last Updated</p>
+              <p className="font-medium">{formatDate(store.updatedAt)}</p>
             </div>
-          )}
-          {profile.taxId && (
-            <div>
-              <p className="text-sm text-muted-foreground">Tax ID</p>
-              <p className="font-medium">{profile.taxId}</p>
-            </div>
-          )}
-          <div>
-            <p className="text-sm text-muted-foreground">Commission Rate</p>
-            <p className="font-medium">{(Number(profile.commissionRate) * 100).toFixed(0)}%</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Delivery Radius</p>
-            <p className="font-medium">{profile.deliveryRadius} km</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Preparation Time</p>
-            <p className="font-medium">{profile.preparationTime} min</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Phone className="h-4 w-4" />
-            Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Verification</span>
-            <Badge
-              className={
-                profile.verificationStatus === 'APPROVED'
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : profile.verificationStatus === 'REJECTED'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-amber-100 text-amber-800'
-              }
-            >
-              {profile.verificationStatus === 'PENDING'
-                ? 'Pending Approval'
-                : profile.verificationStatus}
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Store Active</span>
-            <Badge
-              className={
-                profile.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'
-              }
-            >
-              {profile.isActive ? 'Yes' : 'No'}
-            </Badge>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Member since</p>
-            <p className="font-medium">{formatDate(profile.createdAt)}</p>
           </div>
         </CardContent>
       </Card>
@@ -199,7 +365,7 @@ export function StorePage() {
   );
 }
 
-function CreateStoreForm({ onBack }: { onBack: () => void }) {
+function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess: () => void }) {
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState({
@@ -218,7 +384,15 @@ function CreateStoreForm({ onBack }: { onBack: () => void }) {
   const applyMutation = useMutation({
     mutationFn: (data: Parameters<typeof sellerService.apply>[0]) => sellerService.apply(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['seller', 'profile'] });
+      queryClient.invalidateQueries({ queryKey: ['seller', 'stores'] });
+      onSuccess();
+    },
+    onError: (error) => {
+      const axiosError = error as AxiosError<{ message: string }>;
+      if (axiosError.response?.data?.message === 'Already registered as a seller') {
+        queryClient.invalidateQueries({ queryKey: ['seller', 'stores'] });
+        onSuccess();
+      }
     },
   });
 
@@ -247,7 +421,7 @@ function CreateStoreForm({ onBack }: { onBack: () => void }) {
   if (applyMutation.isSuccess) {
     return (
       <div className="space-y-4 pt-2">
-        <h2 className="text-xl font-bold">My Store</h2>
+        <h2 className="text-xl font-bold">My Stores</h2>
         <Card>
           <CardContent className="py-12 text-center space-y-3">
             <Store className="h-16 w-16 text-emerald-600 mx-auto" />
@@ -255,6 +429,9 @@ function CreateStoreForm({ onBack }: { onBack: () => void }) {
             <p className="text-sm text-muted-foreground">
               Your store is now pending approval. You'll be notified once it's approved.
             </p>
+            <Button onClick={onBack} className="mt-4">
+              Back to Stores
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -263,7 +440,12 @@ function CreateStoreForm({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="space-y-4 pt-2">
-      <h2 className="text-xl font-bold">Create Your Store</h2>
+      <div className="flex items-center gap-3">
+        <Button variant="outline" size="icon" onClick={onBack} className="shrink-0">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="text-xl font-bold">Create Your Store</h2>
+      </div>
       <p className="text-sm text-muted-foreground">
         Fill in the details below to register your store. It will be reviewed by our team.
       </p>

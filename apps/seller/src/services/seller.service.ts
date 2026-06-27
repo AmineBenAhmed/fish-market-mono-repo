@@ -2,6 +2,11 @@ import { api, unwrap } from './api';
 import type { SellerProfile } from '../types';
 
 export const sellerService = {
+  async listStores(): Promise<SellerProfile[]> {
+    const { data } = await api.get('/sellers');
+    return unwrap<SellerProfile[]>(data);
+  },
+
   async getProfile(): Promise<SellerProfile> {
     const { data } = await api.get('/sellers/me');
     return unwrap<SellerProfile>(data);
