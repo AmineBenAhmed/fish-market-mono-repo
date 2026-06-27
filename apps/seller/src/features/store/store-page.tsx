@@ -75,9 +75,7 @@ export function StorePage() {
           <CardContent className="py-12 text-center">
             <Store className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-destructive font-medium">Failed to load stores</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {(error as Error)?.message || 'An unexpected error occurred'}
-            </p>
+            <p className="text-sm text-muted-foreground mt-1">{'An unexpected error occurred'}</p>
           </CardContent>
         </Card>
       </div>
@@ -125,65 +123,67 @@ export function StorePage() {
 
       {isFetching && <p className="text-sm text-muted-foreground">Refreshing...</p>}
 
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b bg-gray-50">
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                Store Name
-              </th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                Status
-              </th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                City
-              </th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                Active
-              </th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
-                Created
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {storeList.map((store) => (
-              <tr
-                key={store.id}
-                onClick={() => {
-                  setSelectedStore(store);
-                  setView('detail');
-                }}
-                className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
-              >
-                <td className="px-4 py-3 font-medium">{store.storeName}</td>
-                <td className="px-4 py-3">
-                  <Badge className={statusBadgeClass(store.verificationStatus)}>
-                    {statusLabel(store.verificationStatus)}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {store.city}
-                  {store.state ? `, ${store.state}` : ''}
-                </td>
-                <td className="px-4 py-3">
-                  <Badge
-                    className={
-                      store.isActive
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }
-                  >
-                    {store.isActive ? 'Yes' : 'No'}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">
-                  {formatDate(store.createdAt)}
-                </td>
+      <div className="max-w-5xl mx-auto w-full">
+        <div className="bg-white rounded-xl border overflow-x-auto">
+          <table className="w-full min-w-[500px]">
+            <thead>
+              <tr className="border-b bg-gray-50">
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                  Store Name
+                </th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                  Status
+                </th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                  City
+                </th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground max-sm:hidden">
+                  Active
+                </th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground max-md:hidden">
+                  Created
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {storeList.map((store) => (
+                <tr
+                  key={store.id}
+                  onClick={() => {
+                    setSelectedStore(store);
+                    setView('detail');
+                  }}
+                  className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <td className="px-4 py-3 font-medium">{store.storeName}</td>
+                  <td className="px-4 py-3">
+                    <Badge className={statusBadgeClass(store.verificationStatus)}>
+                      {statusLabel(store.verificationStatus)}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {store.city}
+                    {store.state ? `, ${store.state}` : ''}
+                  </td>
+                  <td className="px-4 py-3 max-sm:hidden">
+                    <Badge
+                      className={
+                        store.isActive
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }
+                    >
+                      {store.isActive ? 'Yes' : 'No'}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground max-md:hidden">
+                    {formatDate(store.createdAt)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
