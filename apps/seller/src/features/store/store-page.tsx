@@ -109,7 +109,7 @@ export function StorePage() {
 
   return (
     <div className="space-y-4 pt-2 w-full">
-      <div className="flex items-center justify-between mr-4">
+      <div className="flex items-center justify-between w-full mr-4">
         <h2 className="text-xl font-bold">Mes Stores</h2>
         <Button
           className=" hover:bg-gray-500 hover:text-black-200"
@@ -122,8 +122,8 @@ export function StorePage() {
 
       {isFetching && <p className="text-sm text-muted-foreground">Refreshing...</p>}
 
-      <div className="max-w-6xl mx-auto w-full">
-        <div className="bg-white rounded-xl border overflow-x-auto">
+      <div className="mx-auto w-full max-w-[80%]">
+        <div className="bg-white rounded-xl border overflow-x-auto w-full">
           <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b bg-gray-50">
