@@ -263,7 +263,7 @@ export function ListingFormDialog({
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
+                    {(categories ?? []).map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}
                       </SelectItem>
@@ -283,7 +283,7 @@ export function ListingFormDialog({
                     <SelectValue placeholder="Select fish" />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredProducts.map((p) => (
+                    {(filteredProducts ?? []).map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
                       </SelectItem>

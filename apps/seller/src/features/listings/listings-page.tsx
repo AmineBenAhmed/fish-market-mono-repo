@@ -81,11 +81,12 @@ export function ListingsPage() {
 
   const { data: yesterdayListings } = useQuery({
     queryKey: ['seller', 'listings', 'yesterday'],
-    queryFn: () => listingsService.getYesterday(),
+    queryFn: () => listingsService.getYesterday().catch(() => [] as Listing[]),
+    retry: false,
   });
 
-  const listings = result?.data ?? [];
-  const meta = result?.meta;
+  const listings = Array.isArray(result) ? result : (result?.data ?? []);
+  const meta = Array.isArray(result) ? undefined : result?.meta;
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['seller', 'listings'] });
