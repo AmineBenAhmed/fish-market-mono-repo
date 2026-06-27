@@ -185,7 +185,7 @@ export function ListingFormDialog({
     if (!price || Number(price) <= 0) errs.price = 'Price must be greater than 0';
     if (!quantity || Number(quantity) <= 0) errs.quantity = 'Quantity must be greater than 0';
     if (!storeId) errs.storeId = 'Please select a store';
-    if (images.length > 4) errs.images = 'Maximum 4 photos allowed';
+    if ((images ?? []).length > 4) errs.images = 'Maximum 4 photos allowed';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -196,7 +196,7 @@ export function ListingFormDialog({
 
     let cloudinaryUrls: string[] | undefined;
 
-    if (images.length > 0) {
+    if ((images ?? []).length > 0) {
       setUploadingImages(true);
       try {
         const results = await Promise.all(images.map((img) => cloudinaryService.upload(img.file)));
@@ -209,7 +209,7 @@ export function ListingFormDialog({
       setUploadingImages(false);
     }
 
-    const matchedProduct = products.find((p) => p.name === category);
+    const matchedProduct = (products ?? []).find((p) => p.name === category);
     const effectiveProductId = matchedProduct?.id ?? '';
 
     onSubmit({
@@ -373,7 +373,7 @@ export function ListingFormDialog({
                 <label className="text-sm font-medium">
                   Store <span className="text-destructive">*</span>
                 </label>
-                {stores.length === 0 ? (
+                {(stores ?? []).length === 0 ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/30 text-sm text-muted-foreground">
                       <StoreIcon className="h-4 w-4 shrink-0" />
