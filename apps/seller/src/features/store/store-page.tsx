@@ -392,18 +392,12 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
     taxId: '',
   });
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const applyMutation = useMutation({
     mutationFn: (data: Parameters<typeof sellerService.apply>[0]) => sellerService.apply(data),
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['seller', 'stores'] });
-      onSuccess();
-    },
-    onError: (error) => {
-      const axiosError = error as AxiosError<{ message: string }>;
-      if (axiosError.response?.data?.message === 'Already registered as a seller') {
-        queryClient.invalidateQueries({ queryKey: ['seller', 'stores'] });
-        onSuccess();
-      }
     },
   });
 
@@ -411,22 +405,35 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     if (!form.storeName || !form.city || !form.state) return;
 
-    applyMutation.mutate({
-      storeName: form.storeName,
-      storeDescription: form.storeDescription || undefined,
-      city: form.city,
-      state: form.state,
-      lat: form.lat ? Number(form.lat) : undefined,
-      lng: form.lng ? Number(form.lng) : undefined,
-      pickupAddress: form.pickupAddress || undefined,
-      businessName: form.businessName || undefined,
-      businessDoc: form.businessDoc || undefined,
-      taxId: form.taxId || undefined,
-    });
+    try {
+      await applyMutation.mutateAsync({
+        storeName: form.storeName,
+        storeDescription: form.storeDescription || undefined,
+        city: form.city,
+        state: form.state,
+        lat: form.lat ? Number(form.lat) : undefined,
+        lng: form.lng ? Number(form.lng) : undefined,
+        pickupAddress: form.pickupAddress || undefined,
+        businessName: form.businessName || undefined,
+        businessDoc: form.businessDoc || undefined,
+        taxId: form.taxId || undefined,
+      });
+      onSuccess();
+    } catch (err) {
+      const axiosError = err as AxiosError<{ message: string }>;
+      const message =
+        axiosError.response?.data?.message || (err as Error).message || 'Failed to create store';
+      if (message === 'Already registered as a seller') {
+        onSuccess();
+      } else {
+        setSubmitError(message);
+      }
+    }
   };
 
   if (applyMutation.isSuccess) {
@@ -460,6 +467,13 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
       <p className="text-sm text-muted-foreground">
         Fill in the details below to register your store. It will be reviewed by our team.
       </p>
+
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 text-sm">
+          <p className="font-medium mb-1">Failed to create store</p>
+          <p>{submitError}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Card>
@@ -611,12 +625,6 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
             {applyMutation.isPending ? 'Submitting...' : 'Create Store'}
           </Button>
         </div>
-
-        {applyMutation.isError && (
-          <p className="text-destructive text-sm mt-3 text-center">
-            {(applyMutation.error as Error).message}
-          </p>
-        )}
       </form>
     </div>
   );
