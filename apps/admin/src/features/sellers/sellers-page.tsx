@@ -183,7 +183,12 @@ export function SellersPage() {
                   return (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <PenIcon className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
