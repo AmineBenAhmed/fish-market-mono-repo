@@ -122,7 +122,7 @@ export function StorePage() {
 
       {isFetching && <p className="text-sm text-muted-foreground">Refreshing...</p>}
 
-      <div className="mx-auto w-full max-w-[80%]">
+      <div className="mx-auto w-full">
         <div className="bg-white rounded-xl border overflow-x-auto w-full">
           <table className="w-full min-w-[500px]">
             <thead>

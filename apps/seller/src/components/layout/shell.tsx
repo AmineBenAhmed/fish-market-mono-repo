@@ -8,7 +8,7 @@ export function Shell() {
   return (
     <div className="min-h-screen bg-background pb-16">
       <TopBar onNotificationClick={() => navigate('/notifications')} />
-      <main className="px-4 py-4 max-w-lg mx-auto">
+      <main className="px-4 py-4 max-w-5xl mx-auto">
         <Outlet />
       </main>
       <BottomNav />
