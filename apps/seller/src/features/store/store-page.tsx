@@ -139,6 +139,12 @@ export function StorePage() {
                 <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground max-sm:hidden">
                   Active
                 </th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground max-sm:hidden">
+                  Prep Time
+                </th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground max-md:hidden">
+                  Commission
+                </th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground max-md:hidden">
                   Created
                 </th>
@@ -174,6 +180,12 @@ export function StorePage() {
                     >
                       {store.isActive ? 'Yes' : 'No'}
                     </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground max-sm:hidden">
+                    {store.preparationTime} min
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground max-md:hidden">
+                    {(Number(store.commissionRate) * 100).toFixed(0)}%
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground max-md:hidden">
                     {formatDate(store.createdAt)}
