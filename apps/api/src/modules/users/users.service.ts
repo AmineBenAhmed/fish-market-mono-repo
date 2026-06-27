@@ -149,7 +149,7 @@ export class UsersService {
             defaultAddressId: true,
           },
         },
-        sellerProfile: {
+        sellerProfiles: {
           select: {
             id: true,
             storeName: true,

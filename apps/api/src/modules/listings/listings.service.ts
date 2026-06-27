@@ -9,8 +9,9 @@ export class ListingsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateListingDto) {
-    const profile = await this.prisma.sellerProfile.findUnique({
+    const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!profile || !profile.isActive) {
@@ -79,8 +80,9 @@ export class ListingsService {
   }
 
   async findToday(userId: string) {
-    const profile = await this.prisma.sellerProfile.findUnique({
+    const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!profile) {
@@ -107,8 +109,9 @@ export class ListingsService {
   }
 
   async findHistory(userId: string, pagination: { page: number; limit: number }) {
-    const profile = await this.prisma.sellerProfile.findUnique({
+    const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!profile) {
@@ -219,8 +222,9 @@ export class ListingsService {
   }
 
   private async findOwned(userId: string, listingId: string) {
-    const profile = await this.prisma.sellerProfile.findUnique({
+    const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
+      orderBy: { createdAt: 'desc' },
     });
 
     const listing = await this.prisma.sellerListing.findFirst({

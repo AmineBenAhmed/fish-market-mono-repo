@@ -222,7 +222,7 @@ model User {
   refreshTokens   RefreshToken[]
   avatarFile       File?          @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
   customerProfile CustomerProfile?
-  sellerProfile   SellerProfile?
+  sellerProfiles  SellerProfile[]
   driverProfile   DriverProfile?
   setting         UserSetting?
   addresses       UserAddress[]
@@ -295,7 +295,7 @@ model UserSetting {
 /// Extended profile for sellers.
 model SellerProfile {
   id                 String                  @id @default(cuid())
-  userId             String                  @unique
+  userId             String
   storeName          String
   storeDescription   String?
   storeLogoFileId    String?                 @unique

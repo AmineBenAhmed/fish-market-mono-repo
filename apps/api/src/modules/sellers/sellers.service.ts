@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, SellerVerificationStatus } from '@prisma/client';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
@@ -74,14 +74,6 @@ export class SellersService {
   }
 
   async adminCreate(dto: AdminCreateSellerDto) {
-    const existing = await this.prisma.sellerProfile.findUnique({
-      where: { userId: dto.userId },
-    });
-
-    if (existing) {
-      throw new ConflictException('User already has a seller profile');
-    }
-
     await this.prisma.user.update({
       where: { id: dto.userId },
       data: { role: 'SELLER' },
@@ -136,33 +128,6 @@ export class SellersService {
   }
 
   async apply(userId: string, dto: ApplySellerDto) {
-    const existing = await this.prisma.sellerProfile.findUnique({
-      where: { userId },
-    });
-
-    if (existing) {
-      if (existing.verificationStatus === 'PENDING') {
-        throw new ConflictException('Seller application already pending');
-      }
-      if (existing.verificationStatus === 'APPROVED') {
-        throw new ConflictException('Already registered as a seller');
-      }
-      if (existing.verificationStatus === 'REJECTED') {
-        await this.prisma.sellerProfile.update({
-          where: { userId },
-          data: {
-            verificationStatus: 'PENDING',
-            isActive: false,
-            ...dto,
-          },
-        });
-
-        return this.prisma.sellerProfile.findUnique({
-          where: { userId },
-        });
-      }
-    }
-
     await this.prisma.user.update({
       where: { id: userId },
       data: { role: 'SELLER' },
@@ -197,8 +162,9 @@ export class SellersService {
   }
 
   async getProfile(userId: string) {
-    const profile = await this.prisma.sellerProfile.findUnique({
+    const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!profile) {
@@ -209,8 +175,9 @@ export class SellersService {
   }
 
   async updateProfile(userId: string, dto: UpdateSellerDto) {
-    const profile = await this.prisma.sellerProfile.findUnique({
+    const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
+      orderBy: { createdAt: 'desc' },
     });
 
     if (!profile) {
@@ -218,7 +185,7 @@ export class SellersService {
     }
 
     return this.prisma.sellerProfile.update({
-      where: { userId },
+      where: { id: profile.id },
       data: {
         ...(dto.storeName !== undefined && { storeName: dto.storeName }),
         ...(dto.storeDescription !== undefined && { storeDescription: dto.storeDescription }),

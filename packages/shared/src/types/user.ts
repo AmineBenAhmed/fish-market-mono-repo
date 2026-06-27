@@ -51,7 +51,7 @@ export interface User {
   avatar?: string;
   addresses: Address[];
   customerProfile?: CustomerProfile;
-  sellerProfile?: SellerProfile;
+  sellerProfiles: SellerProfile[];
   driverProfile?: DriverProfile;
   setting?: UserSetting;
   createdAt: string;
