@@ -108,22 +108,21 @@ export function StorePage() {
   }
 
   return (
-    <div className="space-y-4 pt-2">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">My Stores</h2>
-        {storeList.every(
-          (s) => s.verificationStatus !== 'APPROVED' && s.verificationStatus !== 'PENDING',
-        ) && (
-          <Button onClick={() => setView('create')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Store
-          </Button>
-        )}
+    <div className="space-y-4 pt-2 w-full">
+      <div className="flex items-center justify-between mr-4">
+        <h2 className="text-xl font-bold">Mes Stores</h2>
+        <Button
+          className=" hover:bg-gray-500 hover:text-black-200"
+          onClick={() => setView('create')}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Ajouter poissonerie
+        </Button>
       </div>
 
       {isFetching && <p className="text-sm text-muted-foreground">Refreshing...</p>}
 
-      <div className="max-w-5xl mx-auto w-full">
+      <div className="max-w-6xl mx-auto w-full">
         <div className="bg-white rounded-xl border overflow-x-auto">
           <table className="w-full min-w-[500px]">
             <thead>
