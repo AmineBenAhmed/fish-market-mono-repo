@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import { formatDateShort, statusColor } from '../../lib/utils';
+import { formatDateShort } from '../../lib/utils';
 import { sellersService } from '../../services';
 import type { SellerProfile } from '../../types';
 
@@ -69,12 +69,22 @@ export function SellersPage() {
 
   const allStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'] as const;
 
+  function statusBadgeClass(status: string) {
+    return status === 'APPROVED'
+      ? 'bg-emerald-100 text-emerald-800'
+      : status === 'REJECTED'
+        ? 'bg-gray-900 text-gray-50'
+        : status === 'SUSPENDED'
+          ? 'bg-red-100 text-red-800'
+          : 'bg-gray-100 text-gray-800';
+  }
+
   const getStatusOptions = (current: string) =>
     allStatuses
       .filter((s) => s !== current)
       .map((value) => ({
         value,
-        className: statusColor(value),
+        className: statusBadgeClass(value),
       }));
 
   const sellers = data?.data ?? [];
@@ -169,7 +179,7 @@ export function SellersPage() {
                 key: 'verificationStatus',
                 header: 'Status',
                 render: (s: SellerProfile) => (
-                  <Badge className={statusColor(s.verificationStatus)}>
+                  <Badge className={statusBadgeClass(s.verificationStatus)}>
                     {s.verificationStatus}
                   </Badge>
                 ),
@@ -201,7 +211,10 @@ export function SellersPage() {
                         {options.map((opt) => (
                           <DropdownMenuItem
                             key={opt.value}
-                            onClick={() => statusMutation.mutate({ id: s.id, status: opt.value })}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              statusMutation.mutate({ id: s.id, status: opt.value });
+                            }}
                             disabled={statusMutation.isPending}
                           >
                             <span className={opt.className}>{opt.value}</span>
