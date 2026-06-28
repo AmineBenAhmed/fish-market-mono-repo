@@ -32,17 +32,16 @@ export class StoresService {
   }
 
   async findByUser(userId: string) {
-    const profile = await this.prisma.sellerProfile.findFirst({
+    const profiles = await this.prisma.sellerProfile.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
     });
 
-    if (!profile) {
+    if (profiles.length === 0) {
       return [];
     }
 
     return this.prisma.store.findMany({
-      where: { sellerId: profile.id, isActive: true },
+      where: { sellerId: { in: profiles.map((p) => p.id) }, isActive: true },
       orderBy: { createdAt: 'desc' },
     });
   }
