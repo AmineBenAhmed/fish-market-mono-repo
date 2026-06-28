@@ -68,10 +68,6 @@ export class UpdateListingDto {
   @IsOptional()
   notes?: string;
 
-  @IsString()
-  @IsOptional()
-  storeId?: string;
-
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

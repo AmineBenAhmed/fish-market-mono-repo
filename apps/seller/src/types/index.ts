@@ -6,20 +6,6 @@ export interface User {
   phone?: string;
 }
 
-export interface Store {
-  id: string;
-  sellerId: string;
-  name: string;
-  description?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface SellerProfile {
   id: string;
   userId: string;
@@ -60,7 +46,6 @@ export interface ListingImage {
 export interface Listing {
   id: string;
   sellerId: string;
-  storeId?: string | null;
   productId: string;
   variantId?: string | null;
   productName?: string;
@@ -82,7 +67,6 @@ export interface Listing {
   coverImage?: { id: string; url: string } | null;
   coverImageId?: string | null;
   images: ListingImage[];
-  store?: Store | null;
   product?: {
     id: string;
     name: string;

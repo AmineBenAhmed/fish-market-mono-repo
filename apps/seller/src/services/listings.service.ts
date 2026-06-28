@@ -5,7 +5,6 @@ export interface ListingsQuery {
   fromDate?: string;
   toDate?: string;
   category?: string;
-  storeId?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -16,7 +15,6 @@ export interface ListingsQuery {
 export interface CreateListingData {
   productId: string;
   variantId?: string;
-  storeId?: string;
   date: string;
   price: number;
   quantity: number;
@@ -38,7 +36,6 @@ export interface UpdateListingData {
   price?: number;
   quantity?: number;
   status?: string;
-  storeId?: string;
   title?: string;
   description?: string;
   catchDate?: string;

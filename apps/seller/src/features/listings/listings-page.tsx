@@ -7,7 +7,6 @@ import {
   Plus,
   Search,
   ShoppingBag,
-  Store as StoreIcon,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -42,8 +41,8 @@ import {
 } from '../../components/ui/select';
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatCurrency, formatDate } from '../../lib/utils';
-import { listingsService, storesService } from '../../services';
-import type { Listing, Store as SellerStore } from '../../types';
+import { listingsService } from '../../services';
+import type { Listing } from '../../types';
 import { ListingFormDialog } from './listing-form-dialog';
 import type { ListingFormSubmitData } from './listing-form-dialog';
 
@@ -90,32 +89,18 @@ export function ListingsPage() {
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [storeFilter, setStoreFilter] = useState('all');
   const [fromDate, setFromDate] = useState(
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   );
   const [toDate, setToDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(1);
 
-  const { data: storesData } = useQuery({
-    queryKey: ['seller', 'stores'],
-    queryFn: () => storesService.getStores(),
-  });
-
-  const stores = storesData ?? [];
-
   const { data: result, isLoading } = useQuery({
-    queryKey: [
-      'seller',
-      'listings',
-      'all',
-      { search, categoryFilter, storeFilter, fromDate, toDate, page },
-    ],
+    queryKey: ['seller', 'listings', 'all', { search, categoryFilter, fromDate, toDate, page }],
     queryFn: () =>
       listingsService.getAll({
         search: search || undefined,
         category: categoryFilter !== 'all' ? categoryFilter : undefined,
-        storeId: storeFilter !== 'all' ? storeFilter : undefined,
         fromDate: fromDate || undefined,
         toDate: toDate || undefined,
         page,
@@ -137,7 +122,6 @@ export function ListingsPage() {
         date: new Date().toISOString(),
         price: data.price,
         quantity: data.quantity,
-        storeId: data.storeId,
         title: data.category,
         description: data.description,
         origin: data.origin,
@@ -161,7 +145,6 @@ export function ListingsPage() {
         description: data.description,
         price: data.price,
         quantity: data.quantity,
-        storeId: data.storeId,
         origin: data.origin,
         condition: data.condition,
       }),
@@ -193,7 +176,6 @@ export function ListingsPage() {
   function resetFilters() {
     setSearch('');
     setCategoryFilter('all');
-    setStoreFilter('all');
     setFromDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
     setToDate(new Date().toISOString().split('T')[0]);
     setPage(1);
@@ -288,26 +270,7 @@ export function ListingsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Select
-                  value={storeFilter}
-                  onValueChange={(v) => {
-                    setStoreFilter(v);
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-9 w-44 text-sm">
-                    <SelectValue placeholder="Store" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Stores</SelectItem>
-                    {(stores ?? []).map((s: SellerStore) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {(search || categoryFilter !== 'all' || storeFilter !== 'all') && (
+                {(search || categoryFilter !== 'all') && (
                   <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs">
                     Clear filters
                   </Button>
@@ -324,11 +287,11 @@ export function ListingsPage() {
               </div>
               <p className="text-muted-foreground font-medium">No listings found</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {search || categoryFilter !== 'all' || storeFilter !== 'all'
+                {search || categoryFilter !== 'all'
                   ? 'Try adjusting your filters'
                   : 'Add your first fish listing'}
               </p>
-              {search || categoryFilter !== 'all' || storeFilter !== 'all' ? (
+              {search || categoryFilter !== 'all' ? (
                 <Button variant="outline" size="sm" className="mt-4" onClick={resetFilters}>
                   Clear filters
                 </Button>
@@ -352,9 +315,6 @@ export function ListingsPage() {
                     <tr className="border-b">
                       <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground">
                         Fish Category
-                      </th>
-                      <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground hidden sm:table-cell">
-                        Store
                       </th>
                       <th className="text-right px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground">
                         Price
@@ -401,14 +361,6 @@ export function ListingsPage() {
                                 {listing.title || listing.product?.name || 'Fish'}
                               </p>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          <div className="flex items-center gap-1.5">
-                            <StoreIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {listing.store?.name || '—'}
-                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">

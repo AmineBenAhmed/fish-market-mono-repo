@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Input } from '@fishmarket/ui';
-import { Loader2, Store as StoreIcon } from 'lucide-react';
 
 import {
   Select,
@@ -18,8 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
-import { cloudinaryService, productsService, storesService } from '../../services';
-import type { Store } from '../../types';
+import { cloudinaryService, productsService } from '../../services';
 import type { FishProduct } from '../../services/products.service';
 import { ImageUpload } from './image-upload';
 
@@ -76,7 +74,6 @@ export interface ListingFormSubmitData {
   quantity: number;
   condition: string;
   origin: string;
-  storeId: string;
   imageIds?: string[];
   cloudinaryUrls?: string[];
   unit?: string;
@@ -98,7 +95,6 @@ export function ListingFormDialog({
   isPending,
   editListing,
 }: ListingFormDialogProps) {
-  const [stores, setStores] = useState<Store[]>([]);
   const [products, setProducts] = useState<FishProduct[]>([]);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -109,38 +105,17 @@ export function ListingFormDialog({
   const [quantity, setQuantity] = useState('');
   const [condition, setCondition] = useState('FRESH');
   const [origin, setOrigin] = useState('');
-  const [storeId, setStoreId] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [creatingStore, setCreatingStore] = useState(false);
-  const [newStoreName, setNewStoreName] = useState('');
 
   useEffect(() => {
     if (open) {
-      storesService
-        .getStores()
-        .then(setStores)
-        .catch(() => {});
       productsService
         .getActive()
         .then(setProducts)
         .catch(() => {});
     }
   }, [open]);
-
-  async function handleCreateStore() {
-    if (!newStoreName.trim()) return;
-    setCreatingStore(true);
-    try {
-      const store = await storesService.create({ name: newStoreName.trim() });
-      setStores((prev) => [...prev, store]);
-      setStoreId(store.id);
-      setNewStoreName('');
-    } catch {
-      // ignore
-    }
-    setCreatingStore(false);
-  }
 
   useEffect(() => {
     if (editListing && open) {
@@ -150,7 +125,6 @@ export function ListingFormDialog({
       setQuantity(String(editListing.quantity ?? ''));
       setCondition(editListing.condition ?? 'FRESH');
       setOrigin(editListing.origin ?? '');
-      setStoreId(editListing.storeId ?? '');
 
       if (editListing.images?.length) {
         setImages(
@@ -174,7 +148,6 @@ export function ListingFormDialog({
     setQuantity('');
     setCondition('FRESH');
     setOrigin('');
-    setStoreId('');
     setImages([]);
     setErrors({});
   }
@@ -184,7 +157,6 @@ export function ListingFormDialog({
     if (!category) errs.category = 'Please select a fish category';
     if (!price || Number(price) <= 0) errs.price = 'Price must be greater than 0';
     if (!quantity || Number(quantity) <= 0) errs.quantity = 'Quantity must be greater than 0';
-    if (!storeId) errs.storeId = 'Please select a store';
     if ((images ?? []).length > 4) errs.images = 'Maximum 4 photos allowed';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -220,7 +192,6 @@ export function ListingFormDialog({
       quantity: Number(quantity),
       condition,
       origin,
-      storeId,
       cloudinaryUrls,
     });
   }
@@ -367,51 +338,6 @@ export function ListingFormDialog({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Store <span className="text-destructive">*</span>
-                </label>
-                {(stores ?? []).length === 0 ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/30 text-sm text-muted-foreground">
-                      <StoreIcon className="h-4 w-4 shrink-0" />
-                      <span>No stores yet. Create one to list your fish.</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Store name"
-                        value={newStoreName}
-                        onChange={(e) => setNewStoreName(e.target.value)}
-                        className="h-9 text-sm"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={handleCreateStore}
-                        disabled={creatingStore || !newStoreName.trim()}
-                        className="h-9 shrink-0"
-                      >
-                        {creatingStore ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Create'}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Select value={storeId} onValueChange={setStoreId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select store" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(stores ?? []).map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-                {errors.storeId && <p className="text-xs text-destructive">{errors.storeId}</p>}
               </div>
 
               <div className="space-y-2">

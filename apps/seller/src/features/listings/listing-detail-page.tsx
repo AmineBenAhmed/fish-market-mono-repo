@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Fish, MapPin, Package, ShoppingCart, Store } from 'lucide-react';
+import { ArrowLeft, Calendar, Fish, MapPin, Package, ShoppingCart } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Badge } from '../../components/ui/badge';
@@ -144,27 +144,6 @@ export function ListingDetailPage() {
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Store className="h-4 w-4" />
-                Store
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {listing.store ? (
-                <div>
-                  <p className="font-medium">{listing.store.name}</p>
-                  {listing.store.city && (
-                    <p className="text-sm text-muted-foreground">{listing.store.city}</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No store assigned</p>
-              )}
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">

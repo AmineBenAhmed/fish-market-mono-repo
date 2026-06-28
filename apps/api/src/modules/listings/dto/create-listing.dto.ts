@@ -18,10 +18,6 @@ export class CreateListingDto {
   @IsOptional()
   variantId?: string;
 
-  @IsString()
-  @IsOptional()
-  storeId?: string;
-
   @IsDateString()
   date!: string;
 

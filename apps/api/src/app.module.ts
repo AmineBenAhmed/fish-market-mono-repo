@@ -35,7 +35,6 @@ import { PrismaModule } from './modules/prisma/prisma.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { SellerOrdersModule } from './modules/seller-orders/seller-orders.module';
 import { SellersModule } from './modules/sellers/sellers.module';
-import { StoresModule } from './modules/stores/stores.module';
 import { UserSettingsModule } from './modules/user-settings/user-settings.module';
 import { UsersModule } from './modules/users/users.module';
 import { WalletModule } from './modules/wallet/wallet.module';
@@ -74,7 +73,6 @@ import { WalletModule } from './modules/wallet/wallet.module';
     UsersModule,
     AddressesModule,
     SellersModule,
-    StoresModule,
     DriversModule,
     UserSettingsModule,
     CategoriesModule,

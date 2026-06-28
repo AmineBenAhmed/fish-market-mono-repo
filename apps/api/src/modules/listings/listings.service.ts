@@ -13,7 +13,6 @@ export class ListingsService {
       include: { category: true },
     },
     variant: true,
-    store: true,
     coverImage: true,
     images: {
       include: { file: true },
@@ -37,15 +36,6 @@ export class ListingsService {
       throw new BadRequestException('Seller profile is not active');
     }
 
-    if (dto.storeId) {
-      const store = await this.prisma.store.findFirst({
-        where: { id: dto.storeId, sellerId: profile.id },
-      });
-      if (!store) {
-        throw new BadRequestException('Store not found or does not belong to you');
-      }
-    }
-
     const listingDate = new Date(dto.date);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -67,7 +57,6 @@ export class ListingsService {
     const listing = await this.prisma.sellerListing.create({
       data: {
         sellerId: profile.id,
-        storeId: dto.storeId ?? null,
         productId: dto.productId,
         variantId: dto.variantId ?? null,
         date: listingDate,
@@ -106,7 +95,6 @@ export class ListingsService {
       fromDate?: string;
       toDate?: string;
       category?: string;
-      storeId?: string;
       search?: string;
       page: number;
       limit: number;
@@ -137,10 +125,6 @@ export class ListingsService {
 
     if (options.category) {
       where.product = { category: { name: { contains: options.category, mode: 'insensitive' } } };
-    }
-
-    if (options.storeId) {
-      where.storeId = options.storeId;
     }
 
     if (options.search) {
@@ -269,7 +253,6 @@ export class ListingsService {
       const dup = await this.prisma.sellerListing.create({
         data: {
           sellerId: listing.sellerId,
-          storeId: listing.storeId,
           productId: listing.productId,
           date: today,
           price: listing.price,
@@ -329,15 +312,6 @@ export class ListingsService {
       throw new BadRequestException('Quantity cannot be negative');
     }
 
-    if (dto.storeId) {
-      const store = await this.prisma.store.findFirst({
-        where: { id: dto.storeId, sellerId: listing.sellerId },
-      });
-      if (!store) {
-        throw new BadRequestException('Store not found');
-      }
-    }
-
     const coverImageId = dto.imageIds?.[0] ?? undefined;
 
     if (dto.imageIds !== undefined) {
@@ -350,7 +324,6 @@ export class ListingsService {
         ...(dto.price !== undefined && { price: dto.price }),
         ...(dto.quantity !== undefined && { quantity: dto.quantity }),
         ...(dto.status !== undefined && { status: dto.status }),
-        ...(dto.storeId !== undefined && { storeId: dto.storeId }),
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.catchDate !== undefined && { catchDate: new Date(dto.catchDate) }),

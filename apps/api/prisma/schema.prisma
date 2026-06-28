@@ -328,29 +328,7 @@ model SellerProfile {
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   storeLogo       File?           @relation("StoreLogo", fields: [storeLogoFileId], references: [id], onDelete: SetNull)
   listings        SellerListing[]
-  stores          Store[]
   zone            DeliveryZone?   @relation("SellerZones", fields: [deliveryZoneId], references: [id])
-}
-
-/// A seller can have multiple stores (e.g., different locations or brands).
-model Store {
-  id          String   @id @default(cuid())
-  sellerId    String
-  name        String
-  description String?
-  phone       String?
-  address     String?
-  city        String?
-  state       String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  seller   SellerProfile   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  listings SellerListing[]
-
-  @@index([sellerId])
-  @@index([sellerId, isActive])
 }
 
 /// Extended profile for drivers.
@@ -509,7 +487,6 @@ model FishVariant {
 model SellerListing {
   id        String        @id @default(cuid())
   sellerId  String
-  storeId   String?
   productId String
   variantId String?
   date      DateTime      @db.Date
@@ -533,7 +510,6 @@ model SellerListing {
 
   // Relations
   seller     SellerProfile   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  store      Store?          @relation(fields: [storeId], references: [id], onDelete: SetNull)
   product    FishProduct     @relation(fields: [productId], references: [id])
   variant    FishVariant?    @relation(fields: [variantId], references: [id])
   coverImage File?           @relation("ListingCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)

@@ -35,11 +35,10 @@ export class ListingsController {
 
   @Get()
   @Roles('SELLER', 'ADMIN')
-  @ApiOperation({ summary: 'Get listings with filters (date range, category, store, search)' })
+  @ApiOperation({ summary: 'Get listings with filters (date range, category, search)' })
   @ApiQuery({ name: 'fromDate', required: false, type: String })
   @ApiQuery({ name: 'toDate', required: false, type: String })
   @ApiQuery({ name: 'category', required: false, type: String })
-  @ApiQuery({ name: 'storeId', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -50,7 +49,6 @@ export class ListingsController {
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
     @Query('category') category?: string,
-    @Query('storeId') storeId?: string,
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -61,7 +59,6 @@ export class ListingsController {
       fromDate,
       toDate,
       category,
-      storeId,
       search,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 30,
