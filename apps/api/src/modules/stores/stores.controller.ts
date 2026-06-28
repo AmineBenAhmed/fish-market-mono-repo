@@ -35,6 +35,8 @@ export class StoresController {
   @Roles('SELLER', 'ADMIN')
   @ApiOperation({ summary: "Get current seller's stores" })
   async findAll(@CurrentUser() user: JwtPayload) {
+    console.log({ user }, 'controller level');
+
     return this.storesService.findByUser(user.sub);
   }
 

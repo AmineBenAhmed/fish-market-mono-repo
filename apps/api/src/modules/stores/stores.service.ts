@@ -36,14 +36,19 @@ export class StoresService {
       where: { userId },
     });
 
+    console.log({ profiles });
+
     if (profiles.length === 0) {
       return [];
     }
 
-    return this.prisma.store.findMany({
-      where: { sellerId: { in: profiles.map((p) => p.id) }, isActive: true },
+    const stores = await this.prisma.store.findMany({
+      where: { sellerId: { in: profiles.map((p) => p.id) } },
       orderBy: { createdAt: 'desc' },
     });
+
+    console.log({ stores });
+    return stores;
   }
 
   async findOne(storeId: string) {
