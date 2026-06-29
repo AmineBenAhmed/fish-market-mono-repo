@@ -129,7 +129,9 @@ enum Preservation {
 }
 
 enum ListingStatus {
+  PENDING
   ACTIVE
+  REJECTED
   OUT_OF_STOCK
   EXPIRED
 }
@@ -493,7 +495,7 @@ model SellerListing {
   date      DateTime      @db.Date
   price     Decimal       @db.Decimal(10, 2)
   quantity  Int           // units available for the day
-  status    ListingStatus @default(ACTIVE)
+  status    ListingStatus @default(PENDING)
   notes     String?
   title     String?
   description String?

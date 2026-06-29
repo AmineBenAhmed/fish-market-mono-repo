@@ -17,4 +17,8 @@ export const listingsService = {
     const res = await api.get(`/admin/listings/${id}`);
     return unwrap<Listing>(res);
   },
+
+  async updateStatus(id: string, status: string): Promise<void> {
+    await api.patch(`/admin/listings/${id}/status`, { status });
+  },
 };

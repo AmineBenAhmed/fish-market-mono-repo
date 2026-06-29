@@ -1,3 +1,4 @@
+import { ListingStatus } from '@prisma/client';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -364,7 +365,7 @@ export class ListingsService {
           unit: listing.unit,
           currency: listing.currency,
           notes: listing.notes,
-          status: 'ACTIVE',
+          status: 'PENDING',
         },
         include: this.listingInclude,
       });
@@ -462,6 +463,22 @@ export class ListingsService {
   async remove(userId: string, listingId: string): Promise<void> {
     await this.findOwned(userId, listingId);
     await this.prisma.sellerListing.delete({ where: { id: listingId } });
+  }
+
+  async updateStatusAdmin(listingId: string, status: ListingStatus) {
+    const listing = await this.prisma.sellerListing.findUnique({
+      where: { id: listingId },
+    });
+
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+
+    return this.prisma.sellerListing.update({
+      where: { id: listingId },
+      data: { status },
+      include: this.listingInclude,
+    });
   }
 
   async expireOldListings(): Promise<void> {

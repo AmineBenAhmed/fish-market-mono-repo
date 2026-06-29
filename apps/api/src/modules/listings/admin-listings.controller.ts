@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { ListingStatus } from '@prisma/client';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../common/decorators';
@@ -9,6 +10,14 @@ import { ListingsService } from './listings.service';
 @Controller('admin/listings')
 export class AdminListingsController {
   constructor(private readonly listingsService: ListingsService) {}
+
+  @Patch(':id/status')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Update listing status (admin)' })
+  @ApiParam({ name: 'id', type: String })
+  async updateStatus(@Param('id') id: string, @Body('status') status: ListingStatus) {
+    return this.listingsService.updateStatusAdmin(id, status);
+  }
 
   @Get(':id')
   @Roles('ADMIN')

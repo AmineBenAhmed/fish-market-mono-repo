@@ -1,19 +1,26 @@
-import { Input } from '@fishmarket/ui';
-import { useQuery } from '@tanstack/react-query';
-import { List, Store } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Button, Input } from '@fishmarket/ui';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Activity, Ban, CheckCircle, List, PenIcon, Store, XCircle } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/data-table/data-table';
 import { PageHeader } from '../../components/shared/page-header';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
 import { formatDate, statusColor } from '../../lib/utils';
 import { listingsService } from '../../services';
 import type { Listing } from '../../types';
 
 export function ListingsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [storeName, setStoreName] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -30,11 +37,15 @@ export function ListingsPage() {
       }),
   });
 
-  useEffect(() => {
-    console.log('Listings data:', data);
-  }, [data]);
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      listingsService.updateStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-listings'] }),
+  });
 
   const listings: Listing[] = data?.data ?? [];
+
+  const statusOptions = ['PENDING', 'ACTIVE', 'REJECTED', 'OUT_OF_STOCK', 'EXPIRED'];
 
   return (
     <div className="space-y-6">
@@ -128,6 +139,47 @@ export function ListingsPage() {
                 key: 'date',
                 header: 'Date',
                 render: (l: Listing) => formatDate(l.date),
+              },
+              {
+                key: 'actions',
+                header: '',
+                className: 'w-[50px]',
+                render: (l: Listing) => (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-12 w-12 p-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="sr-only">Actions</span>
+                        <PenIcon className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {statusOptions.map((s) => (
+                        <DropdownMenuItem
+                          key={s}
+                          disabled={s === l.status || updateStatusMutation.isPending}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateStatusMutation.mutate({ id: l.id, status: s });
+                          }}
+                        >
+                          {s === 'ACTIVE' && (
+                            <CheckCircle className="mr-2 h-4 w-4 text-emerald-600" />
+                          )}
+                          {s === 'REJECTED' && <XCircle className="mr-2 h-4 w-4 text-red-600" />}
+                          {s === 'PENDING' && <Activity className="mr-2 h-4 w-4 text-amber-600" />}
+                          {s === 'OUT_OF_STOCK' && <Ban className="mr-2 h-4 w-4 text-orange-600" />}
+                          {s === 'EXPIRED' && <XCircle className="mr-2 h-4 w-4 text-gray-600" />}
+                          {s}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ),
               },
             ]}
             data={listings}
