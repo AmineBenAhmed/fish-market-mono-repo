@@ -7,4 +7,5 @@ export { notificationsService } from './notifications.service';
 export { ordersService } from './orders.service';
 export { paymentsService } from './payments.service';
 export { sellersService } from './sellers.service';
+export { listingsService } from './listings.service';
 export { usersService } from './users.service';

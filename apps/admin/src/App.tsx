@@ -14,6 +14,7 @@ import { PaymentsPage } from './features/payments/payments-page';
 import { SellersPage } from './features/sellers/sellers-page';
 import { StoreCreatePage } from './features/stores/store-create-page';
 import { StoreDetailPage } from './features/stores/store-detail-page';
+import { ListingDetailPage } from './features/listings/listing-detail-page';
 import { ListingsPage } from './features/listings/listings-page';
 import { UsersPage } from './features/users/users-page';
 
@@ -41,6 +42,7 @@ function App() {
           <Route path="deliveries" element={<DeliveriesPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="listings" element={<ListingsPage />} />
+          <Route path="listings/:id" element={<ListingDetailPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
       </Routes>

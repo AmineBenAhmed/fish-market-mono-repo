@@ -26,6 +26,101 @@ export class ListingsService {
     },
   };
 
+  private adminListingInclude = {
+    ...this.listingInclude,
+    seller: {
+      select: {
+        id: true,
+        storeName: true,
+        city: true,
+        state: true,
+      },
+    },
+  };
+
+  async findOneAdmin(listingId: string) {
+    const listing = await this.prisma.sellerListing.findFirst({
+      where: { id: listingId },
+      include: {
+        ...this.adminListingInclude,
+        product: { include: { category: true, variants: true } },
+      },
+    });
+
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+
+    const boughtQty = listing.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+    const boughtTotal = listing.orderItems.reduce((sum, item) => sum + Number(item.totalPrice), 0);
+
+    const { orderItems, ...listingData } = listing;
+
+    return {
+      ...listingData,
+      boughtQuantity: boughtQty,
+      boughtTotal,
+    };
+  }
+
+  async findAllAdmin(options: {
+    storeName?: string;
+    fromDate?: string;
+    toDate?: string;
+    page: number;
+    limit: number;
+    sortBy?: 'createdAt' | 'price' | 'quantity';
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const skip = (options.page - 1) * options.limit;
+
+    const where: any = {};
+
+    if (options.fromDate || options.toDate) {
+      where.date = {};
+      if (options.fromDate) where.date.gte = new Date(options.fromDate);
+      if (options.toDate) where.date.lte = new Date(options.toDate);
+    }
+
+    if (options.storeName) {
+      where.seller = {
+        storeName: { contains: options.storeName, mode: 'insensitive' },
+      };
+    }
+
+    const orderBy: any = {};
+    if (options.sortBy === 'price') {
+      orderBy.price = options.sortOrder ?? 'desc';
+    } else if (options.sortBy === 'quantity') {
+      orderBy.quantity = options.sortOrder ?? 'desc';
+    } else {
+      orderBy.createdAt = options.sortOrder ?? 'desc';
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.sellerListing.findMany({
+        where,
+        include: this.adminListingInclude,
+        orderBy,
+        skip,
+        take: options.limit,
+      }),
+      this.prisma.sellerListing.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(total / options.limit),
+        hasNextPage: skip + options.limit < total,
+        hasPreviousPage: options.page > 1,
+      },
+    };
+  }
+
   async create(userId: string, dto: CreateListingDto) {
     const profile = dto.sellerId
       ? await this.prisma.sellerProfile.findFirst({

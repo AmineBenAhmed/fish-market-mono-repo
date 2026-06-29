@@ -200,6 +200,48 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface Listing {
+  id: string;
+  sellerId: string;
+  productId: string;
+  variantId?: string;
+  date: string;
+  price: number;
+  quantity: number;
+  status: 'ACTIVE' | 'OUT_OF_STOCK' | 'EXPIRED';
+  title?: string;
+  description?: string;
+  catchDate?: string;
+  availabilityDate?: string;
+  origin?: string;
+  condition?: 'FRESH' | 'CHILLED' | 'FROZEN' | 'SALTED' | 'SMOKED';
+  averageWeight?: number;
+  unit?: string;
+  currency?: string;
+  coverImageId?: string;
+  imageUrls?: string[];
+  notes?: string;
+  seller?: {
+    id: string;
+    storeName: string;
+    city?: string;
+    state?: string;
+  };
+  product?: {
+    id: string;
+    name: string;
+    category?: { id: string; name: string };
+  };
+  variant?: {
+    id: string;
+    name: string;
+  };
+  boughtQuantity?: number;
+  boughtTotal?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DashboardStats {
   totalUsers: number;
   totalSellers: number;
