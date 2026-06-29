@@ -41,3 +41,6 @@ apps/api/prisma/migrations/
 
 # Misc
 *.tsbuildinfo
+
+#images
+./apps/api/uploads
