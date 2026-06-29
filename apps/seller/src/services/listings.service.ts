@@ -1,4 +1,4 @@
-import { api, unwrap } from './api';
+import { api, unwrap, unwrapPaginated } from './api';
 import type { Listing } from '../types';
 
 export interface ListingsQuery {
@@ -13,6 +13,7 @@ export interface ListingsQuery {
 }
 
 export interface CreateListingData {
+  sellerId?: string;
   productId: string;
   variantId?: string;
   date: string;
@@ -52,43 +53,43 @@ export interface UpdateListingData {
 
 export const listingsService = {
   async getAll(params?: ListingsQuery) {
-    const { data } = await api.get('/seller/listings', { params });
-    return unwrap<{ data: Listing[]; meta: any }>(data);
+    const res = await api.get('/seller/listings', { params });
+    return unwrapPaginated<Listing>(res);
   },
 
   async getToday(params?: { search?: string }) {
-    const { data } = await api.get('/seller/listings/today', { params });
-    return unwrap<Listing[]>(data);
+    const res = await api.get('/seller/listings/today', { params });
+    return unwrap<Listing[]>(res);
   },
 
   async getYesterday() {
-    const { data } = await api.get('/seller/listings/yesterday');
-    return unwrap<Listing[]>(data);
+    const res = await api.get('/seller/listings/yesterday');
+    return unwrap<Listing[]>(res);
   },
 
   async duplicateYesterday() {
-    const { data } = await api.post('/seller/listings/duplicate-yesterday');
-    return unwrap<Listing[]>(data);
+    const res = await api.post('/seller/listings/duplicate-yesterday');
+    return unwrap<Listing[]>(res);
   },
 
   async getOne(id: string) {
-    const { data } = await api.get(`/seller/listings/${id}`);
-    return unwrap<Listing>(data);
+    const res = await api.get(`/seller/listings/${id}`);
+    return unwrap<Listing>(res);
   },
 
   async create(listing: CreateListingData) {
-    const { data } = await api.post('/seller/listings', listing);
-    return unwrap<Listing>(data);
+    const res = await api.post('/seller/listings', listing);
+    return unwrap<Listing>(res);
   },
 
   async update(id: string, updates: UpdateListingData) {
-    const { data } = await api.patch(`/seller/listings/${id}`, updates);
-    return unwrap<Listing>(data);
+    const res = await api.patch(`/seller/listings/${id}`, updates);
+    return unwrap<Listing>(res);
   },
 
   async markSoldOut(id: string) {
-    const { data } = await api.patch(`/seller/listings/${id}/sold-out`);
-    return unwrap<Listing>(data);
+    const res = await api.patch(`/seller/listings/${id}/sold-out`);
+    return unwrap<Listing>(res);
   },
 
   async remove(id: string) {

@@ -30,6 +30,7 @@ export interface SellerProfile {
   businessName?: string;
   businessDoc?: string;
   taxId?: string;
+  photo?: string;
   pickupAddress?: string;
   user?: User;
   createdAt: string;

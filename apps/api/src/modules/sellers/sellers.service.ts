@@ -94,6 +94,7 @@ export class SellersService {
         businessName: dto.businessName,
         businessDoc: dto.businessDoc,
         taxId: dto.taxId,
+        photo: dto.photo,
         verificationStatus: 'PENDING',
         isActive: false,
       },
@@ -121,6 +122,7 @@ export class SellersService {
     if (dto.businessName !== undefined) data.businessName = dto.businessName;
     if (dto.businessDoc !== undefined) data.businessDoc = dto.businessDoc;
     if (dto.taxId !== undefined) data.taxId = dto.taxId;
+    if (dto.photo !== undefined) data.photo = dto.photo;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     if (dto.verificationStatus !== undefined) {
       data.verificationStatus = dto.verificationStatus as SellerVerificationStatus;
@@ -150,12 +152,15 @@ export class SellersService {
         storeDescription: dto.storeDescription,
         city: dto.city,
         state: dto.state,
+        preparationTime: dto.preparationTime,
+        deliveryRadius: dto.deliveryRadius,
         lat: dto.lat,
         lng: dto.lng,
         pickupAddress: dto.pickupAddress,
         businessName: dto.businessName,
         businessDoc: dto.businessDoc,
         taxId: dto.taxId,
+        photo: dto.photo,
         verificationStatus: 'PENDING',
         isActive: false,
       },
@@ -209,6 +214,7 @@ export class SellersService {
         ...(dto.businessName !== undefined && { businessName: dto.businessName }),
         ...(dto.businessDoc !== undefined && { businessDoc: dto.businessDoc }),
         ...(dto.taxId !== undefined && { taxId: dto.taxId }),
+        ...(dto.photo !== undefined && { photo: dto.photo }),
       },
     });
   }

@@ -27,10 +27,14 @@ export class ListingsService {
   };
 
   async create(userId: string, dto: CreateListingDto) {
-    const profile = await this.prisma.sellerProfile.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const profile = dto.sellerId
+      ? await this.prisma.sellerProfile.findFirst({
+          where: { id: dto.sellerId, userId },
+        })
+      : await this.prisma.sellerProfile.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+        });
 
     if (!profile || !profile.isActive) {
       throw new BadRequestException('Seller profile is not active');

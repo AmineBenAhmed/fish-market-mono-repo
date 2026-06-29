@@ -36,6 +36,10 @@ export class AdminUpdateSellerDto {
   @IsOptional()
   taxId?: string;
 
+  @IsString()
+  @IsOptional()
+  photo?: string;
+
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

@@ -1,6 +1,6 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Save, Store } from 'lucide-react';
+import { ArrowLeft, ImageIcon, Save, Store, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatDate, statusColor } from '../../lib/utils';
 import { sellersService } from '../../services';
+import { Dialog, DialogContent, DialogClose } from '../../components/ui/dialog';
 
 export function StoreDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,8 @@ export function StoreDetailPage() {
     queryFn: () => sellersService.getSeller(id!),
     enabled: !!id,
   });
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const [form, setForm] = useState({
     storeName: '',
@@ -145,6 +148,22 @@ export function StoreDetailPage() {
               <CardTitle className="text-lg">General Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {store.photo && (
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Registration Photo</label>
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    className="p-0 border-0 bg-transparent cursor-pointer"
+                  >
+                    <img
+                      src={store.photo}
+                      alt="Registration"
+                      className="h-24 w-24 object-cover rounded-lg border hover:opacity-80 transition-opacity"
+                    />
+                  </button>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium mb-1 block">Store Name</label>
                 <Input
@@ -323,6 +342,21 @@ export function StoreDetailPage() {
           <p className="text-emerald-600 text-sm mt-2 text-right">Store updated successfully.</p>
         )}
       </form>
+
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-3xl p-2 bg-transparent border-0 shadow-none">
+          <DialogClose className="absolute -top-10 right-0 text-white opacity-70 hover:opacity-100">
+            <X className="h-6 w-6" />
+          </DialogClose>
+          {store.photo && (
+            <img
+              src={store.photo}
+              alt="Registration photo"
+              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   Plus,
   Search,
   ShoppingBag,
+  Store,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -41,8 +42,8 @@ import {
 } from '../../components/ui/select';
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatCurrency, formatDate } from '../../lib/utils';
-import { listingsService } from '../../services';
-import type { Listing } from '../../types';
+import { listingsService, sellerService } from '../../services';
+import type { Listing, SellerProfile } from '../../types';
 import { ListingFormDialog } from './listing-form-dialog';
 import type { ListingFormSubmitData } from './listing-form-dialog';
 
@@ -108,6 +109,11 @@ export function ListingsPage() {
       }),
   });
 
+  const { data: stores } = useQuery({
+    queryKey: ['seller', 'profiles'],
+    queryFn: sellerService.listStores,
+  });
+
   const listings = result?.data ?? [];
   const meta = result?.meta;
 
@@ -118,6 +124,7 @@ export function ListingsPage() {
   const createMutation = useMutation({
     mutationFn: (data: ListingFormSubmitData) => {
       return listingsService.create({
+        sellerId: data.sellerId,
         productId: data.productId,
         date: new Date().toISOString(),
         price: data.price,
@@ -316,6 +323,9 @@ export function ListingsPage() {
                       <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground">
                         Fish Category
                       </th>
+                      <th className="text-left px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground hidden md:table-cell">
+                        Store
+                      </th>
                       <th className="text-right px-4 py-3 font-medium text-xs uppercase tracking-wider text-muted-foreground">
                         Price
                       </th>
@@ -362,6 +372,11 @@ export function ListingsPage() {
                               </p>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <span className="text-sm text-muted-foreground">
+                            {stores?.find((s) => s.id === listing.sellerId)?.storeName || '—'}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="text-sm font-semibold">
@@ -492,6 +507,7 @@ export function ListingsPage() {
         onSubmit={handleFormSubmit}
         isPending={createMutation.isPending || updateMutation.isPending}
         editListing={editingListing}
+        stores={stores ?? []}
       />
 
       <Dialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>

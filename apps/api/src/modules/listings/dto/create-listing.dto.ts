@@ -12,6 +12,10 @@ import {
 
 export class CreateListingDto {
   @IsString()
+  @IsOptional()
+  sellerId?: string;
+
+  @IsString()
   productId!: string;
 
   @IsString()

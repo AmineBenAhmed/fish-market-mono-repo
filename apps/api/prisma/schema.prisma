@@ -314,6 +314,7 @@ model SellerProfile {
   businessName       String?
   businessDoc        String?
   taxId              String?
+  photo              String?
   isActive           Boolean                 @default(false)
   city               String
   state              String

@@ -51,4 +51,8 @@ export class UpdateSellerDto {
   @IsString()
   @IsOptional()
   taxId?: string;
+
+  @IsString()
+  @IsOptional()
+  photo?: string;
 }

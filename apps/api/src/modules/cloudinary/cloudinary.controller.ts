@@ -44,7 +44,10 @@ export class CloudinaryController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg|gif|webp)' }),
+          new FileTypeValidator({
+            fileType: '.(png|jpeg|jpg|gif|webp)$',
+            skipMagicNumbersValidation: true,
+          }),
         ],
       }),
     )

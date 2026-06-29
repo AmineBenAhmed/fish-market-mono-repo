@@ -51,4 +51,8 @@ export class AdminCreateSellerDto {
   @IsString()
   @IsOptional()
   taxId?: string;
+
+  @IsString()
+  @IsOptional()
+  photo?: string;
 }

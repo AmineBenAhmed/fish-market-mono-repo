@@ -69,6 +69,7 @@ export interface SellerProfile {
   businessName?: string;
   businessDoc?: string;
   taxId?: string;
+  photo?: string;
   isActive: boolean;
   city: string;
   state: string;

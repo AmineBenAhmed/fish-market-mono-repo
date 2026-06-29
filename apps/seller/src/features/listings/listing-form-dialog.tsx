@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { Button, Input } from '@fishmarket/ui';
+import { Store } from 'lucide-react';
 
 import {
   Select,
@@ -19,28 +20,8 @@ import {
 } from '../../components/ui/dialog';
 import { cloudinaryService, productsService } from '../../services';
 import type { FishProduct } from '../../services/products.service';
+import type { SellerProfile } from '../../types';
 import { ImageUpload } from './image-upload';
-
-const FISH_CATEGORIES = [
-  'Sardine',
-  'Sea Bream (Dorade)',
-  'Sea Bass (Loup de Mer)',
-  'Red Mullet (Rouget)',
-  'Mackerel (Maquereau)',
-  'Anchovy',
-  'Grouper',
-  'Tuna',
-  'Bonito',
-  'Horse Mackerel',
-  'Octopus',
-  'Squid',
-  'Shrimp',
-  'Crab',
-  'Cuttlefish',
-  'Mussels',
-  'Clams',
-  'Other',
-];
 
 const CONDITIONS = ['FRESH', 'FROZEN', 'CHILLED'] as const;
 const ORIGINS = [
@@ -67,6 +48,7 @@ interface UploadedImage {
 }
 
 export interface ListingFormSubmitData {
+  sellerId?: string;
   category: string;
   productId: string;
   description: string;
@@ -86,6 +68,7 @@ interface ListingFormDialogProps {
   onSubmit: (data: ListingFormSubmitData) => void;
   isPending: boolean;
   editListing?: any;
+  stores: SellerProfile[];
 }
 
 export function ListingFormDialog({
@@ -94,12 +77,14 @@ export function ListingFormDialog({
   onSubmit,
   isPending,
   editListing,
+  stores,
 }: ListingFormDialogProps) {
   const [products, setProducts] = useState<FishProduct[]>([]);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
 
-  const [category, setCategory] = useState('');
+  const [selectedStoreId, setSelectedStoreId] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -114,12 +99,15 @@ export function ListingFormDialog({
         .getActive()
         .then(setProducts)
         .catch(() => {});
+      if (stores.length === 1) {
+        setSelectedStoreId(stores[0].id);
+      }
     }
-  }, [open]);
+  }, [open, stores]);
 
   useEffect(() => {
     if (editListing && open) {
-      setCategory(editListing.product?.category?.name ?? editListing.title ?? '');
+      setSelectedProductId(editListing.productId ?? '');
       setDescription(editListing.description ?? '');
       setPrice(String(editListing.price ?? ''));
       setQuantity(String(editListing.quantity ?? ''));
@@ -142,7 +130,8 @@ export function ListingFormDialog({
   }, [editListing, open]);
 
   function resetForm() {
-    setCategory('');
+    setSelectedStoreId(stores.length === 1 ? stores[0].id : '');
+    setSelectedProductId('');
     setDescription('');
     setPrice('');
     setQuantity('');
@@ -154,7 +143,7 @@ export function ListingFormDialog({
 
   function validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!category) errs.category = 'Please select a fish category';
+    if (!selectedProductId) errs.category = 'Please select a fish category';
     if (!price || Number(price) <= 0) errs.price = 'Price must be greater than 0';
     if (!quantity || Number(quantity) <= 0) errs.quantity = 'Quantity must be greater than 0';
     if ((images ?? []).length > 4) errs.images = 'Maximum 4 photos allowed';
@@ -181,12 +170,12 @@ export function ListingFormDialog({
       setUploadingImages(false);
     }
 
-    const matchedProduct = (products ?? []).find((p) => p.name === category);
-    const effectiveProductId = matchedProduct?.id ?? '';
+    const matchedProduct = (products ?? []).find((p) => p.id === selectedProductId);
 
     onSubmit({
-      category,
-      productId: effectiveProductId,
+      sellerId: selectedStoreId || undefined,
+      category: matchedProduct?.name ?? '',
+      productId: selectedProductId,
       description,
       price: Number(price),
       quantity: Number(quantity),
@@ -209,6 +198,28 @@ export function ListingFormDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {stores.length > 1 && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Store <span className="text-destructive">*</span>
+              </label>
+              <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a store" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stores.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      <span className="flex items-center gap-2">
+                        <Store className="h-4 w-4" />
+                        {s.storeName}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
@@ -219,14 +230,14 @@ export function ListingFormDialog({
                 <label className="text-sm font-medium">
                   Fish Category <span className="text-destructive">*</span>
                 </label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select fish category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {FISH_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
+                    {(products ?? []).map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        {product.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

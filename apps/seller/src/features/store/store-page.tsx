@@ -1,14 +1,15 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
-import { ArrowLeft, MapPin, Plus, Store } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, ImagePlus, MapPin, Plus, Store, X } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Dialog, DialogClose, DialogContent } from '../../components/ui/dialog';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Badge } from '../../components/ui/badge';
 import { formatDate } from '../../lib/utils';
-import { sellerService } from '../../services';
+import { cloudinaryService, sellerService } from '../../services';
 import type { SellerProfile } from '../../types';
 
 type View = 'list' | 'detail' | 'create';
@@ -175,6 +176,8 @@ export function StorePage() {
 }
 
 function StoreDetail({ store, onBack }: { store: SellerProfile; onBack: () => void }) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
   return (
     <div className="space-y-4 pt-2">
       <div className="flex items-center gap-3">
@@ -196,6 +199,22 @@ function StoreDetail({ store, onBack }: { store: SellerProfile; onBack: () => vo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {store.photo && (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Registration Photo</p>
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(true)}
+                  className="p-0 border-0 bg-transparent cursor-pointer"
+                >
+                  <img
+                    src={store.photo}
+                    alt="Registration"
+                    className="h-24 w-24 object-cover rounded-lg border hover:opacity-80 transition-opacity"
+                  />
+                </button>
+              </div>
+            )}
             <div>
               <p className="text-sm text-muted-foreground">Store Name</p>
               <p className="font-semibold text-lg">{store.storeName}</p>
@@ -296,12 +315,28 @@ function StoreDetail({ store, onBack }: { store: SellerProfile; onBack: () => vo
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-3xl p-2 bg-transparent border-0 shadow-none">
+          <DialogClose className="absolute -top-10 right-0 text-white opacity-70 hover:opacity-100">
+            <X className="h-6 w-6" />
+          </DialogClose>
+          {store.photo && (
+            <img
+              src={store.photo}
+              alt="Registration photo"
+              className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
 function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess: () => void }) {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     storeName: '',
@@ -312,8 +347,15 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
     businessName: '',
     businessDoc: '',
     taxId: '',
+    preparationTime: '30',
+    deliveryRadius: '10',
+    lat: '',
+    lng: '',
   });
 
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const createMutation = useMutation({
@@ -322,10 +364,15 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
       storeDescription?: string;
       city: string;
       state: string;
+      preparationTime?: number;
+      deliveryRadius?: number;
+      lat?: number;
+      lng?: number;
       pickupAddress?: string;
       businessName?: string;
       businessDoc?: string;
       taxId?: string;
+      photo?: string;
     }) => sellerService.apply(data),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['seller', 'profiles'] });
@@ -336,10 +383,39 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
     if (!form.storeName || !form.city || !form.state) return;
+
+    let photoUrl: string | undefined;
+
+    if (photoFile) {
+      setUploadingPhoto(true);
+      try {
+        const result = await cloudinaryService.upload(photoFile);
+        photoUrl = result.url;
+      } catch {
+        setSubmitError('Failed to upload registration photo');
+        setUploadingPhoto(false);
+        return;
+      }
+      setUploadingPhoto(false);
+    }
 
     try {
       await createMutation.mutateAsync({
@@ -347,10 +423,15 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
         storeDescription: form.storeDescription || undefined,
         city: form.city,
         state: form.state,
+        preparationTime: form.preparationTime ? Number(form.preparationTime) : undefined,
+        deliveryRadius: form.deliveryRadius ? Number(form.deliveryRadius) : undefined,
+        lat: form.lat ? Number(form.lat) : undefined,
+        lng: form.lng ? Number(form.lng) : undefined,
         pickupAddress: form.pickupAddress || undefined,
         businessName: form.businessName || undefined,
         businessDoc: form.businessDoc || undefined,
         taxId: form.taxId || undefined,
+        photo: photoUrl,
       });
       onSuccess();
     } catch (err) {
@@ -469,6 +550,40 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
               />
             </div>
             <div>
+              <label className="text-sm font-medium mb-1 block">Registration Photo</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+              {photoPreview ? (
+                <div className="relative inline-block">
+                  <img
+                    src={photoPreview}
+                    alt="Registration preview"
+                    className="h-32 w-32 object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 h-32 w-32 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-muted-foreground/50 transition-colors justify-center"
+                >
+                  <ImagePlus className="h-8 w-8 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+            <div>
               <label className="text-sm font-medium mb-1 block">Business Name</label>
               <Input
                 placeholder="Legal business name"
@@ -498,6 +613,62 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
           </CardContent>
         </Card>
 
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="text-base">Delivery Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Preparation Time (min)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="30"
+                  value={form.preparationTime}
+                  onChange={(e) => handleChange('preparationTime', e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Delivery Radius (km)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="10"
+                  value={form.deliveryRadius}
+                  onChange={(e) => handleChange('deliveryRadius', e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Latitude</label>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder="36.8065"
+                  value={form.lat}
+                  onChange={(e) => handleChange('lat', e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Longitude</label>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder="10.1815"
+                  value={form.lng}
+                  onChange={(e) => handleChange('lng', e.target.value)}
+                  className="h-12 text-base"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex gap-3 pt-4">
           <Button
             type="button"
@@ -510,9 +681,13 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
           <Button
             type="submit"
             className="flex-1 h-12 text-base"
-            disabled={createMutation.isPending}
+            disabled={createMutation.isPending || uploadingPhoto}
           >
-            {createMutation.isPending ? 'Creating...' : 'Create Store'}
+            {uploadingPhoto
+              ? 'Uploading photo...'
+              : createMutation.isPending
+                ? 'Creating...'
+                : 'Create Store'}
           </Button>
         </div>
       </form>

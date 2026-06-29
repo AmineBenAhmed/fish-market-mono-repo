@@ -25,6 +25,7 @@ export interface SellerProfile {
   businessName?: string;
   businessDoc?: string;
   taxId?: string;
+  photo?: string;
   pickupAddress?: string;
   createdAt: string;
   updatedAt: string;
@@ -67,6 +68,7 @@ export interface Listing {
   coverImage?: { id: string; url: string } | null;
   coverImageId?: string | null;
   images: ListingImage[];
+  imageUrls?: string[];
   product?: {
     id: string;
     name: string;

@@ -22,12 +22,15 @@ export const sellerService = {
     storeDescription?: string;
     city: string;
     state: string;
+    preparationTime?: number;
+    deliveryRadius?: number;
     lat?: number;
     lng?: number;
     pickupAddress?: string;
     businessName?: string;
     businessDoc?: string;
     taxId?: string;
+    photo?: string;
   }): Promise<SellerProfile> {
     const result = await api.post('/sellers/apply', data);
     return unwrap<SellerProfile>(result);

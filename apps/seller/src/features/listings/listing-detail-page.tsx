@@ -121,14 +121,26 @@ export function ListingDetailPage() {
             </CardContent>
           </Card>
 
-          {listing.images && listing.images.length > 0 && (
+          {(listing.images?.length > 0 || listing.imageUrls?.length > 0) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Photos</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {listing.images.map((img) => (
+                  {listing.imageUrls?.map((url, i) => (
+                    <div
+                      key={`url-${i}`}
+                      className="aspect-square rounded-lg overflow-hidden border"
+                    >
+                      <img
+                        src={url}
+                        alt={`Listing image ${i + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                  {listing.images?.map((img) => (
                     <div key={img.id} className="aspect-square rounded-lg overflow-hidden border">
                       <img
                         src={img.file?.url}

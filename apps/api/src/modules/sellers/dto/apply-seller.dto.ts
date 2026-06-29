@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class ApplySellerDto {
   @IsString()
@@ -16,6 +16,14 @@ export class ApplySellerDto {
   @IsString()
   @MinLength(2)
   state!: string;
+
+  @IsInt()
+  @IsOptional()
+  preparationTime?: number;
+
+  @IsInt()
+  @IsOptional()
+  deliveryRadius?: number;
 
   @IsNumber()
   @IsOptional()
@@ -40,4 +48,8 @@ export class ApplySellerDto {
   @IsString()
   @IsOptional()
   taxId?: string;
+
+  @IsString()
+  @IsOptional()
+  photo?: string;
 }
