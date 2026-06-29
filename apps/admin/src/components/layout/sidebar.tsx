@@ -4,6 +4,7 @@ import {
   Bell,
   CreditCard,
   LayoutDashboard,
+  List,
   LogOut,
   Menu,
   Package,
@@ -26,6 +27,7 @@ const navItems = [
   { to: '/orders', icon: ShoppingCart, label: 'Orders' },
   { to: '/payments', icon: CreditCard, label: 'Payments' },
   { to: '/deliveries', icon: Package, label: 'Deliveries' },
+  { to: '/listings', icon: List, label: 'Listings' },
   { to: '/notifications', icon: Bell, label: 'Notifications' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
 ];
