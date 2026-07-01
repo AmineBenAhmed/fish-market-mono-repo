@@ -2,11 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { fetchListing } from '@/lib/api';
+import { fetchListing, fetchSellerListings } from '@/lib/api';
 import { useCart } from '@/hooks/use-cart';
 import { QuantityPicker } from '@/components/quantity-picker';
 import type { Listing } from '@/lib/types';
-import { Loader2, ArrowLeft, ShoppingCart, MapPin, Fish, AlertTriangle } from 'lucide-react';
+import {
+  Loader2,
+  ArrowLeft,
+  ShoppingCart,
+  MapPin,
+  Fish,
+  AlertTriangle,
+  Package,
+  Store,
+} from 'lucide-react';
 import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
@@ -19,6 +28,9 @@ function getImages(listing: Listing): string[] {
     listing.images.forEach((img) => {
       if (img.file?.url) urls.push(`${API_URL}${img.file.url}`);
     });
+  }
+  if (urls.length === 0 && listing.seller?.storeLogoUrl) {
+    urls.push(listing.seller.storeLogoUrl);
   }
   return urls;
 }
@@ -33,14 +45,27 @@ export default function ListingDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [sameStoreListings, setSameStoreListings] = useState<Listing[]>([]);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     fetchListing(id)
       .then((res) => {
-        setListing(res.data as unknown as Listing);
+        const listingData = res.data as unknown as Listing;
+        setListing(listingData);
         setQuantity(1);
+
+        if (listingData.seller?.id) {
+          fetchSellerListings(listingData.seller.id)
+            .then((sellerRes) => {
+              const otherListings =
+                (sellerRes.data as any).listings?.filter((l: any) => l.id !== listingData.id) || [];
+              setSameStoreListings(otherListings);
+            })
+            .catch(() => {});
+        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -67,19 +92,19 @@ export default function ListingDetailPage() {
   }
 
   const images = getImages(listing);
-  const categoryName = listing.product?.category?.name || 'General';
+  const categoryName = listing.category?.name || 'General';
 
   const handleAddToCart = () => {
     addItem({
       listingId: listing.id,
       quantity,
-      title: listing.title || listing.product.name,
+      title: listing.title || listing.category?.name || 'Fish',
       price: Number(listing.price),
       unit: listing.unit,
       currency: listing.currency,
       imageUrl: images[0] || null,
       storeName: listing.seller.storeName,
-      productName: listing.product.name,
+      productName: listing.title || listing.category?.name || 'Fish',
       variantName: listing.variant?.name || '',
       maxQuantity: listing.quantity,
     });
@@ -88,7 +113,7 @@ export default function ListingDetailPage() {
   };
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6"
@@ -97,13 +122,13 @@ export default function ListingDetailPage() {
         Back
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
         <div>
           <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden">
             {images.length > 0 ? (
               <img
-                src={images[0]}
-                alt={listing.title || listing.product.name}
+                src={images[selectedImage]}
+                alt={listing.title || categoryName}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -115,12 +140,15 @@ export default function ListingDetailPage() {
           {images.length > 1 && (
             <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
               {images.map((url, i) => (
-                <div
+                <button
                   key={i}
-                  className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0"
+                  onClick={() => setSelectedImage(i)}
+                  className={`w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-colors ${
+                    selectedImage === i ? 'border-blue-500' : 'border-gray-200'
+                  }`}
                 >
                   <img src={url} alt="" className="w-full h-full object-cover" />
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -132,15 +160,23 @@ export default function ListingDetailPage() {
               {categoryName}
             </span>
             <h1 className="text-2xl font-bold text-gray-900 mt-3">
-              {listing.title || listing.product.name}
+              {listing.title || categoryName}
             </h1>
             {listing.description && <p className="text-gray-600 mt-2">{listing.description}</p>}
           </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <MapPin className="h-4 w-4" />
+            {listing.seller.storeLogoUrl ? (
+              <img
+                src={listing.seller.storeLogoUrl}
+                alt=""
+                className="h-6 w-6 rounded-full object-cover"
+              />
+            ) : (
+              <Store className="h-4 w-4" />
+            )}
             <span>
-              {listing.seller.storeName} - {listing.seller.city}, {listing.seller.state}
+              {listing.seller.storeName} &middot; {listing.seller.city}, {listing.seller.state}
             </span>
           </div>
 
@@ -149,7 +185,7 @@ export default function ListingDetailPage() {
             {listing.unit && <span className="text-lg text-gray-400"> / {listing.unit}</span>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 rounded-xl p-4">
             {listing.origin && (
               <div>
                 <span className="text-gray-400">Origin</span>
@@ -174,6 +210,12 @@ export default function ListingDetailPage() {
                 {listing.quantity} {listing.unit}
               </p>
             </div>
+            {listing.catchDate && (
+              <div>
+                <span className="text-gray-400">Catch Date</span>
+                <p className="font-medium">{new Date(listing.catchDate).toLocaleDateString()}</p>
+              </div>
+            )}
           </div>
 
           <div className="border-t pt-6 space-y-4">
@@ -194,6 +236,55 @@ export default function ListingDetailPage() {
           </div>
         </div>
       </div>
+
+      {sameStoreListings.length > 0 && (
+        <div className="border-t pt-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">
+            More from {listing.seller.storeName}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {sameStoreListings.map((l) => (
+              <Link
+                key={l.id}
+                href={`/listings/${l.id}`}
+                className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-200"
+              >
+                <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                  {l.imageUrls?.length ? (
+                    <img
+                      src={l.imageUrls[0]}
+                      alt={l.title || l.category?.name || ''}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <Fish className="h-12 w-12" />
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
+                    {l.category?.name || 'General'}
+                  </div>
+                </div>
+                <div className="p-3 space-y-1">
+                  <h3 className="font-semibold text-gray-900 text-sm truncate">
+                    {l.title || l.category?.name || 'Fish'}
+                  </h3>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-blue-600">
+                      {l.currency} {Number(l.price).toFixed(2)}
+                      {l.unit ? `/${l.unit}` : ''}
+                    </span>
+                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                      <Package className="h-3 w-3" />
+                      <span>{l.quantity} left</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
