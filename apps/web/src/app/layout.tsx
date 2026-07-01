@@ -7,10 +7,14 @@ import './globals.css';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50 text-gray-900">
+      <body className="min-h-screen text-gray-900">
+        <div className="fixed inset-0 -z-10">
+          <img src="/assets/sea.jpg" alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-white/70" />
+        </div>
         <CartProvider>
           <Header />
-          <main className="max-w-7xl mx-auto px-4 py-8">{children}</main>
+          <main className="max-w-[1440px] mx-auto px-6 py-8">{children}</main>
         </CartProvider>
       </body>
     </html>
