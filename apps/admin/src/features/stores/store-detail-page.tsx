@@ -1,7 +1,7 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ImageIcon, Save, Store, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowLeft, ImageIcon, Loader2, Save, Store, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '../../components/shared/page-header';
@@ -9,7 +9,7 @@ import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatDate, statusColor } from '../../lib/utils';
-import { sellersService } from '../../services';
+import { cloudinaryService, sellersService } from '../../services';
 import { Dialog, DialogContent, DialogClose } from '../../components/ui/dialog';
 
 export function StoreDetailPage() {
@@ -28,6 +28,24 @@ export function StoreDetailPage() {
   });
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File, field: 'photo' | 'storeLogoUrl') => {
+    if (field === 'photo') setUploadingPhoto(true);
+    else setUploadingLogo(true);
+    try {
+      const result = await cloudinaryService.upload(file);
+      setForm((prev) => ({ ...prev, [field]: result.url }));
+    } catch {
+      console.error(`Failed to upload ${field}`);
+    } finally {
+      if (field === 'photo') setUploadingPhoto(false);
+      else setUploadingLogo(false);
+    }
+  };
 
   const [form, setForm] = useState({
     storeName: '',
@@ -39,6 +57,8 @@ export function StoreDetailPage() {
     businessDoc: '',
     taxId: '',
     isActive: false,
+    photo: '',
+    storeLogoUrl: '',
   });
 
   useEffect(() => {
@@ -53,6 +73,8 @@ export function StoreDetailPage() {
         businessDoc: store.businessDoc || '',
         taxId: store.taxId || '',
         isActive: store.isActive,
+        photo: store.photo || '',
+        storeLogoUrl: store.storeLogoUrl || '',
       });
     }
   }, [store]);
@@ -126,6 +148,8 @@ export function StoreDetailPage() {
       businessDoc: form.businessDoc || undefined,
       taxId: form.taxId || undefined,
       isActive: form.isActive,
+      photo: form.photo || undefined,
+      storeLogoUrl: form.storeLogoUrl || undefined,
     });
   };
 
@@ -148,22 +172,34 @@ export function StoreDetailPage() {
               <CardTitle className="text-lg">General Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {store.photo && (
-                <div>
-                  <label className="text-sm font-medium mb-1 block">Registration Photo</label>
-                  <button
-                    type="button"
-                    onClick={() => setLightboxOpen(true)}
-                    className="p-0 border-0 bg-transparent cursor-pointer"
-                  >
+              <div className="flex gap-4 flex-wrap">
+                {store.photo && (
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Registration Photo</label>
+                    <button
+                      type="button"
+                      onClick={() => setLightboxOpen(true)}
+                      className="p-0 border-0 bg-transparent cursor-pointer"
+                    >
+                      <img
+                        src={store.photo}
+                        alt="Registration"
+                        className="h-24 w-24 object-cover rounded-lg border hover:opacity-80 transition-opacity"
+                      />
+                    </button>
+                  </div>
+                )}
+                {store.storeLogoUrl && (
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Store Logo</label>
                     <img
-                      src={store.photo}
-                      alt="Registration"
-                      className="h-24 w-24 object-cover rounded-lg border hover:opacity-80 transition-opacity"
+                      src={store.storeLogoUrl}
+                      alt="Store Logo"
+                      className="h-24 w-24 object-cover rounded-lg border"
                     />
-                  </button>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Store Name</label>
                 <Input
@@ -178,6 +214,94 @@ export function StoreDetailPage() {
                   value={form.storeDescription}
                   onChange={(e) => handleChange('storeDescription', e.target.value)}
                 />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Registration Photo</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, 'photo');
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                  >
+                    {uploadingPhoto ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-4 w-4" />
+                    )}
+                    {form.photo ? 'Change' : 'Upload'}
+                  </Button>
+                  {form.photo && (
+                    <div className="relative">
+                      <img
+                        src={form.photo}
+                        alt="Registration"
+                        className="h-12 w-12 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, photo: '' }))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Store Logo</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, 'storeLogoUrl');
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                  >
+                    {uploadingLogo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-4 w-4" />
+                    )}
+                    {form.storeLogoUrl ? 'Change' : 'Upload'}
+                  </Button>
+                  {form.storeLogoUrl && (
+                    <div className="relative">
+                      <img
+                        src={form.storeLogoUrl}
+                        alt="Store Logo"
+                        className="h-12 w-12 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, storeLogoUrl: '' }))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Business Name</label>

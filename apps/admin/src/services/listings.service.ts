@@ -20,7 +20,7 @@ export const listingsService = {
 
   async create(data: {
     sellerId?: string;
-    productId: string;
+    categoryId: string;
     date: string;
     price: number;
     quantity: number;

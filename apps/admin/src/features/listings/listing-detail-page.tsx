@@ -82,7 +82,7 @@ export function ListingDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={listing.title || listing.product?.name || 'Listing'}
+        title={listing.title || listing.category?.name || 'Listing'}
         description={`Listing details • ${listing.seller?.storeName || 'Unknown Store'}`}
       >
         <Button variant="outline" onClick={() => navigate('/listings')}>
@@ -166,12 +166,11 @@ export function ListingDetailPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Fish className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-lg">Product</CardTitle>
+              <CardTitle className="text-lg">Category</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Field label="Product Name" value={listing.product?.name || '-'} />
-            <Field label="Category" value={listing.product?.category?.name || '-'} />
+            <Field label="Category" value={listing.category?.name || '-'} />
             <Field label="Variant" value={listing.variant?.name || '-'} />
           </CardContent>
         </Card>

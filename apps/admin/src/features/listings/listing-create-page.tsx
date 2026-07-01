@@ -1,5 +1,5 @@
 import { Button, Input } from '@fishmarket/ui';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Fish, Store } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -13,12 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import {
-  cloudinaryService,
-  listingsService,
-  productsService,
-  sellersService,
-} from '../../services';
+import { cloudinaryService, listingsService, sellersService } from '../../services';
 import { useCatalogStore } from '../../stores/catalog';
 import type { SellerProfile } from '../../types';
 
@@ -73,14 +68,6 @@ export function ListingCreatePage() {
     });
   }, [loadCategories]);
 
-  const { data: categoryProducts } = useQuery({
-    queryKey: ['products', 'category', categoryId],
-    queryFn: () => productsService.getByCategory(categoryId),
-    enabled: !!categoryId,
-  });
-
-  const products = categoryProducts ?? [];
-
   const createMutation = useMutation({
     mutationFn: (data: Parameters<typeof listingsService.create>[0]) =>
       listingsService.create(data),
@@ -105,12 +92,6 @@ export function ListingCreatePage() {
     e.preventDefault();
     if (!validate()) return;
 
-    const firstProduct = products[0];
-    if (!firstProduct) {
-      setErrors({ category: 'No products available for this category' });
-      return;
-    }
-
     let cloudinaryUrls: string[] | undefined;
 
     if (images.length > 0) {
@@ -128,11 +109,11 @@ export function ListingCreatePage() {
 
     createMutation.mutate({
       sellerId: storeId,
-      productId: firstProduct.id,
+      categoryId,
       date: new Date().toISOString(),
       price: Number(price),
       quantity: Number(quantity),
-      title: firstProduct.name,
+      title: description?.split('\n')[0]?.slice(0, 200) || 'New Listing',
       description: description || undefined,
       condition,
       origin: origin || undefined,

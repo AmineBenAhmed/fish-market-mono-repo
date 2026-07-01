@@ -31,6 +31,7 @@ export interface SellerProfile {
   businessDoc?: string;
   taxId?: string;
   photo?: string;
+  storeLogoUrl?: string;
   pickupAddress?: string;
   user?: User;
   createdAt: string;
@@ -203,7 +204,7 @@ export interface AuthResponse {
 export interface Listing {
   id: string;
   sellerId: string;
-  productId: string;
+  categoryId: string;
   variantId?: string;
   date: string;
   price: number;
@@ -227,11 +228,7 @@ export interface Listing {
     city?: string;
     state?: string;
   };
-  product?: {
-    id: string;
-    name: string;
-    category?: { id: string; name: string };
-  };
+  category?: { id: string; name: string };
   variant?: {
     id: string;
     name: string;

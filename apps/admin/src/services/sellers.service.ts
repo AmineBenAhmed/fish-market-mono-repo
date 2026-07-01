@@ -26,6 +26,8 @@ export const sellersService = {
     businessName?: string;
     businessDoc?: string;
     taxId?: string;
+    photo?: string;
+    storeLogoUrl?: string;
   }): Promise<SellerProfile> {
     const result = await api.post('/admin/sellers', data);
     return unwrap<SellerProfile>(result);
@@ -44,6 +46,8 @@ export const sellersService = {
       taxId?: string;
       isActive?: boolean;
       verificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+      photo?: string;
+      storeLogoUrl?: string;
     },
   ): Promise<SellerProfile> {
     const result = await api.patch(`/admin/sellers/${id}`, data);

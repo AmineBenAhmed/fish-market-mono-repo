@@ -100,7 +100,7 @@ export function ListingsPage() {
                 render: (l: Listing) => (
                   <div className="flex items-center gap-2">
                     <List className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{l.title || l.product?.name || '-'}</span>
+                    <span className="font-medium">{l.title || l.category?.name || '-'}</span>
                   </div>
                 ),
               },
@@ -115,10 +115,10 @@ export function ListingsPage() {
                 ),
               },
               {
-                key: 'product',
-                header: 'Product',
+                key: 'category',
+                header: 'Category',
                 render: (l: Listing) => (
-                  <span className="text-muted-foreground">{l.product?.name || '-'}</span>
+                  <span className="text-muted-foreground">{l.category?.name || '-'}</span>
                 ),
               },
               {

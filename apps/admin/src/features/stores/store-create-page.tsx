@@ -1,13 +1,13 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Plus, Search, User } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, ImageIcon, Loader2, Plus, Search, User, X } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '../../components/shared/page-header';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { sellersService, usersService } from '../../services';
+import { cloudinaryService, sellersService, usersService } from '../../services';
 import type { User as UserType } from '../../types';
 
 export function StoreCreatePage() {
@@ -32,7 +32,28 @@ export function StoreCreatePage() {
     businessName: '',
     businessDoc: '',
     taxId: '',
+    photo: '',
+    storeLogoUrl: '',
   });
+
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File, field: 'photo' | 'storeLogoUrl') => {
+    if (field === 'photo') setUploadingPhoto(true);
+    else setUploadingLogo(true);
+    try {
+      const result = await cloudinaryService.upload(file);
+      setForm((prev) => ({ ...prev, [field]: result.url }));
+    } catch {
+      console.error(`Failed to upload ${field}`);
+    } finally {
+      if (field === 'photo') setUploadingPhoto(false);
+      else setUploadingLogo(false);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: Parameters<typeof sellersService.create>[0]) => sellersService.create(data),
@@ -79,6 +100,8 @@ export function StoreCreatePage() {
       businessName: form.businessName || undefined,
       businessDoc: form.businessDoc || undefined,
       taxId: form.taxId || undefined,
+      photo: form.photo || undefined,
+      storeLogoUrl: form.storeLogoUrl || undefined,
     });
   };
 
@@ -191,6 +214,94 @@ export function StoreCreatePage() {
                   value={form.storeDescription}
                   onChange={(e) => handleChange('storeDescription', e.target.value)}
                 />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Registration Photo</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, 'photo');
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                  >
+                    {uploadingPhoto ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-4 w-4" />
+                    )}
+                    {form.photo ? 'Change' : 'Upload'}
+                  </Button>
+                  {form.photo && (
+                    <div className="relative">
+                      <img
+                        src={form.photo}
+                        alt="Registration"
+                        className="h-12 w-12 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, photo: '' }))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Store Logo</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, 'storeLogoUrl');
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => logoInputRef.current?.click()}
+                    disabled={uploadingLogo}
+                  >
+                    {uploadingLogo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-4 w-4" />
+                    )}
+                    {form.storeLogoUrl ? 'Change' : 'Upload'}
+                  </Button>
+                  {form.storeLogoUrl && (
+                    <div className="relative">
+                      <img
+                        src={form.storeLogoUrl}
+                        alt="Store Logo"
+                        className="h-12 w-12 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, storeLogoUrl: '' }))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Delivery Radius (km)</label>
