@@ -96,8 +96,8 @@ export class SellersService {
         taxId: dto.taxId,
         photo: dto.photo,
         storeLogoUrl: dto.storeLogoUrl,
-        verificationStatus: 'PENDING',
-        isActive: false,
+        verificationStatus: 'APPROVED',
+        isActive: true,
       },
     });
 
