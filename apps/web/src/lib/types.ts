@@ -10,6 +10,25 @@ export interface ListingImage {
   };
 }
 
+export interface FishCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: { id: string; url: string } | null;
+  imageUrl?: string;
+  sortOrder: number;
+}
+
+export interface SellerInfo {
+  id: string;
+  storeName: string;
+  city: string;
+  state: string;
+  photo?: string | null;
+  storeLogoUrl?: string | null;
+}
+
 export interface Listing {
   id: string;
   title: string | null;
@@ -29,25 +48,12 @@ export interface Listing {
   coverImage: { id: string; url: string } | null;
   images: ListingImage[];
   imageUrls: string[];
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    category: { id: string; name: string } | null;
-    variants: Array<{ id: string; name: string; unit: string }>;
-  };
+  category: { id: string; name: string } | null;
   variant: { id: string; name: string; unit: string } | null;
-  seller: {
-    id: string;
-    storeName: string;
-    city: string;
-    state: string;
-  };
+  seller: SellerInfo;
 }
 
-export interface PaginatedResponse<T> {
-  success: boolean;
+export interface PaginatedData<T> {
   data: T[];
   meta: {
     total: number;
@@ -57,6 +63,11 @@ export interface PaginatedResponse<T> {
     hasNextPage: boolean;
     hasPreviousPage: boolean;
   };
+}
+
+export interface MarketplaceResponse<T> {
+  success: boolean;
+  data: PaginatedData<T>;
   timestamp: string;
   path: string;
 }
