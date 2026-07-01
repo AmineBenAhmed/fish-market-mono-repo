@@ -109,7 +109,7 @@ export function HomePage() {
                 <div key={listing.id} className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-sm">
-                      {listing.product?.name ?? listing.title ?? 'Fish'}
+                      {listing.title ?? listing.category?.name ?? 'Fish'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {listing.variant?.name ?? ''} · {listing.quantity}{' '}

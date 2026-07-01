@@ -47,9 +47,8 @@ export interface ListingImage {
 export interface Listing {
   id: string;
   sellerId: string;
-  productId: string;
+  categoryId: string;
   variantId?: string | null;
-  productName?: string;
   variantName?: string;
   price: number;
   quantity: number;
@@ -69,13 +68,7 @@ export interface Listing {
   coverImageId?: string | null;
   images: ListingImage[];
   imageUrls?: string[];
-  product?: {
-    id: string;
-    name: string;
-    slug: string;
-    category: { id: string; name: string; slug: string };
-    image?: string;
-  };
+  category?: { id: string; name: string; slug: string };
   variant?: {
     id: string;
     name: string;

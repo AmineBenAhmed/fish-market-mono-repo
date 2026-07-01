@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button, Input } from '@fishmarket/ui';
-import { useQuery } from '@tanstack/react-query';
 import { Fish, Store } from 'lucide-react';
 
 import {
@@ -19,8 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../../components/ui/dialog';
-import { cloudinaryService, productsService } from '../../services';
-import type { FishProduct } from '../../services/products.service';
+import { cloudinaryService } from '../../services';
 import { useCatalogStore } from '../../stores/catalog';
 import type { SellerProfile } from '../../types';
 import { ImageUpload } from './image-upload';
@@ -51,8 +49,7 @@ interface UploadedImage {
 
 export interface ListingFormSubmitData {
   sellerId?: string;
-  category: string;
-  productId: string;
+  categoryId: string;
   description: string;
   price: number;
   quantity: number;
@@ -88,7 +85,6 @@ export function ListingFormDialog({
 
   const [selectedStoreId, setSelectedStoreId] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
-  const [selectedProductId, setSelectedProductId] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -106,30 +102,11 @@ export function ListingFormDialog({
     }
   }, [open, stores, loadCategories]);
 
-  const { data: categoryProducts } = useQuery({
-    queryKey: ['products', 'category', selectedCategoryId],
-    queryFn: () => productsService.getByCategory(selectedCategoryId),
-    enabled: !!selectedCategoryId,
-  });
-
-  const products = useMemo(() => {
-    if (selectedCategoryId && categoryProducts) return categoryProducts;
-    return [];
-  }, [selectedCategoryId, categoryProducts]);
-
-  useEffect(() => {
-    if (!selectedCategoryId) {
-      setSelectedProductId('');
-    }
-  }, [selectedCategoryId]);
-
   useEffect(() => {
     if (editListing && open) {
-      const productCatId = editListing.product?.categoryId ?? editListing.product?.category?.id;
-      if (productCatId) {
-        setSelectedCategoryId(productCatId);
+      if (editListing.categoryId) {
+        setSelectedCategoryId(editListing.categoryId);
       }
-      setSelectedProductId(editListing.productId ?? '');
       setDescription(editListing.description ?? '');
       setPrice(String(editListing.price ?? ''));
       setQuantity(String(editListing.quantity ?? ''));
@@ -154,7 +131,6 @@ export function ListingFormDialog({
   function resetForm() {
     setSelectedStoreId(stores.length === 1 ? stores[0].id : '');
     setSelectedCategoryId('');
-    setSelectedProductId('');
     setDescription('');
     setPrice('');
     setQuantity('');
@@ -167,7 +143,6 @@ export function ListingFormDialog({
   function validate(): boolean {
     const errs: Record<string, string> = {};
     if (!selectedCategoryId) errs.category = 'Please select a fish category';
-    if (!selectedProductId) errs.product = 'Please select a product';
     if (!price || Number(price) <= 0) errs.price = 'Price must be greater than 0';
     if (!quantity || Number(quantity) <= 0) errs.quantity = 'Quantity must be greater than 0';
     if ((images ?? []).length > 4) errs.images = 'Maximum 4 photos allowed';
@@ -194,12 +169,9 @@ export function ListingFormDialog({
       setUploadingImages(false);
     }
 
-    const matchedProduct = products.find((p) => p.id === selectedProductId);
-
     onSubmit({
       sellerId: selectedStoreId || undefined,
-      category: matchedProduct?.name ?? '',
-      productId: selectedProductId,
+      categoryId: selectedCategoryId,
       description,
       price: Number(price),
       quantity: Number(quantity),
@@ -278,27 +250,6 @@ export function ListingFormDialog({
                   </SelectContent>
                 </Select>
                 {errors.category && <p className="text-xs text-destructive">{errors.category}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Product <span className="text-destructive">*</span>
-                </label>
-                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={!selectedCategoryId ? 'Select category first' : 'Select product'}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.product && <p className="text-xs text-destructive">{errors.product}</p>}
               </div>
 
               <div className="space-y-2">

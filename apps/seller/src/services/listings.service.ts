@@ -14,7 +14,7 @@ export interface ListingsQuery {
 
 export interface CreateListingData {
   sellerId?: string;
-  productId: string;
+  categoryId: string;
   variantId?: string;
   date: string;
   price: number;

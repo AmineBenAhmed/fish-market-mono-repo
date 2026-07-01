@@ -125,11 +125,11 @@ export function ListingsPage() {
     mutationFn: (data: ListingFormSubmitData) => {
       return listingsService.create({
         sellerId: data.sellerId,
-        productId: data.productId,
+        categoryId: data.categoryId,
         date: new Date().toISOString(),
         price: data.price,
         quantity: data.quantity,
-        title: data.category,
+        title: data.description?.split('\n')[0]?.slice(0, 200) || 'New Listing',
         description: data.description,
         origin: data.origin,
         condition: data.condition,
@@ -148,7 +148,7 @@ export function ListingsPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ListingFormSubmitData }) =>
       listingsService.update(id, {
-        title: data.category,
+        title: data.description?.split('\n')[0]?.slice(0, 200) || undefined,
         description: data.description,
         price: data.price,
         quantity: data.quantity,
@@ -368,7 +368,7 @@ export function ListingsPage() {
                             </div>
                             <div className="min-w-0">
                               <p className="text-sm font-medium truncate">
-                                {listing.title || listing.product?.name || 'Fish'}
+                                {listing.title || listing.category?.name || 'Fish'}
                               </p>
                             </div>
                           </div>
@@ -517,7 +517,7 @@ export function ListingsPage() {
             <DialogDescription>
               Are you sure you want to delete{' '}
               <strong>
-                {deleteConfirm?.title || deleteConfirm?.product?.name || 'this listing'}
+                {deleteConfirm?.title || deleteConfirm?.category?.name || 'this listing'}
               </strong>
               ?
             </DialogDescription>

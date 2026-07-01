@@ -68,7 +68,7 @@ export function ListingDetailPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-xl">
-                    {listing.title || listing.product?.name || 'Fish Listing'}
+                    {listing.title || listing.category?.name || 'Fish Listing'}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
                     Created {formatDate(listing.createdAt)}
@@ -166,7 +166,7 @@ export function ListingDetailPage() {
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Category</span>
-                <span className="font-medium">{listing.product?.category?.name || '—'}</span>
+                <span className="font-medium">{listing.category?.name || '—'}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Condition</span>
