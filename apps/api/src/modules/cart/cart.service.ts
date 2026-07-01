@@ -28,15 +28,7 @@ export class CartService {
           include: {
             listing: {
               include: {
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    preservation: true,
-                    qualityGrade: true,
-                  },
-                },
+                category: { select: { id: true, name: true } },
                 variant: { select: { id: true, name: true, unit: true } },
                 seller: { select: { id: true, storeName: true } },
               },
@@ -94,7 +86,7 @@ export class CartService {
       return this.prisma.cartItem.update({
         where: { id: existing.id },
         data: { quantity: newQty, listingId: dto.listingId },
-        include: { listing: { include: { product: true, variant: true, seller: true } } },
+        include: { listing: { include: { category: true, variant: true, seller: true } } },
       });
     }
 
@@ -105,7 +97,7 @@ export class CartService {
         variantId: listing.variantId,
         quantity: dto.quantity,
       },
-      include: { listing: { include: { product: true, variant: true, seller: true } } },
+      include: { listing: { include: { category: true, variant: true, seller: true } } },
     });
   }
 
@@ -128,7 +120,7 @@ export class CartService {
     return this.prisma.cartItem.update({
       where: { id: itemId },
       data: { quantity: dto.quantity },
-      include: { listing: { include: { product: true, variant: true, seller: true } } },
+      include: { listing: { include: { category: true, variant: true, seller: true } } },
     });
   }
 

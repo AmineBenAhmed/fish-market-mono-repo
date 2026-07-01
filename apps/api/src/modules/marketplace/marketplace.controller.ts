@@ -18,8 +18,6 @@ export class MarketplaceController {
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'minPrice', required: false, type: Number })
   @ApiQuery({ name: 'maxPrice', required: false, type: Number })
-  @ApiQuery({ name: 'qualityGrade', required: false, type: String })
-  @ApiQuery({ name: 'preservation', required: false, type: String })
   @ApiQuery({ name: 'sortBy', required: false, enum: ['price', 'date', 'name'] })
   @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'] })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -31,8 +29,6 @@ export class MarketplaceController {
     @Query('search') search?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
-    @Query('qualityGrade') qualityGrade?: string,
-    @Query('preservation') preservation?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: string,
     @Query('page') page?: string,
@@ -44,8 +40,6 @@ export class MarketplaceController {
       search,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-      qualityGrade,
-      preservation,
       sortBy: sortBy as 'price' | 'date' | 'name' | undefined,
       sortOrder: sortOrder as 'asc' | 'desc' | undefined,
       page: page ? parseInt(page, 10) : 1,

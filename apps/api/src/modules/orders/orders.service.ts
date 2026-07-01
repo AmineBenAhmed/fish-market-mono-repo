@@ -43,14 +43,7 @@ export class OrdersService {
             listing: {
               include: {
                 seller: { include: { user: { select: { id: true } } } },
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    variants: { select: { id: true, name: true, unit: true } },
-                  },
-                },
+                category: { select: { id: true, name: true } },
                 variant: { select: { id: true, name: true, unit: true } },
               },
             },
@@ -68,13 +61,19 @@ export class OrdersService {
 
     for (const item of cart.items) {
       if (item.listing.status !== 'ACTIVE') {
-        throw new BadRequestException(`Listing for ${item.listing.product.name} is not active`);
+        throw new BadRequestException(
+          `Listing for ${item.listing.title ?? item.listing.category.name} is not active`,
+        );
       }
       if (item.listing.date < today) {
-        throw new BadRequestException(`Listing for ${item.listing.product.name} is expired`);
+        throw new BadRequestException(
+          `Listing for ${item.listing.title ?? item.listing.category.name} is expired`,
+        );
       }
       if (item.listing.quantity < item.quantity) {
-        throw new BadRequestException(`Insufficient stock for ${item.listing.product.name}`);
+        throw new BadRequestException(
+          `Insufficient stock for ${item.listing.title ?? item.listing.category.name}`,
+        );
       }
     }
 
@@ -166,34 +165,23 @@ export class OrdersService {
         for (const cartItem of so.items) {
           await this.inventoryReservation.reserve(tx, cartItem.listingId, cartItem.quantity);
 
-          let variant = cartItem.listing.variant;
-          if (!variant) {
-            variant = cartItem.listing.product.variants[0] ?? null;
-          }
-          if (!variant) {
-            variant = await tx.fishVariant.create({
-              data: {
-                productId: cartItem.listing.productId,
-                name: cartItem.listing.product.name,
-                unit: 'UNIT' as any,
-              },
-            });
-          }
+          const variant = cartItem.listing.variant;
 
-          await tx.orderItem.create({
-            data: {
-              orderId: created.id,
-              listingId: cartItem.listingId,
-              variantId: variant.id,
-              sellerId: cartItem.listing.seller.user.id,
-              productName: cartItem.listing.product.name,
-              variantName: variant.name,
-              quantity: cartItem.quantity,
-              unit: variant.unit,
-              unitPrice: cartItem.listing.price,
-              totalPrice: Number(cartItem.listing.price) * cartItem.quantity,
-            },
-          });
+          const itemData = {
+            orderId: created.id,
+            listingId: cartItem.listingId,
+            sellerId: cartItem.listing.seller.user.id,
+            productName: cartItem.listing.title ?? cartItem.listing.category.name,
+            variantName: variant?.name ?? 'Standard',
+            quantity: cartItem.quantity,
+            unit: (variant?.unit ?? 'KG') as any,
+            unitPrice: cartItem.listing.price,
+            totalPrice: Number(cartItem.listing.price) * cartItem.quantity,
+          } as any;
+
+          if (variant?.id) itemData.variantId = variant.id;
+
+          await tx.orderItem.create({ data: itemData });
         }
 
         await tx.orderStatusHistory.create({
@@ -453,7 +441,7 @@ export class OrdersService {
       where: { id: orderId, sellerId: sellerUserId },
       include: {
         items: {
-          include: { listing: { include: { product: { select: { name: true } } } } },
+          include: { listing: { include: { category: { select: { name: true } } } } },
         },
         customer: { select: { id: true, name: true } },
         parentOrder: { select: { id: true, orderNumber: true } },

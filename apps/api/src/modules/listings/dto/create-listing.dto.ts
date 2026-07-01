@@ -16,7 +16,7 @@ export class CreateListingDto {
   sellerId?: string;
 
   @IsString()
-  productId!: string;
+  categoryId!: string;
 
   @IsString()
   @IsOptional()

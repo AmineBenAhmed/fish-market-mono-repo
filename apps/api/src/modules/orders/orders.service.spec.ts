@@ -64,7 +64,8 @@ describe('OrdersService', () => {
         price: 25,
         quantity: 100,
         status: 'ACTIVE',
-        product: { id: 'prod-1', name: 'Sea Bass', slug: 'sea-bass' },
+        category: { id: 'cat-1', name: 'Fish' },
+        title: 'Sea Bass',
         variant: { id: 'variant-1', name: 'Whole', unit: 'kg' },
         seller: { user: { id: 'seller-user-1' } },
       },
@@ -111,7 +112,8 @@ describe('OrdersService', () => {
           ...mockCartItem.listing,
           id: 'listing-2',
           seller: { user: { id: 'seller-user-2' } },
-          product: { id: 'prod-2', name: 'Shrimp', slug: 'shrimp' },
+          category: { id: 'cat-2', name: 'Seafood' },
+          title: 'Shrimp',
         },
       };
 

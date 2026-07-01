@@ -105,15 +105,10 @@ export class ProductsService {
   async remove(id: string): Promise<void> {
     const product = await this.prisma.fishProduct.findUnique({
       where: { id },
-      include: { listings: true },
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
-    }
-
-    if (product.listings.length > 0) {
-      throw new ConflictException('Cannot delete product with active listings');
     }
 
     await this.prisma.fishVariant.deleteMany({ where: { productId: id } });

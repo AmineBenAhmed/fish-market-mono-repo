@@ -10,9 +10,7 @@ export class ListingsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private listingInclude = {
-    product: {
-      include: { category: true },
-    },
+    category: true,
     variant: true,
     coverImage: true,
     images: {
@@ -44,7 +42,7 @@ export class ListingsService {
       where: { id: listingId },
       include: {
         ...this.adminListingInclude,
-        product: { include: { category: true, variants: true } },
+        category: true,
       },
     });
 
@@ -144,12 +142,12 @@ export class ListingsService {
       throw new BadRequestException('Cannot create listings for past dates');
     }
 
-    const product = await this.prisma.fishProduct.findUnique({
-      where: { id: dto.productId },
+    const category = await this.prisma.fishCategory.findUnique({
+      where: { id: dto.categoryId },
     });
 
-    if (!product || !product.isActive) {
-      throw new NotFoundException('Product not found or inactive');
+    if (!category) {
+      throw new NotFoundException('Category not found');
     }
 
     const coverImageId = dto.imageIds?.[0] ?? null;
@@ -157,7 +155,7 @@ export class ListingsService {
     const listing = await this.prisma.sellerListing.create({
       data: {
         sellerId: profile.id,
-        productId: dto.productId,
+        categoryId: dto.categoryId,
         variantId: dto.variantId ?? null,
         date: listingDate,
         price: dto.price,
@@ -173,6 +171,7 @@ export class ListingsService {
         currency: dto.currency ?? 'TND',
         notes: dto.notes,
         coverImageId,
+        status: 'ACTIVE',
         imageUrls: dto.cloudinaryUrls ?? [],
         images: dto.imageIds?.length
           ? {
@@ -224,7 +223,7 @@ export class ListingsService {
     }
 
     if (options.category) {
-      where.product = { category: { name: { contains: options.category, mode: 'insensitive' } } };
+      where.category = { name: { contains: options.category, mode: 'insensitive' } };
     }
 
     if (options.search) {
@@ -233,7 +232,7 @@ export class ListingsService {
         { description: { contains: options.search, mode: 'insensitive' } },
         { notes: { contains: options.search, mode: 'insensitive' } },
         { origin: { contains: options.search, mode: 'insensitive' } },
-        { product: { name: { contains: options.search, mode: 'insensitive' } } },
+        { category: { name: { contains: options.search, mode: 'insensitive' } } },
       ];
     }
 
@@ -295,7 +294,7 @@ export class ListingsService {
       where.OR = [
         { title: { contains: options.search, mode: 'insensitive' } },
         { description: { contains: options.search, mode: 'insensitive' } },
-        { product: { name: { contains: options.search, mode: 'insensitive' } } },
+        { category: { name: { contains: options.search, mode: 'insensitive' } } },
       ];
     }
 
@@ -343,7 +342,8 @@ export class ListingsService {
       const existing = await this.prisma.sellerListing.findFirst({
         where: {
           sellerId: listing.sellerId,
-          productId: listing.productId,
+          categoryId: listing.categoryId,
+          variantId: listing.variantId,
           date: today,
         },
       });
@@ -353,7 +353,7 @@ export class ListingsService {
       const dup = await this.prisma.sellerListing.create({
         data: {
           sellerId: listing.sellerId,
-          productId: listing.productId,
+          categoryId: listing.categoryId,
           variantId: listing.variantId,
           date: today,
           price: listing.price,
@@ -382,7 +382,7 @@ export class ListingsService {
       where: { id: listingId },
       include: {
         ...this.listingInclude,
-        product: { include: { category: true, variants: true } },
+        category: true,
       },
     });
 
@@ -485,12 +485,12 @@ export class ListingsService {
       throw new BadRequestException('Cannot create listings for past dates');
     }
 
-    const product = await this.prisma.fishProduct.findUnique({
-      where: { id: dto.productId },
+    const category = await this.prisma.fishCategory.findUnique({
+      where: { id: dto.categoryId },
     });
 
-    if (!product || !product.isActive) {
-      throw new NotFoundException('Product not found or inactive');
+    if (!category) {
+      throw new NotFoundException('Category not found');
     }
 
     const coverImageId = dto.imageIds?.[0] ?? null;
@@ -498,7 +498,7 @@ export class ListingsService {
     const listing = await this.prisma.sellerListing.create({
       data: {
         sellerId: profile.id,
-        productId: dto.productId,
+        categoryId: dto.categoryId,
         variantId: dto.variantId ?? null,
         date: listingDate,
         price: dto.price,
@@ -514,6 +514,7 @@ export class ListingsService {
         currency: dto.currency ?? 'TND',
         notes: dto.notes,
         coverImageId,
+        status: 'ACTIVE',
         imageUrls: dto.cloudinaryUrls ?? [],
         images: dto.imageIds?.length
           ? {

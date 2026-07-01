@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto';
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { OrderStatus, Preservation, Prisma, QualityGrade } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -13,8 +13,6 @@ interface FindTodayParams {
   search?: string;
   minPrice?: number;
   maxPrice?: number;
-  qualityGrade?: string;
-  preservation?: string;
   sortBy?: 'price' | 'date' | 'name';
   sortOrder?: 'asc' | 'desc';
   page?: number;
@@ -41,29 +39,16 @@ export class MarketplaceService {
       };
     }
 
-    const productFilter: Prisma.FishProductWhereInput = {};
-
     if (params.categoryId) {
-      productFilter.categoryId = params.categoryId;
+      where.categoryId = params.categoryId;
     }
 
     if (params.search) {
-      productFilter.OR = [
-        { name: { contains: params.search, mode: 'insensitive' } },
+      where.OR = [
+        { title: { contains: params.search, mode: 'insensitive' } },
         { description: { contains: params.search, mode: 'insensitive' } },
+        { category: { name: { contains: params.search, mode: 'insensitive' } } },
       ];
-    }
-
-    if (params.qualityGrade) {
-      productFilter.qualityGrade = params.qualityGrade as QualityGrade;
-    }
-
-    if (params.preservation) {
-      productFilter.preservation = params.preservation as Preservation;
-    }
-
-    if (Object.keys(productFilter).length > 0) {
-      where.product = productFilter;
     }
 
     if (params.minPrice !== undefined || params.maxPrice !== undefined) {
@@ -77,9 +62,9 @@ export class MarketplaceService {
     if (params.sortBy === 'price') {
       orderBy.push({ price: params.sortOrder || 'asc' });
     } else if (params.sortBy === 'name') {
-      orderBy.push({ product: { name: params.sortOrder || 'asc' } });
+      orderBy.push({ title: params.sortOrder || 'asc' });
     } else {
-      orderBy.push({ createdAt: 'desc' });
+      orderBy.push({ createdAt: params.sortOrder || 'desc' });
     }
 
     const { page, limit, skip } = parsePagination(params.page, params.limit);
@@ -88,12 +73,7 @@ export class MarketplaceService {
       this.prisma.sellerListing.findMany({
         where,
         include: {
-          product: {
-            include: {
-              category: true,
-              variants: true,
-            },
-          },
+          category: true,
           variant: true,
           seller: {
             select: {
@@ -101,6 +81,8 @@ export class MarketplaceService {
               storeName: true,
               city: true,
               state: true,
+              photo: true,
+              storeLogoUrl: true,
             },
           },
         },
@@ -147,21 +129,16 @@ export class MarketplaceService {
       quantity: { gt: 0 },
     };
 
-    const productFilter: Prisma.FishProductWhereInput = {};
-
     if (params.categoryId) {
-      productFilter.categoryId = params.categoryId;
+      where.categoryId = params.categoryId;
     }
 
     if (params.search) {
-      productFilter.OR = [
-        { name: { contains: params.search, mode: 'insensitive' } },
+      where.OR = [
+        { title: { contains: params.search, mode: 'insensitive' } },
         { description: { contains: params.search, mode: 'insensitive' } },
+        { category: { name: { contains: params.search, mode: 'insensitive' } } },
       ];
-    }
-
-    if (Object.keys(productFilter).length > 0) {
-      where.product = productFilter;
     }
 
     if (params.minPrice !== undefined || params.maxPrice !== undefined) {
@@ -176,12 +153,7 @@ export class MarketplaceService {
       this.prisma.sellerListing.findMany({
         where,
         include: {
-          product: {
-            include: {
-              category: true,
-              variants: true,
-            },
-          },
+          category: true,
           variant: true,
           seller: {
             select: {
@@ -189,6 +161,8 @@ export class MarketplaceService {
               storeName: true,
               city: true,
               state: true,
+              photo: true,
+              storeLogoUrl: true,
             },
           },
           images: {
@@ -214,12 +188,7 @@ export class MarketplaceService {
     const listing = await this.prisma.sellerListing.findFirst({
       where: { id: listingId, status: 'ACTIVE', quantity: { gt: 0 } },
       include: {
-        product: {
-          include: {
-            category: true,
-            variants: true,
-          },
-        },
+        category: true,
         variant: true,
         seller: {
           select: {
@@ -255,13 +224,7 @@ export class MarketplaceService {
     const listings = await this.prisma.sellerListing.findMany({
       where: { id: { in: listingIds } },
       include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            variants: { select: { id: true, name: true, unit: true } },
-          },
-        },
+        category: { select: { id: true, name: true } },
         variant: { select: { id: true, name: true, unit: true } },
         seller: { select: { id: true, user: { select: { id: true } } } },
       },
@@ -275,23 +238,14 @@ export class MarketplaceService {
         throw new BadRequestException(`Listing ${item.listingId} not found`);
       }
       if (listing.status !== 'ACTIVE') {
-        throw new BadRequestException(`Listing "${listing.product.name}" is not active`);
+        throw new BadRequestException(
+          `Listing "${listing.title ?? listing.category.name}" is not active`,
+        );
       }
       if (listing.quantity < item.quantity) {
-        throw new BadRequestException(`Insufficient stock for "${listing.product.name}"`);
-      }
-      if (!listing.variant) {
-        if (listing.product.variants.length > 0) {
-          listing.variant = listing.product.variants[0];
-        } else {
-          listing.variant = await this.prisma.fishVariant.create({
-            data: {
-              productId: listing.productId,
-              name: listing.product.name,
-              unit: 'UNIT' as any,
-            },
-          });
-        }
+        throw new BadRequestException(
+          `Insufficient stock for "${listing.title ?? listing.category.name}"`,
+        );
       }
     }
 
@@ -406,20 +360,20 @@ export class MarketplaceService {
             data: { quantity: { decrement: cartItem.quantity } },
           });
 
-          await tx.orderItem.create({
-            data: {
-              orderId: created.id,
-              listingId: cartItem.listingId,
-              variantId: listing.variant!.id,
-              sellerId: listing.seller.id,
-              productName: listing.product.name,
-              variantName: listing.variant!.name,
-              quantity: cartItem.quantity,
-              unit: listing.variant!.unit,
-              unitPrice: listing.price,
-              totalPrice: Number(listing.price) * cartItem.quantity,
-            },
-          });
+          const itemData = {
+            orderId: created.id,
+            listingId: cartItem.listingId,
+            variantId: listing.variant?.id ?? undefined,
+            sellerId: listing.seller.id,
+            productName: listing.title ?? listing.category.name,
+            variantName: listing.variant?.name ?? 'Standard',
+            quantity: cartItem.quantity,
+            unit: (listing.variant?.unit ?? 'KG') as any,
+            unitPrice: listing.price,
+            totalPrice: Number(listing.price) * cartItem.quantity,
+          };
+
+          await tx.orderItem.create({ data: itemData });
         }
 
         await tx.orderStatusHistory.create({
@@ -476,7 +430,7 @@ export class MarketplaceService {
         quantity: { gt: 0 },
       },
       include: {
-        product: { include: { category: true } },
+        category: true,
         variant: true,
       },
       orderBy: { createdAt: 'desc' },

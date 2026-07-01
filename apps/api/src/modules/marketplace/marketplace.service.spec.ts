@@ -22,30 +22,18 @@ describe('MarketplaceService', () => {
   const mockListing = {
     id: 'listing-1',
     sellerId: 'seller-1',
-    productId: 'product-1',
+    categoryId: 'cat-1',
     variantId: 'variant-1',
     date: new Date(new Date().setHours(0, 0, 0, 0)),
     price: 25,
     quantity: 100,
+    title: 'Sea Bass',
     unit: 'kg',
-    minOrder: 1,
-    maxOrder: 100,
     status: 'ACTIVE',
     notes: null,
-    isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-    product: {
-      id: 'product-1',
-      name: 'Sea Bass',
-      description: 'Fresh sea bass',
-      qualityGrade: 'PREMIUM',
-      preservation: 'FRESH',
-      isActive: true,
-      categoryId: 'cat-1',
-      category: { id: 'cat-1', name: 'Fish' },
-      variants: [{ id: 'variant-1', name: 'Whole', price: 25 }],
-    },
+    category: { id: 'cat-1', name: 'Fish' },
     variant: { id: 'variant-1', name: 'Whole', price: 25 },
     seller: {
       id: 'seller-1',
@@ -100,13 +88,13 @@ describe('MarketplaceService', () => {
       expect(mockPrisma.sellerListing.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            product: expect.objectContaining({ categoryId: 'cat-1' }),
+            categoryId: 'cat-1',
           }),
         }),
       );
     });
 
-    it('should search by product name', async () => {
+    it('should search by title or category name', async () => {
       mockPrisma.sellerListing.findMany.mockResolvedValue([mockListing]);
       mockPrisma.sellerListing.count.mockResolvedValue(1);
 
@@ -115,7 +103,7 @@ describe('MarketplaceService', () => {
       expect(mockPrisma.sellerListing.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            product: expect.objectContaining({ OR: expect.any(Array) }),
+            OR: expect.any(Array),
           }),
         }),
       );
@@ -131,36 +119,6 @@ describe('MarketplaceService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             price: { gte: 10, lte: 50 },
-          }),
-        }),
-      );
-    });
-
-    it('should filter by qualityGrade', async () => {
-      mockPrisma.sellerListing.findMany.mockResolvedValue([mockListing]);
-      mockPrisma.sellerListing.count.mockResolvedValue(1);
-
-      await service.findToday({ qualityGrade: 'PREMIUM' });
-
-      expect(mockPrisma.sellerListing.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            product: expect.objectContaining({ qualityGrade: 'PREMIUM' }),
-          }),
-        }),
-      );
-    });
-
-    it('should filter by preservation', async () => {
-      mockPrisma.sellerListing.findMany.mockResolvedValue([mockListing]);
-      mockPrisma.sellerListing.count.mockResolvedValue(1);
-
-      await service.findToday({ preservation: 'FRESH' });
-
-      expect(mockPrisma.sellerListing.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            product: expect.objectContaining({ preservation: 'FRESH' }),
           }),
         }),
       );
@@ -187,7 +145,7 @@ describe('MarketplaceService', () => {
 
       expect(mockPrisma.sellerListing.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          orderBy: expect.arrayContaining([{ product: { name: 'asc' } }]),
+          orderBy: expect.arrayContaining([{ title: 'asc' }]),
         }),
       );
     });
@@ -217,7 +175,7 @@ describe('MarketplaceService', () => {
 
   describe('search', () => {
     it('should search products by query', async () => {
-      mockPrisma.fishProduct.findMany.mockResolvedValue([mockListing.product]);
+      mockPrisma.fishProduct.findMany.mockResolvedValue([{ id: 'product-1', name: 'Sea Bass' }]);
 
       const result = await service.search('Sea Bass');
 
