@@ -317,6 +317,7 @@ model SellerProfile {
   businessDoc        String?
   taxId              String?
   photo              String?
+  storeLogoUrl       String?
   isActive           Boolean                 @default(false)
   city               String
   state              String
@@ -429,6 +430,7 @@ model FishCategory {
   children   FishCategory[] @relation("CategoryHierarchy")
   image      File?         @relation("CategoryImage", fields: [imageFileId], references: [id], onDelete: SetNull)
   products   FishProduct[]
+  listings   SellerListing[]
 
   @@index([parentId])
   @@index([slug])
@@ -459,7 +461,6 @@ model FishProduct {
   image      File?          @relation("ProductImage", fields: [imageFileId], references: [id], onDelete: SetNull)
   variants   FishVariant[]
   reviews    Review[]
-  listings   SellerListing[]
 
   @@index([categoryId, isActive])
   @@index([slug])
@@ -491,7 +492,7 @@ model FishVariant {
 model SellerListing {
   id        String        @id @default(cuid())
   sellerId  String
-  productId String
+  categoryId String
   variantId String?
   date      DateTime      @db.Date
   price     Decimal       @db.Decimal(10, 2)
@@ -514,16 +515,15 @@ model SellerListing {
 
   // Relations
   seller     SellerProfile   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  product    FishProduct     @relation(fields: [productId], references: [id])
+  category   FishCategory    @relation(fields: [categoryId], references: [id])
   variant    FishVariant?    @relation(fields: [variantId], references: [id])
   coverImage File?           @relation("ListingCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
   images     ListingImage[]
   cartItems  CartItem[]
   orderItems OrderItem[]
 
-  @@unique([variantId, sellerId, date])
   @@index([sellerId, date, status])
-  @@index([productId, date, status])
+  @@index([categoryId, date, status])
   @@index([date, status])
   @@index([status])
 }
@@ -631,7 +631,7 @@ model OrderItem {
   id          String  @id @default(cuid())
   orderId     String
   listingId   String? // nullable for backward compat
-  variantId   String
+  variantId   String? // null if no variant assigned to listing
   sellerId    String  // denormalized for per-seller queries
   productName String  // snapshot at order time
   variantName String  // snapshot at order time
@@ -643,7 +643,7 @@ model OrderItem {
   // Relations
   order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   listing SellerListing? @relation(fields: [listingId], references: [id])
-  variant FishVariant    @relation(fields: [variantId], references: [id])
+  variant FishVariant?   @relation(fields: [variantId], references: [id])
 
   @@index([orderId])
   @@index([listingId])
