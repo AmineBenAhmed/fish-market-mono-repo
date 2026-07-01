@@ -1,6 +1,6 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Activity, Ban, CheckCircle, List, PenIcon, Store, XCircle } from 'lucide-react';
+import { Activity, Ban, CheckCircle, List, PenIcon, Plus, Store, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -49,7 +49,12 @@ export function ListingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Listings" description="Manage marketplace listings" />
+      <PageHeader title="Listings" description="Manage marketplace listings">
+        <Button onClick={() => navigate('/listings/new')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Listing
+        </Button>
+      </PageHeader>
 
       <Card>
         <CardHeader>

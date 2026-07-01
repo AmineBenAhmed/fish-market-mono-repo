@@ -1,6 +1,9 @@
 export { api } from './api';
 export { authService } from './auth.service';
+export { categoriesService } from './categories.service';
+export { cloudinaryService } from './cloudinary.service';
 export { dashboardService } from './dashboard.service';
+export { filesService } from './files.service';
 export { deliveriesService } from './deliveries.service';
 export { driversService } from './drivers.service';
 export { notificationsService } from './notifications.service';
@@ -8,4 +11,5 @@ export { ordersService } from './orders.service';
 export { paymentsService } from './payments.service';
 export { sellersService } from './sellers.service';
 export { listingsService } from './listings.service';
+export { productsService } from './products.service';
 export { usersService } from './users.service';

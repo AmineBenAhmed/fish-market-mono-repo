@@ -1,14 +1,70 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma, UserRole } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 import { parsePagination, createPaginationMeta } from '../../common/utils/pagination';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
+  private readonly SALT_ROUNDS = 12;
+
   constructor(private readonly prisma: PrismaService) {}
+
+  private async generateCode(): Promise<string> {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    for (let attempt = 0; attempt < 10; attempt++) {
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const existing = await this.prisma.user.findUnique({ where: { code } });
+      if (!existing) return code;
+    }
+    throw new Error('Failed to generate unique user code');
+  }
+
+  async create(dto: CreateUserDto) {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existing) {
+      throw new ConflictException('Email already registered');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
+    const code = await this.generateCode();
+
+    return this.prisma.user.create({
+      data: {
+        email: dto.email,
+        passwordHash,
+        code,
+        name: dto.name,
+        phone: dto.phone,
+        role: (dto.role as UserRole) || 'CUSTOMER',
+      },
+      select: {
+        id: true,
+        code: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+  }
 
   async findAll(query: UserQueryDto) {
     const where: Prisma.UserWhereInput = { deletedAt: null };

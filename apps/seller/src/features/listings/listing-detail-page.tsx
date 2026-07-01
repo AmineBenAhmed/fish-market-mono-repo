@@ -121,7 +121,7 @@ export function ListingDetailPage() {
             </CardContent>
           </Card>
 
-          {(listing.images?.length > 0 || listing.imageUrls?.length > 0) && (
+          {((listing.images?.length ?? 0) > 0 || (listing.imageUrls?.length ?? 0) > 0) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Photos</CardTitle>

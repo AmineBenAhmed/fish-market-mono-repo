@@ -17,6 +17,17 @@ export const usersService = {
     return unwrap<User>(result);
   },
 
+  async create(data: {
+    email: string;
+    password: string;
+    name: string;
+    phone?: string;
+    role?: string;
+  }): Promise<User> {
+    const result = await api.post('/admin/users', data);
+    return unwrap<User>(result);
+  },
+
   async updateStatus(id: string, status: string): Promise<void> {
     await api.patch(`/admin/users/${id}/status`, { status });
   },

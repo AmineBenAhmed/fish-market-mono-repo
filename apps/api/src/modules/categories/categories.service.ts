@@ -8,21 +8,33 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private categoryInclude = {
+    children: { orderBy: { sortOrder: 'asc' as const } },
+  };
+
+  private mapCategory(cat: any) {
+    const imageUrl = cat.imageUrl || '';
+    const imageId = cat.imageFileId || cat.imageUrl || '';
+    return {
+      ...cat,
+      image: imageUrl ? { id: imageId, url: imageUrl } : null,
+    };
+  }
+
   async findAll() {
-    return this.prisma.fishCategory.findMany({
-      include: {
-        children: { orderBy: { sortOrder: 'asc' } },
-      },
+    const categories = await this.prisma.fishCategory.findMany({
+      include: this.categoryInclude,
       orderBy: { sortOrder: 'asc' },
     });
+    return categories.map((cat) => this.mapCategory(cat));
   }
 
   async findOne(id: string) {
     const category = await this.prisma.fishCategory.findUnique({
       where: { id },
       include: {
+        ...this.categoryInclude,
         parent: true,
-        children: { orderBy: { sortOrder: 'asc' } },
       },
     });
 
@@ -30,7 +42,7 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    return category;
+    return this.mapCategory(category);
   }
 
   async create(dto: CreateCategoryDto) {
@@ -42,19 +54,19 @@ export class CategoriesService {
       throw new ConflictException('Category slug already exists');
     }
 
-    return this.prisma.fishCategory.create({
+    const category = await this.prisma.fishCategory.create({
       data: {
         name: dto.name,
         slug: dto.slug,
         description: dto.description,
         parentId: dto.parentId,
         sortOrder: dto.sortOrder ?? 0,
+        imageFileId: dto.imageFileId,
+        imageUrl: dto.imageUrl,
       },
-      include: {
-        parent: true,
-        children: { orderBy: { sortOrder: 'asc' } },
-      },
+      include: this.categoryInclude,
     });
+    return this.mapCategory(category);
   }
 
   async update(id: string, dto: UpdateCategoryDto) {
@@ -75,7 +87,7 @@ export class CategoriesService {
       }
     }
 
-    return this.prisma.fishCategory.update({
+    const updated = await this.prisma.fishCategory.update({
       where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
@@ -83,12 +95,12 @@ export class CategoriesService {
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.parentId !== undefined && { parentId: dto.parentId }),
         ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.imageFileId !== undefined && { imageFileId: dto.imageFileId }),
+        ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
       },
-      include: {
-        parent: true,
-        children: { orderBy: { sortOrder: 'asc' } },
-      },
+      include: this.categoryInclude,
     });
+    return this.mapCategory(updated);
   }
 
   async remove(id: string): Promise<void> {

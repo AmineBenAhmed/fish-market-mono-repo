@@ -15,4 +15,11 @@ export const productsService = {
     });
     return unwrap<FishProduct[]>(res);
   },
+
+  async getByCategory(categoryId: string): Promise<FishProduct[]> {
+    const res = await api.get('/products', {
+      params: { categoryId, isActive: true, limit: 100 },
+    });
+    return unwrap<FishProduct[]>(res);
+  },
 };

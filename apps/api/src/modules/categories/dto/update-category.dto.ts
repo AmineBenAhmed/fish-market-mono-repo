@@ -22,4 +22,12 @@ export class UpdateCategoryDto {
   @IsNumber()
   @IsOptional()
   sortOrder?: number;
+
+  @IsString()
+  @IsOptional()
+  imageFileId?: string;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
 }

@@ -354,6 +354,7 @@ export class ListingsService {
         data: {
           sellerId: listing.sellerId,
           productId: listing.productId,
+          variantId: listing.variantId,
           date: today,
           price: listing.price,
           quantity: listing.quantity,
@@ -463,6 +464,70 @@ export class ListingsService {
   async remove(userId: string, listingId: string): Promise<void> {
     await this.findOwned(userId, listingId);
     await this.prisma.sellerListing.delete({ where: { id: listingId } });
+  }
+
+  async adminCreate(dto: CreateListingDto) {
+    const profile = dto.sellerId
+      ? await this.prisma.sellerProfile.findUnique({
+          where: { id: dto.sellerId },
+        })
+      : null;
+
+    if (!profile || !profile.isActive) {
+      throw new BadRequestException('Seller profile is not active');
+    }
+
+    const listingDate = new Date(dto.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (listingDate < today) {
+      throw new BadRequestException('Cannot create listings for past dates');
+    }
+
+    const product = await this.prisma.fishProduct.findUnique({
+      where: { id: dto.productId },
+    });
+
+    if (!product || !product.isActive) {
+      throw new NotFoundException('Product not found or inactive');
+    }
+
+    const coverImageId = dto.imageIds?.[0] ?? null;
+
+    const listing = await this.prisma.sellerListing.create({
+      data: {
+        sellerId: profile.id,
+        productId: dto.productId,
+        variantId: dto.variantId ?? null,
+        date: listingDate,
+        price: dto.price,
+        quantity: dto.quantity,
+        title: dto.title,
+        description: dto.description,
+        catchDate: dto.catchDate ? new Date(dto.catchDate) : null,
+        availabilityDate: dto.availabilityDate ? new Date(dto.availabilityDate) : listingDate,
+        origin: dto.origin,
+        condition: dto.condition ?? 'FRESH',
+        averageWeight: dto.averageWeight ?? null,
+        unit: dto.unit,
+        currency: dto.currency ?? 'TND',
+        notes: dto.notes,
+        coverImageId,
+        imageUrls: dto.cloudinaryUrls ?? [],
+        images: dto.imageIds?.length
+          ? {
+              create: dto.imageIds.map((fileId, i) => ({
+                fileId,
+                sortOrder: i,
+              })),
+            }
+          : undefined,
+      },
+      include: this.adminListingInclude,
+    });
+
+    return listing;
   }
 
   async updateStatusAdmin(listingId: string, status: ListingStatus) {

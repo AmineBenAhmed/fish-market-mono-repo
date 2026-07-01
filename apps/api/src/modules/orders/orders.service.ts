@@ -43,7 +43,14 @@ export class OrdersService {
             listing: {
               include: {
                 seller: { include: { user: { select: { id: true } } } },
-                product: { select: { id: true, name: true, slug: true } },
+                product: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    variants: { select: { id: true, name: true, unit: true } },
+                  },
+                },
                 variant: { select: { id: true, name: true, unit: true } },
               },
             },
@@ -159,22 +166,30 @@ export class OrdersService {
         for (const cartItem of so.items) {
           await this.inventoryReservation.reserve(tx, cartItem.listingId, cartItem.quantity);
 
-          if (!cartItem.listing.variantId || !cartItem.listing.variant) {
-            throw new BadRequestException(
-              `Listing ${cartItem.listingId} is missing variant information`,
-            );
+          let variant = cartItem.listing.variant;
+          if (!variant) {
+            variant = cartItem.listing.product.variants[0] ?? null;
+          }
+          if (!variant) {
+            variant = await tx.fishVariant.create({
+              data: {
+                productId: cartItem.listing.productId,
+                name: cartItem.listing.product.name,
+                unit: 'UNIT' as any,
+              },
+            });
           }
 
           await tx.orderItem.create({
             data: {
               orderId: created.id,
               listingId: cartItem.listingId,
-              variantId: cartItem.listing.variantId,
+              variantId: variant.id,
               sellerId: cartItem.listing.seller.user.id,
               productName: cartItem.listing.product.name,
-              variantName: cartItem.listing.variant.name,
+              variantName: variant.name,
               quantity: cartItem.quantity,
-              unit: cartItem.listing.variant.unit,
+              unit: variant.unit,
               unitPrice: cartItem.listing.price,
               totalPrice: Number(cartItem.listing.price) * cartItem.quantity,
             },

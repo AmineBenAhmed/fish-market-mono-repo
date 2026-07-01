@@ -18,6 +18,28 @@ export const listingsService = {
     return unwrap<Listing>(res);
   },
 
+  async create(data: {
+    sellerId?: string;
+    productId: string;
+    date: string;
+    price: number;
+    quantity: number;
+    title?: string;
+    description?: string;
+    catchDate?: string;
+    availabilityDate?: string;
+    origin?: string;
+    condition?: string;
+    averageWeight?: number;
+    unit?: string;
+    currency?: string;
+    notes?: string;
+    cloudinaryUrls?: string[];
+  }): Promise<Listing> {
+    const result = await api.post('/admin/listings', data);
+    return unwrap<Listing>(result);
+  },
+
   async updateStatus(id: string, status: string): Promise<void> {
     await api.patch(`/admin/listings/${id}/status`, { status });
   },

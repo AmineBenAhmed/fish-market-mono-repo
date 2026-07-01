@@ -1,7 +1,18 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UsersService } from './users.service';
 
@@ -10,6 +21,15 @@ import { UsersService } from './users.service';
 @Controller('admin/users')
 export class AdminUsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Post()
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new user (admin)' })
+  @ApiResponse({ status: 201, description: 'User created' })
+  async create(@Body() dto: CreateUserDto) {
+    return this.usersService.create(dto);
+  }
 
   @Get()
   @Roles('ADMIN')

@@ -3,6 +3,7 @@ import {
   BarChart3,
   Bell,
   CreditCard,
+  Fish,
   LayoutDashboard,
   List,
   LogOut,
@@ -22,6 +23,7 @@ import { useAuthStore } from '../../stores/auth';
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', end: true },
   { to: '/users', icon: Users, label: 'Users' },
+  { to: '/categories', icon: Fish, label: 'Categories' },
   { to: '/stores', icon: Store, label: 'Stores' },
   { to: '/drivers', icon: Truck, label: 'Drivers' },
   { to: '/orders', icon: ShoppingCart, label: 'Orders' },

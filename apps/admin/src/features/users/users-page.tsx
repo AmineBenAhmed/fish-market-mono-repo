@@ -1,7 +1,8 @@
 import { Button, Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Ban, Check, MoreHorizontal, PenIcon, User, X } from 'lucide-react';
+import { Ban, Check, MoreHorizontal, PenIcon, Plus, User, X } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/data-table/data-table';
 import { PageHeader } from '../../components/shared/page-header';
@@ -25,6 +26,7 @@ import { usersService } from '../../services';
 import type { User as UserType } from '../../types';
 
 export function UsersPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [page, setPage] = useState(1);
@@ -50,7 +52,12 @@ export function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Users" description="Manage marketplace users" />
+      <PageHeader title="Users" description="Manage marketplace users">
+        <Button onClick={() => navigate('/users/new')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create User
+        </Button>
+      </PageHeader>
 
       <Card>
         <CardHeader>

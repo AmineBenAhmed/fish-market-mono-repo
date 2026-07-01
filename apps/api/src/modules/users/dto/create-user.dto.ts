@@ -1,0 +1,26 @@
+import { IsEmail, IsEnum, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+
+export class CreateUserDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  @Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+  })
+  password!: string;
+
+  @IsString()
+  @MinLength(2)
+  name!: string;
+
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @IsEnum(['CUSTOMER', 'SELLER', 'ADMIN', 'DRIVER'] as const)
+  @IsOptional()
+  role?: 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DRIVER';
+}

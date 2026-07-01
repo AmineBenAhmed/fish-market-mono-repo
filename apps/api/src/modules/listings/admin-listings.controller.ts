@@ -1,8 +1,26 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ListingStatus } from '@prisma/client';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { Roles } from '../../common/decorators';
+import { CreateListingDto } from './dto/create-listing.dto';
 import { ListingsService } from './listings.service';
 
 @ApiTags('Admin Listings')
@@ -10,6 +28,15 @@ import { ListingsService } from './listings.service';
 @Controller('admin/listings')
 export class AdminListingsController {
   constructor(private readonly listingsService: ListingsService) {}
+
+  @Post()
+  @Roles('ADMIN')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a listing for any seller (admin)' })
+  @ApiResponse({ status: 201, description: 'Listing created' })
+  async create(@Body() dto: CreateListingDto) {
+    return this.listingsService.adminCreate(dto);
+  }
 
   @Patch(':id/status')
   @Roles('ADMIN')
