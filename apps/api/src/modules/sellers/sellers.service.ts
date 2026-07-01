@@ -95,6 +95,7 @@ export class SellersService {
         businessDoc: dto.businessDoc,
         taxId: dto.taxId,
         photo: dto.photo,
+        storeLogoUrl: dto.storeLogoUrl,
         verificationStatus: 'PENDING',
         isActive: false,
       },
@@ -123,6 +124,7 @@ export class SellersService {
     if (dto.businessDoc !== undefined) data.businessDoc = dto.businessDoc;
     if (dto.taxId !== undefined) data.taxId = dto.taxId;
     if (dto.photo !== undefined) data.photo = dto.photo;
+    if (dto.storeLogoUrl !== undefined) data.storeLogoUrl = dto.storeLogoUrl;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     if (dto.verificationStatus !== undefined) {
       data.verificationStatus = dto.verificationStatus as SellerVerificationStatus;

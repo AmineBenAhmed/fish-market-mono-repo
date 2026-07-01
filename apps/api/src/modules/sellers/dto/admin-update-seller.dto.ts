@@ -40,6 +40,10 @@ export class AdminUpdateSellerDto {
   @IsOptional()
   photo?: string;
 
+  @IsString()
+  @IsOptional()
+  storeLogoUrl?: string;
+
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

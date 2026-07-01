@@ -55,4 +55,8 @@ export class AdminCreateSellerDto {
   @IsString()
   @IsOptional()
   photo?: string;
+
+  @IsString()
+  @IsOptional()
+  storeLogoUrl?: string;
 }
