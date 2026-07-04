@@ -1,22 +1,53 @@
 import { Button } from '@fishmarket/ui';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatCurrency, formatDate, statusColor } from '../../lib/utils';
 import { ordersService } from '../../services';
 
+const orderStatuses = [
+  'DRAFT',
+  'PENDING',
+  'CONFIRMED',
+  'PREPARING',
+  'READY_FOR_PICKUP',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'CANCELLED',
+  'REFUNDED',
+];
+
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn: () => ordersService.getOrder(id!),
     enabled: !!id,
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ status, reason }: { status: string; reason?: string }) =>
+      ordersService.updateStatus(id!, status, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['order', id] }),
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Invalid status transition';
+      toast.error(message);
+    },
   });
 
   if (isLoading) {
@@ -53,7 +84,20 @@ export function OrderDetailPage() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{order.orderNumber}</h1>
           <p className="text-sm text-muted-foreground">Created {formatDate(order.createdAt)}</p>
         </div>
-        <Badge className={statusColor(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
+        <Select value={order.status} onValueChange={(v) => statusMutation.mutate({ status: v })}>
+          <SelectTrigger className="w-44">
+            <SelectValue>
+              <Badge className={statusColor(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {orderStatuses.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s.replace(/_/g, ' ')}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

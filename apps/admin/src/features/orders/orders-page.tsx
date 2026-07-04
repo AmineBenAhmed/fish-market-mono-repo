@@ -1,7 +1,8 @@
-import { Button, Input } from '@fishmarket/ui';
+import { Input } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DataTable } from '../../components/data-table/data-table';
 import { PageHeader } from '../../components/shared/page-header';
@@ -22,6 +23,7 @@ const orderStatuses = [
   'DRAFT',
   'PENDING',
   'CONFIRMED',
+  'PREPARING',
   'READY_FOR_PICKUP',
   'OUT_FOR_DELIVERY',
   'DELIVERED',
@@ -46,10 +48,14 @@ export function OrdersPage() {
       }),
   });
 
-  const cancelMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      ordersService.cancelOrder(id, reason),
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
+      ordersService.updateStatus(id, status, reason),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['orders'] }),
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Invalid status transition';
+      toast.error(message);
+    },
   });
 
   const orders: Order[] = data?.data ?? [];
@@ -130,44 +136,29 @@ export function OrdersPage() {
                 key: 'status',
                 header: 'Status',
                 render: (o: Order) => (
-                  <Badge className={statusColor(o.status)}>{o.status.replace(/_/g, ' ')}</Badge>
+                  <Select
+                    value={o.status}
+                    onValueChange={(v) => statusMutation.mutate({ id: o.id, status: v })}
+                  >
+                    <SelectTrigger className="w-40 h-8">
+                      <SelectValue>
+                        <Badge className={statusColor(o.status)}>
+                          {o.status.replace(/_/g, ' ')}
+                        </Badge>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {orderStatuses.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s.replace(/_/g, ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ),
               },
               { key: 'items', header: 'Items', render: (o: Order) => o.items?.length ?? 0 },
               { key: 'createdAt', header: 'Date', render: (o: Order) => formatDate(o.createdAt) },
-              {
-                key: 'actions',
-                header: 'Actions',
-                render: (o: Order) => (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/orders/${o.id}`);
-                      }}
-                    >
-                      View
-                    </Button>
-                    {!['DELIVERED', 'CANCELLED', 'REFUNDED'].includes(o.status) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm(`Cancel order ${o.orderNumber}?`)) {
-                            cancelMutation.mutate({ id: o.id, reason: '' });
-                          }
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                ),
-              },
             ]}
             data={orders}
             isLoading={isLoading}
@@ -175,6 +166,7 @@ export function OrdersPage() {
             emptyMessage="No orders found."
             meta={data?.meta}
             onPageChange={setPage}
+            onRowClick={(o: Order) => navigate(`/orders/${o.id}`)}
             keyExtractor={(o: Order) => o.id}
           />
         </CardContent>

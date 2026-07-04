@@ -7,6 +7,7 @@ import { Order, OrderStatus, Prisma } from '@prisma/client';
 import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 import { CancelOrderDto } from './dto/cancel-order.dto';
+import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { QueryOrdersDto } from './dto/query-orders.dto';
 import { InventoryReservationService } from './inventory-reservation.service';
 import { OrderCalculationService } from './order-calculation.service';
@@ -309,6 +310,35 @@ export class OrdersService {
     }
 
     return order;
+  }
+
+  async updateStatus(userId: string, orderId: string, dto: UpdateOrderStatusDto) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    this.orderStatus.validateTransition(order.status as OrderStatus, dto.status);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: dto.status },
+      });
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: order.status,
+          toStatus: dto.status,
+          changedById: userId,
+          reason: dto.reason,
+        },
+      });
+    });
+
+    return { message: 'Order status updated successfully', status: dto.status };
   }
 
   async cancelOrder(userId: string, orderId: string, dto: CancelOrderDto, userRole?: string) {

@@ -22,4 +22,8 @@ export const ordersService = {
   async cancelOrder(id: string, reason: string): Promise<void> {
     await api.patch(`/orders/${id}/cancel`, { reason });
   },
+
+  async updateStatus(id: string, status: string, reason?: string): Promise<void> {
+    await api.patch(`/admin/orders/${id}/status`, { status, reason });
+  },
 };
