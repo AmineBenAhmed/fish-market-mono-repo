@@ -29,4 +29,21 @@ export const driversService = {
     const result = await api.post('/admin/drivers', data);
     return unwrap<DriverProfile>(result);
   },
+
+  async updateDriverStatus(id: string, status: 'ONLINE' | 'OFFLINE'): Promise<void> {
+    await api.patch(`/admin/drivers/${id}/status`, { status });
+  },
+
+  async updateDriver(
+    id: string,
+    data: Partial<CreateDriverPayload & { isAvailable?: boolean }>,
+  ): Promise<DriverProfile> {
+    const result = await api.patch(`/admin/drivers/${id}`, data);
+    return unwrap<DriverProfile>(result);
+  },
+
+  async getDriverAuditLogs(id: string): Promise<any[]> {
+    const result = await api.get(`/audit-logs`, { params: { entity: 'Driver', entityId: id } });
+    return unwrap<any[]>(result);
+  },
 };

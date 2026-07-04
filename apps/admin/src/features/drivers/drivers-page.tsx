@@ -1,8 +1,9 @@
 import { Button } from '@fishmarket/ui';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DataTable } from '../../components/data-table/data-table';
 import { PageHeader } from '../../components/shared/page-header';
@@ -21,6 +22,7 @@ import type { DriverProfile } from '../../types';
 
 export function DriversPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
 
@@ -28,6 +30,18 @@ export function DriversPage() {
     queryKey: ['drivers', { status, page }],
     queryFn: () =>
       driversService.getDrivers({ status: status !== 'all' ? status : undefined, page }),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'ONLINE' | 'OFFLINE' }) =>
+      driversService.updateDriverStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+      toast.success('Driver status updated');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to update status');
+    },
   });
 
   const drivers: DriverProfile[] = data?.data ?? [];
@@ -80,7 +94,24 @@ export function DriversPage() {
                 key: 'status',
                 header: 'Status',
                 render: (d: DriverProfile) => (
-                  <Badge className={statusColor(d.status)}>{d.status}</Badge>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={d.status}
+                      onValueChange={(v) =>
+                        statusMutation.mutate({ id: d.id, status: v as 'ONLINE' | 'OFFLINE' })
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-28">
+                        <SelectValue>
+                          <Badge className={statusColor(d.status)}>{d.status}</Badge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ONLINE">Online</SelectItem>
+                        <SelectItem value="OFFLINE">Offline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 ),
               },
               {
@@ -111,6 +142,7 @@ export function DriversPage() {
             emptyMessage="No drivers found."
             meta={data?.meta}
             onPageChange={setPage}
+            onRowClick={(d: DriverProfile) => navigate(`/drivers/${d.id}`)}
             keyExtractor={(d: DriverProfile) => d.id}
           />
         </CardContent>

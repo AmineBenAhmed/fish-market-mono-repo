@@ -273,7 +273,7 @@ export function OrderDetailPage() {
               <SelectContent>
                 {drivers.map((d) => (
                   <SelectItem key={d.id} value={d.userId}>
-                    {d.name || d.userId}
+                    {d.user?.name || d.name || d.userId}
                   </SelectItem>
                 ))}
               </SelectContent>

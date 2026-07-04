@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser, Roles } from '../../common/decorators';
+import { JwtPayload } from '../../common/interfaces';
 import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
+import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { DriversService } from './drivers.service';
 
 @ApiTags('Admin Drivers')
@@ -40,6 +42,35 @@ export class AdminDriversController {
   @ApiOperation({ summary: 'List available drivers' })
   async findAvailable(@Query('zoneId') zoneId?: string) {
     return this.driversService.findAvailable(zoneId);
+  }
+
+  @Get(':id/audit-logs')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Get driver audit logs' })
+  async getAuditLogs(@Param('id') id: string) {
+    return this.driversService.getAuditLogs(id);
+  }
+
+  @Patch(':id/status')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Update driver online/offline status' })
+  async updateStatus(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body('status') status: 'ONLINE' | 'OFFLINE',
+  ) {
+    return this.driversService.adminUpdateStatus(id, status, user.sub);
+  }
+
+  @Patch(':id')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Update driver profile' })
+  async updateDriver(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateDriverDto,
+  ) {
+    return this.driversService.adminUpdateProfile(id, dto, user.sub);
   }
 
   @Get(':id')

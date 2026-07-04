@@ -16,8 +16,8 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { formatCurrency, formatDate, statusColor } from '../../lib/utils';
-import { ordersService } from '../../services';
-import type { Order } from '../../types';
+import { driversService, ordersService } from '../../services';
+import type { DriverProfile, Order } from '../../types';
 
 const orderStatuses = [
   'DRAFT',
@@ -48,6 +48,13 @@ export function OrdersPage() {
       }),
   });
 
+  const { data: driversData } = useQuery({
+    queryKey: ['drivers', 'all'],
+    queryFn: () => driversService.getDrivers({ limit: 100 }),
+  });
+
+  const drivers = driversData?.data ?? [];
+
   const statusMutation = useMutation({
     mutationFn: ({ id, status, reason }: { id: string; status: string; reason?: string }) =>
       ordersService.updateStatus(id, status, reason),
@@ -55,6 +62,18 @@ export function OrdersPage() {
     onError: (err: any) => {
       const message = err?.response?.data?.message || err?.message || 'Invalid status transition';
       toast.error(message);
+    },
+  });
+
+  const assignDriverMutation = useMutation({
+    mutationFn: ({ orderId, driverId }: { orderId: string; driverId: string }) =>
+      ordersService.assignDriver(orderId, driverId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Driver assigned');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to assign driver');
     },
   });
 
@@ -163,7 +182,25 @@ export function OrdersPage() {
                 key: 'driver',
                 header: 'Driver',
                 render: (o: Order) => (
-                  <span className="text-sm">{o.delivery?.driver?.name || '-'}</span>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={o.delivery?.driverId || ''}
+                      onValueChange={(v) =>
+                        assignDriverMutation.mutate({ orderId: o.id, driverId: v })
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-36">
+                        <SelectValue placeholder={o.delivery?.driver?.name || 'Assign...'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {drivers.map((d: DriverProfile) => (
+                          <SelectItem key={d.id} value={d.userId}>
+                            {d.user?.name || d.name || d.userId}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 ),
               },
               { key: 'items', header: 'Items', render: (o: Order) => o.items?.length ?? 0 },

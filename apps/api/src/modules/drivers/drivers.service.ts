@@ -6,6 +6,7 @@ import { DriverStatus, Prisma } from '@prisma/client';
 import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
 import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
+import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 
 @Injectable()
@@ -162,6 +163,144 @@ export class DriversService {
     });
   }
 
+  async adminUpdateStatus(id: string, status: 'ONLINE' | 'OFFLINE', adminId: string) {
+    const profile = await this.prisma.driverProfile.findFirst({
+      where: { OR: [{ id }, { userId: id }] },
+      include: { user: { select: { name: true } } },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Driver profile not found');
+    }
+
+    const updated = await this.prisma.driverProfile.update({
+      where: { id: profile.id },
+      data: {
+        status: status as DriverStatus,
+        isAvailable: status === 'ONLINE',
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: 'UPDATE',
+        entity: 'Driver',
+        entityId: profile.id,
+        oldValue: { status: profile.status },
+        newValue: { status },
+      },
+    });
+
+    return updated;
+  }
+
+  async adminUpdateProfile(id: string, dto: AdminUpdateDriverDto, adminId: string) {
+    const profile = await this.prisma.driverProfile.findFirst({
+      where: { OR: [{ id }, { userId: id }] },
+    });
+
+    if (!profile) throw new NotFoundException('Driver profile not found');
+
+    const oldValue: Record<string, unknown> = {};
+
+    const data: Record<string, unknown> = {};
+    if (dto.city !== undefined) {
+      oldValue.city = profile.city;
+      data.city = dto.city;
+    }
+    if (dto.state !== undefined) {
+      oldValue.state = profile.state;
+      data.state = dto.state;
+    }
+    if (dto.vehicleType !== undefined) {
+      oldValue.vehicleType = profile.vehicleType;
+      data.vehicleType = dto.vehicleType;
+    }
+    if (dto.status !== undefined) {
+      oldValue.status = profile.status;
+      data.status = dto.status;
+      data.isAvailable = dto.status === 'ONLINE';
+    }
+    if (dto.isAvailable !== undefined) {
+      oldValue.isAvailable = profile.isAvailable;
+      data.isAvailable = dto.isAvailable;
+    }
+    if (dto.idCardNumber !== undefined) {
+      oldValue.idCardNumber = profile.idCardNumber;
+      data.idCardNumber = dto.idCardNumber;
+    }
+    if (dto.idCardPhoto !== undefined) {
+      oldValue.idCardPhoto = profile.idCardPhoto;
+      data.idCardPhoto = dto.idCardPhoto;
+    }
+    if (dto.phone2 !== undefined) {
+      oldValue.phone2 = profile.phone2;
+      data.phone2 = dto.phone2;
+    }
+    if (dto.workingZone !== undefined) {
+      oldValue.workingZone = profile.workingZone;
+      data.workingZone = dto.workingZone;
+    }
+    if (dto.deliveryZoneId !== undefined) {
+      oldValue.deliveryZoneId = profile.deliveryZoneId;
+      data.deliveryZoneId = dto.deliveryZoneId;
+    }
+    if (dto.vehiclePlate !== undefined) {
+      oldValue.vehiclePlate = profile.vehiclePlate;
+      data.vehiclePlate = dto.vehiclePlate;
+    }
+    if (dto.licenseNumber !== undefined) {
+      oldValue.licenseNumber = profile.licenseNumber;
+      data.licenseNumber = dto.licenseNumber;
+    }
+    if (dto.maxLoadKg !== undefined) {
+      oldValue.maxLoadKg = profile.maxLoadKg;
+      data.maxLoadKg = dto.maxLoadKg;
+    }
+
+    const updated = await this.prisma.driverProfile.update({
+      where: { id: profile.id },
+      data,
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, phone: true, role: true, status: true },
+        },
+        zone: { select: { id: true, name: true } },
+      },
+    });
+
+    if (dto.name || dto.phone) {
+      await this.prisma.user.update({
+        where: { id: profile.userId },
+        data: {
+          ...(dto.name && { name: dto.name }),
+          ...(dto.phone && { phone: dto.phone }),
+        },
+      });
+    }
+
+    const newValue: Record<string, unknown> = {};
+    for (const key of Object.keys(data)) {
+      newValue[key] = (updated as any)[key];
+    }
+    if (dto.name) newValue.name = dto.name;
+    if (dto.phone) newValue.phone = dto.phone;
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: 'UPDATE',
+        entity: 'Driver',
+        entityId: profile.id,
+        oldValue: Object.keys(oldValue).length > 0 ? (oldValue as any) : undefined,
+        newValue: Object.keys(newValue).length > 0 ? (newValue as any) : undefined,
+      },
+    });
+
+    return updated;
+  }
+
   async findAvailable(zoneId?: string) {
     return this.prisma.driverProfile.findMany({
       where: {
@@ -175,6 +314,24 @@ export class DriversService {
         zone: { select: { id: true, name: true } },
       },
       orderBy: { activeDeliveries: 'asc' },
+    });
+  }
+
+  async getAuditLogs(id: string) {
+    const profile = await this.prisma.driverProfile.findFirst({
+      where: { OR: [{ id }, { userId: id }] },
+      select: { id: true, userId: true },
+    });
+
+    if (!profile) throw new NotFoundException('Driver profile not found');
+
+    return this.prisma.auditLog.findMany({
+      where: {
+        entity: 'Driver',
+        entityId: profile.id,
+      },
+      include: { user: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

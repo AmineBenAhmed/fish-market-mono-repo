@@ -8,6 +8,7 @@ import { DashboardPage } from './features/dashboard/dashboard-page';
 import { LoginPage } from './features/auth/login-page';
 import { DeliveriesPage } from './features/deliveries/deliveries-page';
 import { DriverCreatePage } from './features/drivers/driver-create-page';
+import { DriverDetailPage } from './features/drivers/driver-detail-page';
 import { DriversPage } from './features/drivers/drivers-page';
 import { NotificationsPage } from './features/notifications/notifications-page';
 import { OrderDetailPage } from './features/orders/order-detail-page';
@@ -42,6 +43,7 @@ function App() {
           <Route path="stores/:id" element={<StoreDetailPage />} />
           <Route path="drivers" element={<DriversPage />} />
           <Route path="drivers/new" element={<DriverCreatePage />} />
+          <Route path="drivers/:id" element={<DriverDetailPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />
           <Route path="payments" element={<PaymentsPage />} />
