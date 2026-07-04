@@ -58,7 +58,9 @@ export function StoreDetailPage() {
     taxId: '',
     isActive: false,
     photo: '',
+    registrationNumber: '',
     storeLogoUrl: '',
+    commissionRate: 0,
   });
 
   useEffect(() => {
@@ -74,7 +76,9 @@ export function StoreDetailPage() {
         taxId: store.taxId || '',
         isActive: store.isActive,
         photo: store.photo || '',
+        registrationNumber: store.registrationNumber || '',
         storeLogoUrl: store.storeLogoUrl || '',
+        commissionRate: store.commissionRate ?? 0,
       });
     }
   }, [store]);
@@ -149,7 +153,9 @@ export function StoreDetailPage() {
       taxId: form.taxId || undefined,
       isActive: form.isActive,
       photo: form.photo || undefined,
+      registrationNumber: form.registrationNumber || undefined,
       storeLogoUrl: form.storeLogoUrl || undefined,
+      commissionRate: form.commissionRate,
     });
   };
 
@@ -321,6 +327,13 @@ export function StoreDetailPage() {
                   onChange={(e) => handleChange('businessDoc', e.target.value)}
                 />
               </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Registration Number</label>
+                <Input
+                  value={form.registrationNumber}
+                  onChange={(e) => handleChange('registrationNumber', e.target.value)}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -345,6 +358,17 @@ export function StoreDetailPage() {
                   min={0}
                   value={form.preparationTime}
                   onChange={(e) => handleChange('preparationTime', Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Commission Rate (%)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  value={form.commissionRate * 100}
+                  onChange={(e) => handleChange('commissionRate', Number(e.target.value) / 100)}
                 />
               </div>
               <div>
@@ -399,17 +423,9 @@ export function StoreDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Protected Fields (Read Only)</CardTitle>
+              <CardTitle className="text-lg">Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Commission Rate</label>
-                <Input
-                  value={`${(Number(store.commissionRate) * 100).toFixed(1)}%`}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">City</label>
                 <Input value={store.city || '-'} disabled className="bg-muted" />

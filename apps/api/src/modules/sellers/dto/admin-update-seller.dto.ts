@@ -46,6 +46,10 @@ export class AdminUpdateSellerDto {
 
   @IsString()
   @IsOptional()
+  registrationNumber?: string;
+
+  @IsString()
+  @IsOptional()
   storeLogoUrl?: string;
 
   @IsBoolean()

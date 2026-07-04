@@ -48,7 +48,9 @@ export const sellersService = {
       isActive?: boolean;
       verificationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
       photo?: string;
+      registrationNumber?: string;
       storeLogoUrl?: string;
+      commissionRate?: number;
     },
   ): Promise<SellerProfile> {
     const result = await api.patch(`/admin/sellers/${id}`, data);

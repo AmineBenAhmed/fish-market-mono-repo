@@ -136,25 +136,27 @@ export function OrdersPage() {
                 key: 'status',
                 header: 'Status',
                 render: (o: Order) => (
-                  <Select
-                    value={o.status}
-                    onValueChange={(v) => statusMutation.mutate({ id: o.id, status: v })}
-                  >
-                    <SelectTrigger className="w-40 h-8">
-                      <SelectValue>
-                        <Badge className={statusColor(o.status)}>
-                          {o.status.replace(/_/g, ' ')}
-                        </Badge>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {orderStatuses.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s.replace(/_/g, ' ')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={o.status}
+                      onValueChange={(v) => statusMutation.mutate({ id: o.id, status: v })}
+                    >
+                      <SelectTrigger className="w-40 h-8">
+                        <SelectValue>
+                          <Badge className={statusColor(o.status)}>
+                            {o.status.replace(/_/g, ' ')}
+                          </Badge>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {orderStatuses.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s.replace(/_/g, ' ')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 ),
               },
               { key: 'items', header: 'Items', render: (o: Order) => o.items?.length ?? 0 },

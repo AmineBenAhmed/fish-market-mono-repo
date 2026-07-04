@@ -55,4 +55,8 @@ export class UpdateSellerDto {
   @IsString()
   @IsOptional()
   photo?: string;
+
+  @IsString()
+  @IsOptional()
+  registrationNumber?: string;
 }

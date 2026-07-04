@@ -62,5 +62,9 @@ export class AdminCreateSellerDto {
 
   @IsString()
   @IsOptional()
+  registrationNumber?: string;
+
+  @IsString()
+  @IsOptional()
   storeLogoUrl?: string;
 }

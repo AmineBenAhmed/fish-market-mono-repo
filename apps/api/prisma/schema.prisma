@@ -318,6 +318,7 @@ model SellerProfile {
   businessDoc        String?
   taxId              String?
   photo              String?
+  registrationNumber String?
   storeLogoUrl       String?
   isActive           Boolean                 @default(false)
   city               String

@@ -31,6 +31,7 @@ export interface SellerProfile {
   businessDoc?: string;
   taxId?: string;
   photo?: string;
+  registrationNumber?: string;
   storeLogoUrl?: string;
   pickupAddress?: string;
   user?: User;
