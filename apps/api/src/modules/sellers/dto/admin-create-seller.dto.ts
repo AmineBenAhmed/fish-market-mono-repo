@@ -20,6 +20,10 @@ export class AdminCreateSellerDto {
   @IsOptional()
   preparationTime?: number;
 
+  @IsNumber()
+  @IsOptional()
+  commissionRate?: number;
+
   @IsString()
   @MinLength(1)
   city!: string;

@@ -84,6 +84,7 @@ export class SellersService {
         userId: dto.userId,
         storeName: dto.storeName,
         storeDescription: dto.storeDescription,
+        commissionRate: dto.commissionRate ?? 0,
         deliveryRadius: dto.deliveryRadius ?? 10,
         preparationTime: dto.preparationTime ?? 30,
         city: dto.city,
@@ -117,6 +118,7 @@ export class SellersService {
 
     if (dto.storeName !== undefined) data.storeName = dto.storeName;
     if (dto.storeDescription !== undefined) data.storeDescription = dto.storeDescription;
+    if (dto.commissionRate !== undefined) data.commissionRate = dto.commissionRate;
     if (dto.deliveryRadius !== undefined) data.deliveryRadius = dto.deliveryRadius;
     if (dto.preparationTime !== undefined) data.preparationTime = dto.preparationTime;
     if (dto.pickupAddress !== undefined) data.pickupAddress = dto.pickupAddress;

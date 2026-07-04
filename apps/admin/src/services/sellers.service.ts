@@ -16,6 +16,7 @@ export const sellersService = {
     userId: string;
     storeName: string;
     storeDescription?: string;
+    commissionRate?: number;
     deliveryRadius?: number;
     preparationTime?: number;
     city: string;

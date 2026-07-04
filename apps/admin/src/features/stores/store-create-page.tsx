@@ -22,6 +22,7 @@ export function StoreCreatePage() {
   const [form, setForm] = useState({
     storeName: '',
     storeDescription: '',
+    commissionRate: '0',
     deliveryRadius: 10,
     preparationTime: 30,
     city: '',
@@ -90,6 +91,7 @@ export function StoreCreatePage() {
       userId: lookedUpUser.id,
       storeName: form.storeName,
       storeDescription: form.storeDescription || undefined,
+      commissionRate: form.commissionRate ? Number(form.commissionRate) / 100 : 0,
       deliveryRadius: form.deliveryRadius ? Number(form.deliveryRadius) : undefined,
       preparationTime: form.preparationTime ? Number(form.preparationTime) : undefined,
       city: form.city,
@@ -321,6 +323,18 @@ export function StoreCreatePage() {
                   placeholder="30"
                   value={form.preparationTime}
                   onChange={(e) => handleChange('preparationTime', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Commission Rate (%)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  placeholder="0"
+                  value={form.commissionRate}
+                  onChange={(e) => handleChange('commissionRate', e.target.value)}
                 />
               </div>
               <div>

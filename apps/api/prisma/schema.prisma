@@ -311,7 +311,7 @@ model SellerProfile {
   storeDescription   String?
   storeLogoFileId    String?                 @unique
   deliveryRadius     Int                     @default(10)
-  commissionRate     Float                   @default(0.12)
+  commissionRate     Float                   @default(0)
   preparationTime    Int                     @default(30)
   verificationStatus SellerVerificationStatus @default(PENDING)
   businessName       String?

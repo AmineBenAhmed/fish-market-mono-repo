@@ -20,6 +20,10 @@ export class AdminUpdateSellerDto {
   @IsOptional()
   preparationTime?: number;
 
+  @IsNumber()
+  @IsOptional()
+  commissionRate?: number;
+
   @IsString()
   @IsOptional()
   pickupAddress?: string;
