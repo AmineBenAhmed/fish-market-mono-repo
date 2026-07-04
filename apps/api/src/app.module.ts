@@ -50,7 +50,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
       {
         name: 'global',
         ttl: 60_000,
-        limit: 100,
+        limit: 300,
       },
       {
         name: 'auth',
