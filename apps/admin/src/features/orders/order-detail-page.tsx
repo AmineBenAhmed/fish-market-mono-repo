@@ -106,7 +106,9 @@ export function OrderDetailPage() {
         <Select value={order.status} onValueChange={(v) => statusMutation.mutate({ status: v })}>
           <SelectTrigger className="w-44">
             <SelectValue>
-              <Badge className={statusColor(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
+              <Badge variant="outline" className={statusColor(order.status)}>
+                {order.status.replace(/_/g, ' ')}
+              </Badge>
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -353,11 +355,15 @@ export function OrderDetailPage() {
                     <div className="flex items-center gap-2">
                       {h.fromStatus && (
                         <>
-                          <Badge variant="secondary">{h.fromStatus}</Badge>
+                          <Badge variant="outline" className={statusColor(h.fromStatus)}>
+                            {h.fromStatus}
+                          </Badge>
                           <span className="text-muted-foreground">&rarr;</span>
                         </>
                       )}
-                      <Badge>{h.toStatus}</Badge>
+                      <Badge variant="outline" className={statusColor(h.toStatus)}>
+                        {h.toStatus}
+                      </Badge>
                     </div>
                     {h.reason && <p className="mt-1 text-xs text-muted-foreground">{h.reason}</p>}
                   </div>

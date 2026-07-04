@@ -162,7 +162,7 @@ export function OrdersPage() {
                     >
                       <SelectTrigger className="w-40 h-8">
                         <SelectValue>
-                          <Badge className={statusColor(o.status)}>
+                          <Badge variant="outline" className={statusColor(o.status)}>
                             {o.status.replace(/_/g, ' ')}
                           </Badge>
                         </SelectValue>
