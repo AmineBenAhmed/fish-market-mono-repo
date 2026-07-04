@@ -75,7 +75,7 @@ export async function createOrder(body: {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
-  items: Array<{ listingId: string; quantity: number }>;
+  items: Array<{ listingId: string; quantity: number; cleaning: boolean }>;
 }) {
   const res = await fetch(`${API_URL}/marketplace/orders`, {
     method: 'POST',

@@ -8,8 +8,8 @@ interface CartContextValue {
   itemCount: number;
   total: number;
   addItem: (item: CartItem) => void;
-  updateQuantity: (listingId: string, quantity: number) => void;
-  removeItem: (listingId: string) => void;
+  updateQuantity: (listingId: string, cleaning: boolean, quantity: number) => void;
+  removeItem: (listingId: string, cleaning: boolean) => void;
   clearCart: () => void;
 }
 
@@ -24,7 +24,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw));
+      if (raw) {
+        const parsed: CartItem[] = JSON.parse(raw);
+        setItems(
+          parsed.map((item) => ({
+            ...item,
+            cleaning: item.cleaning ?? false,
+            cleaningCost: item.cleaningCost ?? 0,
+          })),
+        );
+      }
     } catch {
       /* ignore */
     }
@@ -41,14 +50,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, ready]);
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const total = items.reduce((sum, i) => {
+    const unitPrice = i.price + (i.cleaning ? i.cleaningCost : 0);
+    return sum + unitPrice * i.quantity;
+  }, 0);
 
   const addItem = useCallback((newItem: CartItem) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.listingId === newItem.listingId);
+      const existing = prev.find(
+        (i) => i.listingId === newItem.listingId && i.cleaning === newItem.cleaning,
+      );
       if (existing) {
         return prev.map((i) =>
-          i.listingId === newItem.listingId
+          i.listingId === newItem.listingId && i.cleaning === newItem.cleaning
             ? { ...i, quantity: Math.min(i.quantity + newItem.quantity, newItem.maxQuantity) }
             : i,
         );
@@ -57,16 +71,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const updateQuantity = useCallback((listingId: string, quantity: number) => {
+  const updateQuantity = useCallback((listingId: string, cleaning: boolean, quantity: number) => {
     setItems((prev) =>
       quantity <= 0
-        ? prev.filter((i) => i.listingId !== listingId)
-        : prev.map((i) => (i.listingId === listingId ? { ...i, quantity } : i)),
+        ? prev.filter((i) => i.listingId !== listingId || i.cleaning !== cleaning)
+        : prev.map((i) =>
+            i.listingId === listingId && i.cleaning === cleaning ? { ...i, quantity } : i,
+          ),
     );
   }, []);
 
-  const removeItem = useCallback((listingId: string) => {
-    setItems((prev) => prev.filter((i) => i.listingId !== listingId));
+  const removeItem = useCallback((listingId: string, cleaning: boolean) => {
+    setItems((prev) => prev.filter((i) => i.listingId !== listingId || i.cleaning !== cleaning));
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);
@@ -88,8 +104,8 @@ export function useCart(): CartContextValue {
       itemCount: 0,
       total: 0,
       addItem() {},
-      updateQuantity() {},
-      removeItem() {},
+      updateQuantity(_a, _b, _c) {},
+      removeItem(_a, _b) {},
       clearCart() {},
     };
   }

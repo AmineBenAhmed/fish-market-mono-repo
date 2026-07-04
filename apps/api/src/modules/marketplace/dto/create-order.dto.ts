@@ -1,5 +1,14 @@
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsNumber, IsString, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 class OrderItemDto {
   @IsString()
@@ -8,6 +17,10 @@ class OrderItemDto {
   @IsNumber()
   @Min(1)
   quantity!: number;
+
+  @IsOptional()
+  @IsBoolean()
+  cleaning?: boolean;
 }
 
 export class CreateOrderDto {

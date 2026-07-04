@@ -59,6 +59,25 @@ export interface DriverProfile {
   createdAt: string;
 }
 
+export interface OrderCustomer {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
+
+export interface OrderSeller {
+  id: string;
+  name: string;
+  phone?: string;
+  sellerProfiles?: {
+    storeName: string;
+    city: string;
+    state: string;
+    pickupAddress?: string;
+  }[];
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
@@ -71,8 +90,8 @@ export interface Order {
   discount: number;
   total: number;
   cancelReason?: string;
-  customer?: { id: string; name: string; email: string };
-  seller?: { id: string; name: string };
+  customer?: OrderCustomer;
+  seller?: OrderSeller;
   items?: OrderItem[];
   childOrders?: Partial<Order>[];
   payment?: Payment;
@@ -92,6 +111,7 @@ export interface OrderItem {
   unit: string;
   unitPrice: number;
   totalPrice: number;
+  cleaning: boolean;
 }
 
 export interface OrderStatusHistory {
@@ -217,6 +237,7 @@ export interface Listing {
   origin?: string;
   condition?: 'FRESH' | 'CHILLED' | 'FROZEN' | 'SALTED' | 'SMOKED';
   averageWeight?: number;
+  cleaningCost?: number;
   unit?: string;
   currency?: string;
   coverImageId?: string;

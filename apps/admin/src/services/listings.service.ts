@@ -31,6 +31,7 @@ export const listingsService = {
     origin?: string;
     condition?: string;
     averageWeight?: number;
+    cleaningCost?: number;
     unit?: string;
     currency?: string;
     notes?: string;

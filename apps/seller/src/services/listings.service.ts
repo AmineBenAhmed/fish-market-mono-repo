@@ -26,6 +26,7 @@ export interface CreateListingData {
   origin?: string;
   condition?: string;
   averageWeight?: number;
+  cleaningCost?: number;
   unit?: string;
   currency?: string;
   notes?: string;
@@ -44,6 +45,7 @@ export interface UpdateListingData {
   origin?: string;
   condition?: string;
   averageWeight?: number;
+  cleaningCost?: number;
   unit?: string;
   currency?: string;
   notes?: string;

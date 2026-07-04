@@ -57,6 +57,7 @@ export interface ListingFormSubmitData {
   origin: string;
   imageIds?: string[];
   cloudinaryUrls?: string[];
+  cleaningCost?: number;
   unit?: string;
   currency?: string;
 }
@@ -90,6 +91,7 @@ export function ListingFormDialog({
   const [quantity, setQuantity] = useState('');
   const [condition, setCondition] = useState('FRESH');
   const [origin, setOrigin] = useState('');
+  const [cleaningCost, setCleaningCost] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -112,6 +114,7 @@ export function ListingFormDialog({
       setQuantity(String(editListing.quantity ?? ''));
       setCondition(editListing.condition ?? 'FRESH');
       setOrigin(editListing.origin ?? '');
+      setCleaningCost(editListing.cleaningCost ? String(editListing.cleaningCost) : '');
 
       if (editListing.images?.length) {
         setImages(
@@ -136,6 +139,7 @@ export function ListingFormDialog({
     setQuantity('');
     setCondition('FRESH');
     setOrigin('');
+    setCleaningCost('');
     setImages([]);
     setErrors({});
   }
@@ -177,6 +181,7 @@ export function ListingFormDialog({
       quantity: Number(quantity),
       condition,
       origin,
+      cleaningCost: cleaningCost ? Number(cleaningCost) : undefined,
       cloudinaryUrls,
     });
   }

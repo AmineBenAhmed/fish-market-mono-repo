@@ -506,6 +506,7 @@ model SellerListing {
   origin     String?
   condition  Preservation    @default(FRESH)
   averageWeight Decimal?     @db.Decimal(8, 2)
+  cleaningCost Decimal       @default(0) @db.Decimal(10, 2)
   unit       String?
   currency   String          @default("TND")
   coverImageId String?   @unique
@@ -639,6 +640,7 @@ model OrderItem {
   unit        InventoryUnit
   unitPrice   Decimal @db.Decimal(10, 2)
   totalPrice  Decimal @db.Decimal(10, 2)
+  cleaning    Boolean @default(false)
 
   // Relations
   order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)

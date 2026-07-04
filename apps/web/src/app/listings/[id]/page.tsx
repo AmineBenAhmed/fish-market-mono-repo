@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Package,
   Store,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,9 +45,12 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [cleaning, setCleaning] = useState(false);
   const [added, setAdded] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [sameStoreListings, setSameStoreListings] = useState<Listing[]>([]);
+  const [sameStoreQty, setSameStoreQty] = useState<Record<string, number>>({});
+  const [sameStoreAdded, setSameStoreAdded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!id) return;
@@ -100,6 +104,8 @@ export default function ListingDetailPage() {
       quantity,
       title: listing.title || listing.category?.name || 'Fish',
       price: Number(listing.price),
+      cleaningCost: Number(listing.cleaningCost ?? 0),
+      cleaning,
       unit: listing.unit,
       currency: listing.currency,
       imageUrl: images[0] || null,
@@ -224,6 +230,37 @@ export default function ListingDetailPage() {
               <QuantityPicker value={quantity} max={listing.quantity} onChange={setQuantity} />
             </div>
 
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                  cleaning
+                    ? 'bg-blue-600 border-blue-600'
+                    : 'border-gray-300 group-hover:border-gray-400'
+                }`}
+                onClick={() => setCleaning(!cleaning)}
+              >
+                {cleaning && <Check className="h-3.5 w-3.5 text-white" />}
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium">Clean fish</span>
+                <p className="text-xs text-gray-400">
+                  +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} /{' '}
+                  {listing.unit}
+                </p>
+              </div>
+            </label>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500">Subtotal</span>
+              <span className="font-semibold">
+                {listing.currency}{' '}
+                {(
+                  Number(listing.price) * quantity +
+                  (cleaning ? Number(listing.cleaningCost ?? 0) * quantity : 0)
+                ).toFixed(2)}
+              </span>
+            </div>
+
             <button
               onClick={handleAddToCart}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-lg transition-all ${
@@ -243,45 +280,88 @@ export default function ListingDetailPage() {
             More from {listing.seller.storeName}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {sameStoreListings.map((l) => (
-              <Link
-                key={l.id}
-                href={`/listings/${l.id}`}
-                className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-200"
-              >
-                <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
-                  {l.imageUrls?.length ? (
-                    <img
-                      src={l.imageUrls[0]}
-                      alt={l.title || l.category?.name || ''}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <Fish className="h-12 w-12" />
+            {sameStoreListings.map((l) => {
+              const qty = sameStoreQty[l.id] ?? 1;
+              const justAdded = sameStoreAdded[l.id];
+
+              const handleAdd = () => {
+                const img = getImages(l);
+                addItem({
+                  listingId: l.id,
+                  quantity: qty,
+                  title: l.title || l.category?.name || 'Fish',
+                  price: Number(l.price),
+                  cleaningCost: Number(l.cleaningCost ?? 0),
+                  cleaning: false,
+                  unit: l.unit,
+                  currency: l.currency,
+                  imageUrl: img[0] || null,
+                  storeName: l.seller.storeName,
+                  productName: l.title || l.category?.name || 'Fish',
+                  variantName: l.variant?.name || '',
+                  maxQuantity: l.quantity,
+                });
+                setSameStoreAdded((prev) => ({ ...prev, [l.id]: true }));
+                setTimeout(() => {
+                  setSameStoreAdded((prev) => ({ ...prev, [l.id]: false }));
+                }, 1500);
+              };
+
+              return (
+                <div
+                  key={l.id}
+                  className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-200"
+                >
+                  <Link href={`/listings/${l.id}`}>
+                    <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+                      {l.imageUrls?.length ? (
+                        <img
+                          src={l.imageUrls[0]}
+                          alt={l.title || l.category?.name || ''}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <Fish className="h-12 w-12" />
+                        </div>
+                      )}
+                      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
+                        {l.category?.name || 'General'}
+                      </div>
                     </div>
-                  )}
-                  <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
-                    {l.category?.name || 'General'}
+                  </Link>
+                  <div className="p-3 space-y-2">
+                    <Link href={`/listings/${l.id}`}>
+                      <h3 className="font-semibold text-gray-900 text-sm truncate">
+                        {l.title || l.category?.name || 'Fish'}
+                      </h3>
+                      <span className="text-sm font-bold text-blue-600">
+                        {l.currency} {Number(l.price).toFixed(2)}
+                        {l.unit ? `/${l.unit}` : ''}
+                      </span>
+                    </Link>
+                    <div className="flex items-center gap-2 pt-1">
+                      <QuantityPicker
+                        value={qty}
+                        max={l.quantity}
+                        onChange={(v) => setSameStoreQty((prev) => ({ ...prev, [l.id]: v }))}
+                      />
+                      <button
+                        onClick={handleAdd}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                          justAdded
+                            ? 'bg-green-500 text-white'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        <ShoppingCart className="h-3.5 w-3.5" />
+                        {justAdded ? 'Added!' : 'Add'}
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="p-3 space-y-1">
-                  <h3 className="font-semibold text-gray-900 text-sm truncate">
-                    {l.title || l.category?.name || 'Fish'}
-                  </h3>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-blue-600">
-                      {l.currency} {Number(l.price).toFixed(2)}
-                      {l.unit ? `/${l.unit}` : ''}
-                    </span>
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
-                      <Package className="h-3 w-3" />
-                      <span>{l.quantity} left</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

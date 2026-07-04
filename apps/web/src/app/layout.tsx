@@ -1,8 +1,22 @@
 'use client';
 
+import { Suspense } from 'react';
 import { CartProvider } from '@/hooks/use-cart';
 import { Header } from '@/components/header';
+import { Sidebar } from '@/components/sidebar';
+import { useCategories } from '@/hooks/use-categories';
 import './globals.css';
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const categories = useCategories();
+
+  return (
+    <div className="flex gap-8">
+      <Sidebar categories={categories} />
+      <main className="flex-1 min-w-0 max-w-[1440px] mx-auto px-6 py-8">{children}</main>
+    </div>
+  );
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <CartProvider>
           <Header />
-          <main className="max-w-[1440px] mx-auto px-6 py-8">{children}</main>
+          <Suspense fallback={<div className="max-w-[1440px] mx-auto px-6 py-8">{children}</div>}>
+            <LayoutContent>{children}</LayoutContent>
+          </Suspense>
         </CartProvider>
       </body>
     </html>

@@ -1,6 +1,6 @@
 import { Button } from '@fishmarket/ui';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Badge } from '../../components/ui/badge';
@@ -39,35 +39,99 @@ export function OrderDetailPage() {
     );
   }
 
+  const storeProfile = order.seller?.sellerProfiles?.[0];
+  const deliveryAddress = order.delivery?.address;
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/orders')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{order.orderNumber}</h1>
-          <p className="text-sm text-muted-foreground">Order details</p>
+          <p className="text-sm text-muted-foreground">Created {formatDate(order.createdAt)}</p>
         </div>
         <Badge className={statusColor(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Customer Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Order Information</CardTitle>
+            <CardTitle className="text-lg">Customer</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Customer</span>
-              <span className="text-sm font-medium">
-                {order.customer?.name || order.customerId}
-              </span>
+          <CardContent className="space-y-2">
+            <div>
+              <span className="text-sm text-muted-foreground">Name</span>
+              <p className="font-medium">{order.customer?.name || order.customerId}</p>
             </div>
-            <div className="flex justify-between">
+            <div>
+              <span className="text-sm text-muted-foreground">Phone</span>
+              <p className="font-medium">{order.customer?.phone || '-'}</p>
+            </div>
+            <div>
               <span className="text-sm text-muted-foreground">Email</span>
-              <span className="text-sm">{order.customer?.email || '-'}</span>
+              <p className="text-sm">{order.customer?.email || '-'}</p>
             </div>
+            {deliveryAddress && (
+              <div>
+                <span className="text-sm text-muted-foreground">Delivery Address</span>
+                <p className="text-sm">
+                  {[
+                    (deliveryAddress as any).street,
+                    (deliveryAddress as any).number,
+                    (deliveryAddress as any).complement,
+                    (deliveryAddress as any).neighborhood,
+                    (deliveryAddress as any).city,
+                    (deliveryAddress as any).state,
+                  ]
+                    .filter(Boolean)
+                    .join(', ') || '-'}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Store Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Store</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>
+              <span className="text-sm text-muted-foreground">Name</span>
+              <p className="font-medium">{storeProfile?.storeName || order.seller?.name || '-'}</p>
+            </div>
+            <div>
+              <span className="text-sm text-muted-foreground">Phone</span>
+              <p className="font-medium">{order.seller?.phone || '-'}</p>
+            </div>
+            {storeProfile?.city && (
+              <div>
+                <span className="text-sm text-muted-foreground">Location</span>
+                <p className="text-sm">
+                  {[storeProfile.city, storeProfile.state].filter(Boolean).join(', ') || '-'}
+                </p>
+              </div>
+            )}
+            {storeProfile?.pickupAddress && (
+              <div>
+                <span className="text-sm text-muted-foreground">Pickup Address</span>
+                <p className="text-sm">{storeProfile.pickupAddress}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Order Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Order Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Subtotal</span>
               <span className="text-sm font-medium">{formatCurrency(Number(order.subtotal))}</span>
@@ -84,59 +148,90 @@ export function OrderDetailPage() {
                 {formatCurrency(Number(order.commission))}
               </span>
             </div>
+            {Number(order.discount) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Discount</span>
+                <span className="text-sm font-medium text-green-600">
+                  -{formatCurrency(Number(order.discount))}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between border-t pt-2">
               <span className="text-sm font-semibold">Total</span>
               <span className="text-sm font-bold">{formatCurrency(Number(order.total))}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Created</span>
-              <span className="text-sm">{formatDate(order.createdAt)}</span>
+            <div className="flex justify-between pt-2">
+              <span className="text-sm text-muted-foreground">Items</span>
+              <span className="text-sm">{order.items?.length ?? 0}</span>
             </div>
             {order.cancelReason && (
-              <div className="flex justify-between">
+              <div className="flex justify-between pt-2 border-t">
                 <span className="text-sm text-muted-foreground">Cancel Reason</span>
                 <span className="text-sm text-red-600">{order.cancelReason}</span>
               </div>
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Order Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {(order.items ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">No items</p>
-              ) : (
-                (order.items ?? []).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{item.productName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.variantName} × {item.quantity} {item.unit}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {formatCurrency(Number(item.totalPrice))}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatCurrency(Number(item.unitPrice))}/{item.unit}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
+      {/* Order Items */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Order Items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(order.items ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">No items</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-3 font-medium">Product</th>
+                    <th className="pb-3 font-medium">Variant</th>
+                    <th className="pb-3 font-medium text-center">Qty</th>
+                    <th className="pb-3 font-medium text-right">Unit Price</th>
+                    <th className="pb-3 font-medium text-center">Cleaning</th>
+                    <th className="pb-3 font-medium text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(order.items ?? []).map((item) => (
+                    <tr key={item.id} className="border-b last:border-0">
+                      <td className="py-3 font-medium">{item.productName}</td>
+                      <td className="py-3 text-muted-foreground">
+                        {item.variantName} ({item.unit})
+                      </td>
+                      <td className="py-3 text-center">{item.quantity}</td>
+                      <td className="py-3 text-right font-medium">
+                        {formatCurrency(Number(item.unitPrice))}
+                      </td>
+                      <td className="py-3 text-center">
+                        {item.cleaning ? (
+                          <span className="inline-flex items-center gap-1 text-green-600 font-medium">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <XCircle className="h-3.5 w-3.5" />
+                            No
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 text-right font-semibold">
+                        {formatCurrency(Number(item.totalPrice))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Status History */}
       {order.statusHistory && order.statusHistory.length > 0 && (
         <Card>
           <CardHeader>
@@ -151,7 +246,7 @@ export function OrderDetailPage() {
                       {h.fromStatus && (
                         <>
                           <Badge variant="secondary">{h.fromStatus}</Badge>
-                          <span className="text-muted-foreground">→</span>
+                          <span className="text-muted-foreground">&rarr;</span>
                         </>
                       )}
                       <Badge>{h.toStatus}</Badge>

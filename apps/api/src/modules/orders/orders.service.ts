@@ -275,6 +275,18 @@ export class OrdersService {
     const order = await this.prisma.order.findFirst({
       where,
       include: {
+        customer: { select: { id: true, name: true, email: true, phone: true } },
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            sellerProfiles: {
+              select: { storeName: true, city: true, state: true, pickupAddress: true },
+              take: 1,
+            },
+          },
+        },
         childOrders: {
           include: {
             seller: { select: { id: true, name: true } },
@@ -284,6 +296,11 @@ export class OrdersService {
         },
         items: true,
         statusHistory: { orderBy: { createdAt: 'desc' } },
+        delivery: {
+          include: {
+            address: true,
+          },
+        },
       },
     });
 
@@ -475,8 +492,17 @@ export class OrdersService {
       this.prisma.order.findMany({
         where,
         include: {
-          customer: { select: { id: true, name: true, email: true } },
-          seller: { select: { id: true, name: true } },
+          customer: { select: { id: true, name: true, email: true, phone: true } },
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              sellerProfiles: {
+                select: { storeName: true, city: true, state: true, pickupAddress: true },
+                take: 1,
+              },
+            },
+          },
           items: true,
           childOrders: { select: { id: true, orderNumber: true, status: true, total: true } },
         },

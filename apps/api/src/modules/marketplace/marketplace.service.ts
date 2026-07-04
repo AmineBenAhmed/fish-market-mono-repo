@@ -302,7 +302,9 @@ export class MarketplaceService {
       for (const [sellerId, sellerItems] of groupedBySeller) {
         const subtotal = sellerItems.reduce((sum, i) => {
           const listing = listingMap.get(i.listingId)!;
-          return sum + Number(listing.price) * i.quantity;
+          const unitPrice =
+            Number(listing.price) + (i.cleaning ? Number(listing.cleaningCost ?? 0) : 0);
+          return sum + unitPrice * i.quantity;
         }, 0);
         const commissionRate = commissionMap.get(sellerId) ?? 0.12;
         const commission = subtotal * commissionRate;
@@ -360,6 +362,9 @@ export class MarketplaceService {
             data: { quantity: { decrement: cartItem.quantity } },
           });
 
+          const cleaningCost = cartItem.cleaning ? Number(listing.cleaningCost ?? 0) : 0;
+          const effectiveUnitPrice = Number(listing.price) + cleaningCost;
+
           const itemData = {
             orderId: created.id,
             listingId: cartItem.listingId,
@@ -369,8 +374,9 @@ export class MarketplaceService {
             variantName: listing.variant?.name ?? 'Standard',
             quantity: cartItem.quantity,
             unit: (listing.variant?.unit ?? 'KG') as any,
-            unitPrice: listing.price,
-            totalPrice: Number(listing.price) * cartItem.quantity,
+            unitPrice: effectiveUnitPrice,
+            totalPrice: effectiveUnitPrice * cartItem.quantity,
+            cleaning: cartItem.cleaning ?? false,
           };
 
           await tx.orderItem.create({ data: itemData });
@@ -419,19 +425,25 @@ export class MarketplaceService {
       throw new NotFoundException('Seller not found');
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const listings = await this.prisma.sellerListing.findMany({
       where: {
         sellerId: sellerProfileId,
-        date: today,
         status: 'ACTIVE',
-        quantity: { gt: 0 },
       },
       include: {
         category: true,
         variant: true,
+        coverImage: true,
+        seller: {
+          select: {
+            id: true,
+            storeName: true,
+            city: true,
+            state: true,
+            photo: true,
+            storeLogoUrl: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

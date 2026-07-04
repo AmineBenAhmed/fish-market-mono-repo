@@ -56,6 +56,11 @@ export class UpdateListingDto {
   @Min(0)
   averageWeight?: number;
 
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  cleaningCost?: number;
+
   @IsString()
   @IsOptional()
   unit?: string;

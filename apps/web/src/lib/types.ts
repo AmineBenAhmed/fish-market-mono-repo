@@ -34,6 +34,7 @@ export interface Listing {
   title: string | null;
   description: string | null;
   price: number;
+  cleaningCost?: number;
   quantity: number;
   unit: string;
   currency: string;
@@ -84,6 +85,8 @@ export interface CartItem {
   quantity: number;
   title: string;
   price: number;
+  cleaningCost: number;
+  cleaning: boolean;
   unit: string;
   currency: string;
   imageUrl: string | null;
@@ -97,5 +100,5 @@ export interface CreateOrderPayload {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
-  items: Array<{ listingId: string; quantity: number }>;
+  items: Array<{ listingId: string; quantity: number; cleaning: boolean }>;
 }

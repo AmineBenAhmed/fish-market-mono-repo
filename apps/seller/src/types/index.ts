@@ -62,6 +62,7 @@ export interface Listing {
   origin?: string;
   condition?: string;
   averageWeight?: number;
+  cleaningCost?: number;
   currency?: string;
   notes?: string;
   coverImage?: { id: string; url: string } | null;

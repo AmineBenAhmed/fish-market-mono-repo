@@ -103,7 +103,23 @@ export function OrdersPage() {
               {
                 key: 'customer',
                 header: 'Customer',
-                render: (o: Order) => o.customer?.name || o.customerId,
+                render: (o: Order) => (
+                  <div>
+                    <div className="font-medium">{o.customer?.name || o.customerId}</div>
+                    {o.customer?.phone && (
+                      <div className="text-xs text-muted-foreground">{o.customer.phone}</div>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                key: 'store',
+                header: 'Store',
+                render: (o: Order) => (
+                  <span className="text-sm">
+                    {o.seller?.sellerProfiles?.[0]?.storeName || o.seller?.name || '-'}
+                  </span>
+                ),
               },
               {
                 key: 'total',
