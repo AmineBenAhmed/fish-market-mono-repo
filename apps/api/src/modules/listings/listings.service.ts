@@ -136,7 +136,7 @@ export class ListingsService {
 
     const listingDate = new Date(dto.date);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     if (listingDate < today) {
       throw new BadRequestException('Cannot create listings for past dates');
@@ -281,7 +281,7 @@ export class ListingsService {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     await this.expireOldListings();
 
@@ -316,9 +316,10 @@ export class ListingsService {
       throw new NotFoundException('Seller profile not found');
     }
 
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const yesterday = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1),
+    );
 
     return this.prisma.sellerListing.findMany({
       where: { sellerId: profile.id, date: yesterday },
@@ -335,7 +336,7 @@ export class ListingsService {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     const created: any[] = [];
 
@@ -482,7 +483,7 @@ export class ListingsService {
 
     const listingDate = new Date(dto.date);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     if (listingDate < today) {
       throw new BadRequestException('Cannot create listings for past dates');
@@ -553,7 +554,7 @@ export class ListingsService {
 
   async expireOldListings(): Promise<void> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     await this.prisma.sellerListing.updateMany({
       where: { date: { lt: today }, status: { not: 'EXPIRED' } },

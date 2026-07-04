@@ -57,7 +57,7 @@ export class CartService {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
     if (listing.date < today) {
       throw new BadRequestException('Listing is from a past date');
     }

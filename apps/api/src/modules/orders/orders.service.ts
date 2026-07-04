@@ -57,7 +57,7 @@ export class OrdersService {
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     for (const item of cart.items) {
       if (item.listing.status !== 'ACTIVE') {

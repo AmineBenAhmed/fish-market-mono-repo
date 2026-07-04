@@ -10,9 +10,9 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
   return (
     <button
       onClick={() => onClick(category.id)}
-      className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-200 text-left"
+      className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all duration-200"
     >
-      <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+      <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
         {category.image?.url ? (
           <img
             src={category.image.url}
@@ -25,11 +25,8 @@ export function CategoryCard({ category, onClick }: CategoryCardProps) {
           </div>
         )}
       </div>
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 text-lg">{category.name}</h3>
-        {category.description && (
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{category.description}</p>
-        )}
+      <div className="py-4 px-2 text-center">
+        <h3 className="font-bold text-xl text-gray-900">{category.name}</h3>
       </div>
     </button>
   );

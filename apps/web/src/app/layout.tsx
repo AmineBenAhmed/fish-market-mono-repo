@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen text-gray-900">
         <div className="fixed inset-0 -z-10">
-          <img src="/assets/sea.jpg" alt="" className="w-full h-full object-cover" />
+          <img src="/assets/background.jpg" alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-white/70" />
         </div>
         <CartProvider>

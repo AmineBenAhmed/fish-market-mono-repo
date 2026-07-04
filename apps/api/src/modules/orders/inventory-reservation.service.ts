@@ -13,7 +13,7 @@ export class InventoryReservationService {
         id: listingId,
         quantity: { gte: quantity },
         status: 'ACTIVE',
-        date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        date: { gte: new Date(new Date().setUTCHours(0, 0, 0, 0)) },
       },
       data: { quantity: { decrement: quantity } },
     });

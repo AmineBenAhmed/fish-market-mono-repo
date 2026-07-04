@@ -160,7 +160,7 @@ export default function ListingDetailPage() {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 bg-white p-6 rounded-2xl">
           <div>
             <span className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
               {categoryName}
