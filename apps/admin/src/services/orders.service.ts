@@ -26,4 +26,8 @@ export const ordersService = {
   async updateStatus(id: string, status: string, reason?: string): Promise<void> {
     await api.patch(`/admin/orders/${id}/status`, { status, reason });
   },
+
+  async assignDriver(id: string, driverId: string, addressId?: string): Promise<void> {
+    await api.post(`/admin/orders/${id}/assign-driver`, { driverId, addressId });
+  },
 };

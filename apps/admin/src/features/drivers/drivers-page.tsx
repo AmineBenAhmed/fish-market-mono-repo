@@ -1,6 +1,8 @@
+import { Button } from '@fishmarket/ui';
 import { useQuery } from '@tanstack/react-query';
-import { Truck } from 'lucide-react';
+import { Plus, Truck } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DataTable } from '../../components/data-table/data-table';
 import { PageHeader } from '../../components/shared/page-header';
@@ -18,6 +20,7 @@ import { driversService } from '../../services';
 import type { DriverProfile } from '../../types';
 
 export function DriversPage() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
 
@@ -31,7 +34,12 @@ export function DriversPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Drivers" description="Manage delivery drivers" />
+      <PageHeader title="Drivers" description="Manage delivery drivers">
+        <Button onClick={() => navigate('/drivers/new')}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Driver
+        </Button>
+      </PageHeader>
 
       <Card>
         <CardHeader>

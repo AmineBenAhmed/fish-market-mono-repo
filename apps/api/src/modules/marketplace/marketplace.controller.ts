@@ -16,6 +16,7 @@ export class MarketplaceController {
   @ApiQuery({ name: 'city', required: false, type: String })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'condition', required: false, type: String })
   @ApiQuery({ name: 'minPrice', required: false, type: Number })
   @ApiQuery({ name: 'maxPrice', required: false, type: Number })
   @ApiQuery({ name: 'sortBy', required: false, enum: ['price', 'date', 'name'] })
@@ -27,6 +28,7 @@ export class MarketplaceController {
     @Query('city') city?: string,
     @Query('categoryId') categoryId?: string,
     @Query('search') search?: string,
+    @Query('condition') condition?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
     @Query('sortBy') sortBy?: string,
@@ -38,6 +40,7 @@ export class MarketplaceController {
       city,
       categoryId,
       search,
+      condition,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
       sortBy: sortBy as 'price' | 'date' | 'name' | undefined,

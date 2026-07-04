@@ -1,6 +1,6 @@
 import { Button } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Truck, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -15,7 +15,7 @@ import {
 } from '../../components/ui/select';
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatCurrency, formatDate, statusColor } from '../../lib/utils';
-import { ordersService } from '../../services';
+import { driversService, ordersService } from '../../services';
 
 const orderStatuses = [
   'DRAFT',
@@ -40,12 +40,31 @@ export function OrderDetailPage() {
     enabled: !!id,
   });
 
+  const { data: driversData } = useQuery({
+    queryKey: ['drivers'],
+    queryFn: () => driversService.getDrivers({ limit: 100 }),
+  });
+
+  const drivers = driversData?.data ?? [];
+
   const statusMutation = useMutation({
     mutationFn: ({ status, reason }: { status: string; reason?: string }) =>
       ordersService.updateStatus(id!, status, reason),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['order', id] }),
     onError: (err: any) => {
       const message = err?.response?.data?.message || err?.message || 'Invalid status transition';
+      toast.error(message);
+    },
+  });
+
+  const assignDriverMutation = useMutation({
+    mutationFn: (driverId: string) => ordersService.assignDriver(id!, driverId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
+      toast.success('Driver assigned successfully');
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || err?.message || 'Failed to assign driver';
       toast.error(message);
     },
   });
@@ -217,6 +236,51 @@ export function OrderDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Driver */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Truck className="h-5 w-5" />
+            Driver
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {order.delivery?.driver ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{order.delivery.driver.name}</p>
+                  {order.delivery.driver.phone && (
+                    <p className="text-sm text-muted-foreground">{order.delivery.driver.phone}</p>
+                  )}
+                </div>
+                <Badge variant="secondary">Assigned</Badge>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground mb-3">No driver assigned</p>
+          )}
+          <div className="mt-3">
+            <Select
+              value=""
+              onValueChange={(v) => assignDriverMutation.mutate(v)}
+              disabled={assignDriverMutation.isPending}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Assign a driver..." />
+              </SelectTrigger>
+              <SelectContent>
+                {drivers.map((d) => (
+                  <SelectItem key={d.id} value={d.userId}>
+                    {d.name || d.userId}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Order Items */}
       <Card>

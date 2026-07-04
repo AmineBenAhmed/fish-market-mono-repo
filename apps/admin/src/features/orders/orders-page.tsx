@@ -159,6 +159,13 @@ export function OrdersPage() {
                   </div>
                 ),
               },
+              {
+                key: 'driver',
+                header: 'Driver',
+                render: (o: Order) => (
+                  <span className="text-sm">{o.delivery?.driver?.name || '-'}</span>
+                ),
+              },
               { key: 'items', header: 'Items', render: (o: Order) => o.items?.length ?? 0 },
               { key: 'createdAt', header: 'Date', render: (o: Order) => formatDate(o.createdAt) },
             ]}

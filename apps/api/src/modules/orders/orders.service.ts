@@ -300,6 +300,7 @@ export class OrdersService {
         delivery: {
           include: {
             address: true,
+            driver: { select: { id: true, name: true, phone: true } },
           },
         },
       },
@@ -535,6 +536,11 @@ export class OrdersService {
           },
           items: true,
           childOrders: { select: { id: true, orderNumber: true, status: true, total: true } },
+          delivery: {
+            include: {
+              driver: { select: { id: true, name: true, phone: true } },
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,

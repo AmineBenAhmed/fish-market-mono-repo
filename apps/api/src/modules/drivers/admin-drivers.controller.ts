@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { Roles } from '../../common/decorators/roles.decorator';
+import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
 import { DriversService } from './drivers.service';
 
 @ApiTags('Admin Drivers')
@@ -25,6 +26,13 @@ export class AdminDriversController {
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
+  }
+
+  @Post()
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Create a new driver' })
+  async create(@Body() dto: AdminCreateDriverDto) {
+    return this.driversService.adminCreate(dto);
   }
 
   @Get('available')

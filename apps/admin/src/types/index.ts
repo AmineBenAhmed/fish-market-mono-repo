@@ -56,6 +56,11 @@ export interface DriverProfile {
   currentLng?: number;
   deliveryZoneId?: string;
   lastLocationAt?: string;
+  licenseNumber?: string;
+  idCardNumber?: string;
+  idCardPhoto?: string;
+  phone2?: string;
+  workingZone?: string;
   user?: User;
   createdAt: string;
 }

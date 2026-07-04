@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser, Roles } from '../../common/decorators';
 import { JwtPayload } from '../../common/interfaces';
 import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto';
 import { AdminOrdersService } from './admin-orders.service';
+import { AssignOrderDriverDto } from './dto/assign-order-driver.dto';
 
 @ApiTags('Admin Orders')
 @ApiBearerAuth()
@@ -37,6 +38,19 @@ export class AdminOrdersController {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });
+  }
+
+  @Post(':id/assign-driver')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Assign a driver to an order (admin only)' })
+  @ApiResponse({ status: 200, description: 'Driver assigned' })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  async assignDriver(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @Body() dto: AssignOrderDriverDto,
+  ) {
+    return this.adminOrdersService.assignDriver(id, dto, user.sub);
   }
 
   @Patch(':id/status')

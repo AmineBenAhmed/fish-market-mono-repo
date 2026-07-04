@@ -354,6 +354,10 @@ model DriverProfile {
   vehicleType      String?
   vehiclePlate     String?
   licenseNumber    String?
+  idCardNumber     String?
+  idCardPhoto      String?
+  phone2           String?
+  workingZone      String?
   maxLoadKg        Float?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
