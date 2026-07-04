@@ -12,6 +12,7 @@ export default function HomePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const selectedCategory = searchParams.get('category');
+  const selectedCondition = searchParams.get('condition');
   const [categories, setCategories] = useState<FishCategory[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [page, setPage] = useState(1);
@@ -26,34 +27,40 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
-  const loadListings = useCallback(async (p: number, categoryId: string | null) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params: any = { page: p, limit: LIMIT };
-      if (categoryId) {
-        params.categoryId = categoryId;
+  const loadListings = useCallback(
+    async (p: number, categoryId: string | null, condition: string | null) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const params: any = { page: p, limit: LIMIT };
+        if (categoryId) {
+          params.categoryId = categoryId;
+        }
+        if (condition) {
+          params.condition = condition;
+        }
+        const res = await fetchTodayListings(params);
+        const payload = res.data.data;
+        if (p === 1) {
+          setListings(payload);
+        } else {
+          setListings((prev) => [...prev, ...payload]);
+        }
+        setHasMore(res.data.meta.hasNextPage);
+        setPage(p);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      const res = await fetchTodayListings(params);
-      const payload = res.data.data;
-      if (p === 1) {
-        setListings(payload);
-      } else {
-        setListings((prev) => [...prev, ...payload]);
-      }
-      setHasMore(res.data.meta.hasNextPage);
-      setPage(p);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     setPage(1);
-    loadListings(1, selectedCategory);
-  }, [selectedCategory, loadListings]);
+    loadListings(1, selectedCategory, selectedCondition);
+  }, [selectedCategory, selectedCondition, loadListings]);
 
   function handleSelectCategory(id: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -137,7 +144,7 @@ export default function HomePage() {
           {hasMore && !loading && listings.length > 0 && (
             <div className="flex justify-center py-8">
               <button
-                onClick={() => loadListings(page + 1, selectedCategory)}
+                onClick={() => loadListings(page + 1, selectedCategory, selectedCondition)}
                 className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
               >
                 Show More

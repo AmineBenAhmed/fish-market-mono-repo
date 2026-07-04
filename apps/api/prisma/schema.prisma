@@ -126,6 +126,7 @@ enum Preservation {
   FROZEN
   SALTED
   SMOKED
+  PREPARED
 }
 
 enum ListingStatus {

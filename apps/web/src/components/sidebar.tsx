@@ -14,6 +14,8 @@ import {
   Ship,
   Droplets,
   Anchor,
+  Snowflake,
+  Droplet,
 } from 'lucide-react';
 import type { FishCategory } from '@/lib/types';
 
@@ -27,11 +29,42 @@ export function Sidebar({ categories }: SidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get('category');
+  const selectedConditions = (searchParams.get('condition') || '').split(',').filter(Boolean);
   const [search, setSearch] = useState('');
 
+  const conditionLabels = [
+    { value: 'FRESH', label: 'Fresh', icon: Droplet, iconClass: 'text-blue-400' },
+    { value: 'FROZEN', label: 'Frozen', icon: Snowflake, iconClass: 'text-cyan-400' },
+    { value: 'PREPARED', label: 'Prepared', icon: Sparkles, iconClass: 'text-amber-400' },
+  ] as const;
+
   function handleSelect(id: string | null) {
-    const qs = id ? `?category=${id}` : '';
-    router.push(`/${qs}`);
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set('category', id);
+    } else {
+      params.delete('category');
+    }
+    const qs = params.toString();
+    router.push(qs ? `/?${qs}` : '/');
+  }
+
+  function handleConditionChange(value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    const current = (params.get('condition') || '').split(',').filter(Boolean);
+    const idx = current.indexOf(value);
+    if (idx >= 0) {
+      current.splice(idx, 1);
+    } else {
+      current.push(value);
+    }
+    if (current.length > 0) {
+      params.set('condition', current.join(','));
+    } else {
+      params.delete('condition');
+    }
+    const qs = params.toString();
+    router.push(qs ? `/?${qs}` : '/');
   }
 
   const filtered = categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
@@ -40,7 +73,7 @@ export function Sidebar({ categories }: SidebarProps) {
     <aside className="w-72 shrink-0 hidden lg:block ml-8">
       <div className="sticky top-24 space-y-5">
         {/* ── Header ── */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400 p-5 shadow-lg shadow-blue-200/50">
+        {/*<div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400 p-5 shadow-lg shadow-blue-200/50">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wOCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
           <div className="absolute -top-6 -right-6 h-24 w-24 rounded-full bg-white/10 blur-xl" />
           <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-white/10 blur-lg" />
@@ -53,10 +86,10 @@ export function Sidebar({ categories }: SidebarProps) {
               <p className="text-xs text-white/70 font-medium">{categories.length} types</p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* ── Search ── */}
-        <div className="relative group">
+        <div className="relative group mt-6">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none transition-colors group-focus-within:text-blue-500" />
           <input
             type="text"
@@ -73,6 +106,27 @@ export function Sidebar({ categories }: SidebarProps) {
               Clear
             </button>
           )}
+        </div>
+
+        {/* ── Condition Filter ── */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-100/80 shadow-sm p-4 space-y-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Preservation
+          </p>
+          {conditionLabels.map(({ value, label, icon: Icon, iconClass }) => (
+            <label key={value} className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={selectedConditions.includes(value)}
+                onChange={() => handleConditionChange(value)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <Icon className={`h-4 w-4 ${iconClass}`} />
+              <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                {label}
+              </span>
+            </label>
+          ))}
         </div>
 
         {/* ── Category List ── */}
@@ -174,7 +228,7 @@ export function Sidebar({ categories }: SidebarProps) {
         </nav>
 
         {/* ── Footer ── */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 border border-emerald-100/60 p-5 group cursor-default">
+        {/*<div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 border border-emerald-100/60 p-5 group cursor-default">
           <div className="absolute -top-6 -right-6 h-20 w-20 rounded-full bg-emerald-200/30 blur-xl group-hover:bg-emerald-200/40 transition-all duration-500" />
           <div className="absolute -bottom-4 -left-4 h-14 w-14 rounded-full bg-cyan-200/30 blur-lg group-hover:bg-cyan-200/40 transition-all duration-500" />
           <div className="relative flex items-start gap-3">
@@ -188,7 +242,7 @@ export function Sidebar({ categories }: SidebarProps) {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </aside>
   );

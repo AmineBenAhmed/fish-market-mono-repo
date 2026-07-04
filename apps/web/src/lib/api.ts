@@ -42,6 +42,7 @@ export async function fetchTodayListings(params: {
   limit?: number;
   categoryId?: string;
   search?: string;
+  condition?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;
@@ -52,6 +53,7 @@ export async function fetchTodayListings(params: {
   if (params.limit) searchParams.set('limit', String(params.limit));
   if (params.categoryId) searchParams.set('categoryId', params.categoryId);
   if (params.search) searchParams.set('search', params.search);
+  if (params.condition) searchParams.set('condition', params.condition);
   if (params.minPrice !== undefined) searchParams.set('minPrice', String(params.minPrice));
   if (params.maxPrice !== undefined) searchParams.set('maxPrice', String(params.maxPrice));
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);

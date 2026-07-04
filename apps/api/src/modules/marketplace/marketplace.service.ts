@@ -11,6 +11,7 @@ interface FindTodayParams {
   city?: string;
   categoryId?: string;
   search?: string;
+  condition?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: 'price' | 'date' | 'name';
@@ -49,6 +50,18 @@ export class MarketplaceService {
         { description: { contains: params.search, mode: 'insensitive' } },
         { category: { name: { contains: params.search, mode: 'insensitive' } } },
       ];
+    }
+
+    if (params.condition) {
+      const conditions = params.condition
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (conditions.length === 1) {
+        where.condition = conditions[0] as any;
+      } else {
+        where.condition = { in: conditions } as any;
+      }
     }
 
     if (params.minPrice !== undefined || params.maxPrice !== undefined) {
