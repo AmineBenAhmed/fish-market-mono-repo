@@ -60,7 +60,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
       {
         name: 'marketplace',
         ttl: 60_000,
-        limit: 200,
+        limit: 500,
       },
     ]),
 

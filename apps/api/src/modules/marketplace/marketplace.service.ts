@@ -438,9 +438,13 @@ export class MarketplaceService {
       throw new NotFoundException('Seller not found');
     }
 
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
     const listings = await this.prisma.sellerListing.findMany({
       where: {
         sellerId: sellerProfileId,
+        date: today,
         status: 'ACTIVE',
       },
       include: {

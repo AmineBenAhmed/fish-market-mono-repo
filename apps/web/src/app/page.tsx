@@ -94,7 +94,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {!selectedCategory ? (
+      {!selectedCategory && !selectedCondition ? (
         <>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">All Categories</h1>
@@ -110,7 +110,7 @@ export default function HomePage() {
         <>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              {showingCategory?.name || 'Listings'}
+              {showingCategory?.name || (selectedCondition ? 'Filtered Listings' : 'Listings')}
             </h1>
             <p className="text-gray-500 mt-1">
               {listings.length} listing{listings.length !== 1 ? 's' : ''} available
