@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '../../components/shared/page-header';
+import { MapPicker } from '../../components/shared/map-picker';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { cloudinaryService, sellersService, usersService } from '../../services';
@@ -385,6 +386,13 @@ export function StoreCreatePage() {
               <CardTitle className="text-lg">Location</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <MapPicker
+                lat={form.lat}
+                lng={form.lng}
+                onChange={(lat, lng) => {
+                  setForm((prev) => ({ ...prev, lat, lng }));
+                }}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Latitude</label>

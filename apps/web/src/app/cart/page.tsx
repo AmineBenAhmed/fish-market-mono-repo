@@ -1,15 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/hooks/use-cart';
 import { QuantityPicker } from '@/components/quantity-picker';
 import { CheckoutModal } from '@/components/checkout-modal';
 import { createOrder } from '@/lib/api';
 import { ShoppingCart, Trash2, ArrowLeft, Fish, Loader2 } from 'lucide-react';
+import { useLocale } from '@/lib/i18n/context';
 
 export default function CartPage() {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
   const { items, total, itemCount, updateQuantity, removeItem, clearCart } = useCart();
+  const { t } = useLocale();
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,20 +47,28 @@ export default function CartPage() {
     }
   };
 
+  if (!hydrated) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="text-center py-20">
         <div className="bg-green-100 text-green-700 h-20 w-20 rounded-full flex items-center justify-center mx-auto mb-6">
           <Fish className="h-10 w-10" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Placed!</h2>
-        <p className="text-gray-500 mb-6">Thank you for your order. We will contact you soon.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('cart.orderPlaced')}</h2>
+        <p className="text-gray-500 mb-6">{t('cart.thankYou')}</p>
         <Link
           href="/"
           className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Continue Shopping
+          {t('cart.continueShopping')}
         </Link>
       </div>
     );
@@ -63,13 +78,13 @@ export default function CartPage() {
     return (
       <div className="text-center py-20">
         <ShoppingCart className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-600 mb-2">Your cart is empty</h2>
-        <p className="text-gray-400 mb-6">Add some fish from the market</p>
+        <h2 className="text-xl font-semibold text-gray-600 mb-2">{t('cart.empty')}</h2>
+        <p className="text-gray-400 mb-6">{t('cart.addSomeFish')}</p>
         <Link
           href="/"
           className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
         >
-          Browse Listings
+          {t('cart.browseListings')}
         </Link>
       </div>
     );
@@ -78,8 +93,10 @@ export default function CartPage() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Shopping Cart</h1>
-        <span className="text-gray-500">{itemCount} items</span>
+        <h1 className="text-2xl font-bold">{t('cart.shoppingCart')}</h1>
+        <span className="text-gray-500">
+          {itemCount} {t('cart.items')}
+        </span>
       </div>
 
       <div className="space-y-4">
@@ -105,7 +122,8 @@ export default function CartPage() {
               </p>
               {item.cleaning && (
                 <p className="text-xs text-green-600 mt-0.5">
-                  Cleaning: +{item.currency} {item.cleaningCost.toFixed(2)} / {item.unit}
+                  {t('cart.cleaning')}: +{item.currency} {item.cleaningCost.toFixed(2)} /{' '}
+                  {item.unit}
                 </p>
               )}
             </div>
@@ -136,7 +154,7 @@ export default function CartPage() {
       <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
         <div className="space-y-2 text-sm mb-4">
           <div className="flex items-center justify-between text-gray-500">
-            <span>Subtotal</span>
+            <span>{t('cart.subtotal')}</span>
             <span>
               {items[0]?.currency || 'TND'}{' '}
               {items.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}
@@ -144,7 +162,7 @@ export default function CartPage() {
           </div>
           {items.some((i) => i.cleaning) && (
             <div className="flex items-center justify-between text-green-600">
-              <span>Cleaning Fee</span>
+              <span>{t('cart.cleaningFee')}</span>
               <span>
                 {items[0]?.currency || 'TND'}{' '}
                 {items
@@ -154,7 +172,7 @@ export default function CartPage() {
             </div>
           )}
           <div className="border-t pt-2 flex items-center justify-between text-lg">
-            <span className="font-semibold">Total</span>
+            <span className="font-semibold">{t('cart.total')}</span>
             <span className="font-bold text-xl text-blue-600">
               {items[0]?.currency || 'TND'} {total.toFixed(2)}
             </span>
@@ -164,7 +182,7 @@ export default function CartPage() {
           onClick={() => setModalOpen(true)}
           className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-lg"
         >
-          Proceed to Checkout
+          {t('cart.proceedToCheckout')}
         </button>
       </div>
 

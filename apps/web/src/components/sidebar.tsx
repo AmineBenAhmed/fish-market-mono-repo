@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -18,6 +19,7 @@ import {
   Droplet,
 } from 'lucide-react';
 import type { FishCategory } from '@/lib/types';
+import { useLocale } from '@/lib/i18n/context';
 
 const categoryIcons = [Fish, Waves, Egg, Shell, Ship, Droplets, Anchor];
 
@@ -31,11 +33,17 @@ export function Sidebar({ categories }: SidebarProps) {
   const selectedCategory = searchParams.get('category');
   const selectedConditions = (searchParams.get('condition') || '').split(',').filter(Boolean);
   const [search, setSearch] = useState('');
+  const { t } = useLocale();
 
   const conditionLabels = [
-    { value: 'FRESH', label: 'Fresh', icon: Droplet, iconClass: 'text-blue-400' },
-    { value: 'FROZEN', label: 'Frozen', icon: Snowflake, iconClass: 'text-cyan-400' },
-    { value: 'PREPARED', label: 'Prepared', icon: Sparkles, iconClass: 'text-amber-400' },
+    { value: 'FRESH', label: t('sidebar.fresh'), icon: Droplet, iconClass: 'text-blue-400' },
+    { value: 'FROZEN', label: t('sidebar.frozen'), icon: Snowflake, iconClass: 'text-cyan-400' },
+    {
+      value: 'PREPARED',
+      label: t('sidebar.prepared'),
+      icon: Sparkles,
+      iconClass: 'text-amber-400',
+    },
   ] as const;
 
   function handleSelect(id: string | null) {
@@ -70,7 +78,7 @@ export function Sidebar({ categories }: SidebarProps) {
   const filtered = categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <aside className="w-72 shrink-0 hidden lg:block ml-8">
+    <aside className="w-72 shrink-0 hidden lg:block ltr:ml-8 rtl:mr-8">
       <div className="sticky top-24 space-y-5">
         {/* ── Header ── */}
         {/*<div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400 p-5 shadow-lg shadow-blue-200/50">
@@ -88,12 +96,18 @@ export function Sidebar({ categories }: SidebarProps) {
           </div>
         </div> */}
 
+        {/* ── Brand ── */}
+        <Link href="/" className="flex items-center gap-2 text-xl font-bold text-blue-600">
+          <Fish className="h-6 w-6" />
+          {t('sidebar.brand')}
+        </Link>
+
         {/* ── Search ── */}
-        <div className="relative group mt-6">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none transition-colors group-focus-within:text-blue-500" />
+        <div className="relative group">
+          <Search className="absolute ltr:left-3.5 rtl:right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none transition-colors group-focus-within:text-blue-500" />
           <input
             type="text"
-            placeholder="Search categories…"
+            placeholder={t('sidebar.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm text-sm text-gray-700 placeholder:text-gray-400 outline-none transition-all duration-200 focus:border-blue-300 focus:ring-2 focus:ring-blue-100 focus:bg-white"
@@ -101,9 +115,9 @@ export function Sidebar({ categories }: SidebarProps) {
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors text-xs font-semibold"
+              className="absolute ltr:right-3 rtl:left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors text-xs font-semibold"
             >
-              Clear
+              {t('sidebar.clear')}
             </button>
           )}
         </div>
@@ -111,7 +125,7 @@ export function Sidebar({ categories }: SidebarProps) {
         {/* ── Condition Filter ── */}
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-100/80 shadow-sm p-4 space-y-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Preservation
+            {t('sidebar.preservation')}
           </p>
           {conditionLabels.map(({ value, label, icon: Icon, iconClass }) => (
             <label key={value} className="flex items-center gap-3 cursor-pointer group">
@@ -143,7 +157,7 @@ export function Sidebar({ categories }: SidebarProps) {
                 }`}
               >
                 {!selectedCategory && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-r-full bg-gradient-to-b from-blue-500 to-cyan-400 shadow-sm shadow-blue-200" />
+                  <span className="absolute ltr:left-0 rtl:right-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-r-full bg-gradient-to-b from-blue-500 to-cyan-400 shadow-sm shadow-blue-200" />
                 )}
                 <div
                   className={`flex items-center justify-center h-8 w-8 rounded-xl transition-all duration-200 ${
@@ -154,7 +168,9 @@ export function Sidebar({ categories }: SidebarProps) {
                 >
                   <Fish className="h-4 w-4" />
                 </div>
-                <span className="flex-1 text-left font-semibold">All Categories</span>
+                <span className="flex-1 ltr:text-left rtl:text-right font-semibold">
+                  {t('sidebar.allCategories')}
+                </span>
                 <span className="text-xs text-gray-400 tabular-nums bg-gray-100 px-2 py-0.5 rounded-full font-medium">
                   {categories.length}
                 </span>
@@ -178,7 +194,7 @@ export function Sidebar({ categories }: SidebarProps) {
                     }`}
                   >
                     {isActive && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-gradient-to-b from-blue-500 to-cyan-400 shadow-sm shadow-blue-200" />
+                      <span className="absolute ltr:left-0 rtl:right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-gradient-to-b from-blue-500 to-cyan-400 shadow-sm shadow-blue-200" />
                     )}
                     <div
                       className={`flex items-center justify-center h-8 w-8 rounded-xl overflow-hidden transition-all duration-200 ${
@@ -201,7 +217,7 @@ export function Sidebar({ categories }: SidebarProps) {
                         </div>
                       )}
                     </div>
-                    <span className="flex-1 text-left truncate">{cat.name}</span>
+                    <span className="flex-1 ltr:text-left rtl:text-right truncate">{cat.name}</span>
                     {isActive ? (
                       <ChevronRight className="h-4 w-4 text-blue-400 animate-pulse" />
                     ) : (
@@ -215,12 +231,12 @@ export function Sidebar({ categories }: SidebarProps) {
             {filtered.length === 0 && (
               <div className="px-6 py-10 text-center">
                 <Search className="h-6 w-6 mx-auto text-gray-300 mb-2" />
-                <p className="text-sm text-gray-400">No categories match</p>
+                <p className="text-sm text-gray-400">{t('sidebar.noMatch')}</p>
                 <button
                   onClick={() => setSearch('')}
                   className="text-xs text-blue-500 hover:text-blue-600 mt-1 font-medium"
                 >
-                  Clear search
+                  {t('sidebar.clearSearch')}
                 </button>
               </div>
             )}

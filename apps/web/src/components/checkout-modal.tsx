@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useLocale } from '@/lib/i18n/context';
 
 interface Props {
   open: boolean;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props) {
+  const { t } = useLocale();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -23,10 +25,10 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
 
   const validate = () => {
     const errs: typeof fieldErrors = {};
-    if (!name.trim()) errs.name = 'Full name is required';
-    if (!phone.trim()) errs.phone = 'Phone number is required';
-    else if (!/^[\d\s+\-()]{7,20}$/.test(phone.trim())) errs.phone = 'Enter a valid phone number';
-    if (!address.trim()) errs.address = 'Full address is required';
+    if (!name.trim()) errs.name = t('checkout.nameRequired');
+    if (!phone.trim()) errs.phone = t('checkout.phoneRequired');
+    else if (!/^[\d\s+\-()]{7,20}$/.test(phone.trim())) errs.phone = t('checkout.phoneInvalid');
+    if (!address.trim()) errs.address = t('checkout.addressRequired');
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -46,7 +48,7 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Confirm Order</h2>
+          <h2 className="text-lg font-semibold">{t('checkout.confirmOrder')}</h2>
           <button onClick={handleClose} className="p-1 hover:bg-gray-100 rounded-lg">
             <X className="h-5 w-5" />
           </button>
@@ -54,31 +56,37 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{error}</div>}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('checkout.fullName')}
+            </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              placeholder={t('checkout.fullNamePlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {fieldErrors.name && <p className="text-red-500 text-xs mt-1">{fieldErrors.name}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('checkout.phoneNumber')}
+            </label>
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+216 99 999 999"
+              placeholder={t('checkout.phonePlaceholder')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {fieldErrors.phone && <p className="text-red-500 text-xs mt-1">{fieldErrors.phone}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Address</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('checkout.fullAddress')}
+            </label>
             <textarea
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Street, city, postal code..."
+              placeholder={t('checkout.addressPlaceholder')}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
@@ -91,7 +99,7 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
             disabled={loading}
             className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {loading ? 'Processing...' : 'Place Order'}
+            {loading ? t('checkout.processing') : t('checkout.placeOrder')}
           </button>
         </form>
       </div>

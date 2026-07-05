@@ -13,9 +13,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { useOrderSocket } from '../../hooks/use-order-socket';
 import { MobileMenuButton, Sidebar } from './sidebar';
 
 export function DashboardShell() {
+  useOrderSocket();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);

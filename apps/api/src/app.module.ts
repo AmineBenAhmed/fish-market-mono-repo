@@ -23,6 +23,7 @@ import { DeliveryZoneModule } from './modules/delivery-zones/delivery-zone.modul
 import { DriversModule } from './modules/drivers/drivers.module';
 import { EventsModule } from './modules/events/events.module';
 import { FilesModule } from './modules/files/files.module';
+import { GatewaysModule } from './modules/gateways/gateways.module';
 import { HealthModule } from './modules/health/health.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { ListingsModule } from './modules/listings/listings.module';
@@ -48,19 +49,8 @@ import { WalletModule } from './modules/wallet/wallet.module';
 
     ThrottlerModule.forRoot([
       {
-        name: 'global',
         ttl: 60_000,
         limit: 300,
-      },
-      {
-        name: 'auth',
-        ttl: 60_000,
-        limit: 10,
-      },
-      {
-        name: 'marketplace',
-        ttl: 60_000,
-        limit: 500,
       },
     ]),
 
@@ -95,6 +85,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
     DeliveriesModule,
     CloudinaryModule,
     FilesModule,
+    GatewaysModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

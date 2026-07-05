@@ -6,6 +6,7 @@ import { fetchListing, fetchSellerListings } from '@/lib/api';
 import { useCart } from '@/hooks/use-cart';
 import { QuantityPicker } from '@/components/quantity-picker';
 import type { Listing } from '@/lib/types';
+import { useLocale } from '@/lib/i18n/context';
 import {
   Loader2,
   ArrowLeft,
@@ -40,6 +41,7 @@ export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { addItem } = useCart();
+  const { t } = useLocale();
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,22 +89,22 @@ export default function ListingDetailPage() {
     return (
       <div className="text-center py-20">
         <AlertTriangle className="h-12 w-12 mx-auto text-red-400 mb-4" />
-        <p className="text-gray-600">{error || 'Listing not found'}</p>
+        <p className="text-gray-600">{error || t('listing.notFound')}</p>
         <Link href="/" className="text-blue-600 hover:underline mt-4 inline-block">
-          Back to listings
+          {t('listing.backToListings')}
         </Link>
       </div>
     );
   }
 
   const images = getImages(listing);
-  const categoryName = listing.category?.name || 'General';
+  const categoryName = listing.category?.name || t('listing.general');
 
   const handleAddToCart = () => {
     addItem({
       listingId: listing.id,
       quantity,
-      title: listing.title || listing.category?.name || 'Fish',
+      title: listing.title || listing.category?.name || t('listing.general'),
       price: Number(listing.price),
       cleaningCost: Number(listing.cleaningCost ?? 0),
       cleaning,
@@ -125,7 +127,7 @@ export default function ListingDetailPage() {
         className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back
+        {t('listing.back')}
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -194,31 +196,33 @@ export default function ListingDetailPage() {
           <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 rounded-xl p-4">
             {listing.origin && (
               <div>
-                <span className="text-gray-400">Origin</span>
+                <span className="text-gray-400">{t('listing.origin')}</span>
                 <p className="font-medium">{listing.origin}</p>
               </div>
             )}
             {listing.condition && (
               <div>
-                <span className="text-gray-400">Condition</span>
+                <span className="text-gray-400">{t('listing.condition')}</span>
                 <p className="font-medium capitalize">{listing.condition.toLowerCase()}</p>
               </div>
             )}
             {listing.averageWeight && (
               <div>
-                <span className="text-gray-400">Avg. Weight</span>
-                <p className="font-medium">{listing.averageWeight} kg</p>
+                <span className="text-gray-400">{t('listing.avgWeight')}</span>
+                <p className="font-medium">
+                  {listing.averageWeight} {t('listing.kg')}
+                </p>
               </div>
             )}
             <div>
-              <span className="text-gray-400">Available</span>
+              <span className="text-gray-400">{t('listing.available')}</span>
               <p className="font-medium">
                 {listing.quantity} {listing.unit}
               </p>
             </div>
             {listing.catchDate && (
               <div>
-                <span className="text-gray-400">Catch Date</span>
+                <span className="text-gray-400">{t('listing.catchDate')}</span>
                 <p className="font-medium">{new Date(listing.catchDate).toLocaleDateString()}</p>
               </div>
             )}
@@ -226,7 +230,7 @@ export default function ListingDetailPage() {
 
           <div className="border-t pt-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="font-medium">Quantity</span>
+              <span className="font-medium">{t('listing.quantity')}</span>
               <QuantityPicker value={quantity} max={listing.quantity} onChange={setQuantity} />
             </div>
 
@@ -242,7 +246,7 @@ export default function ListingDetailPage() {
                 {cleaning && <Check className="h-3.5 w-3.5 text-white" />}
               </div>
               <div className="flex-1">
-                <span className="text-sm font-medium">Clean fish</span>
+                <span className="text-sm font-medium">{t('listing.cleanFish')}</span>
                 <p className="text-xs text-gray-400">
                   +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} /{' '}
                   {listing.unit}
@@ -251,7 +255,7 @@ export default function ListingDetailPage() {
             </label>
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Subtotal</span>
+              <span className="text-gray-500">{t('listing.subtotal')}</span>
               <span className="font-semibold">
                 {listing.currency}{' '}
                 {(
@@ -268,7 +272,7 @@ export default function ListingDetailPage() {
               }`}
             >
               <ShoppingCart className="h-5 w-5" />
-              {added ? 'Added to Cart!' : 'Add to Cart'}
+              {added ? t('listing.addedToCart') : t('listing.addToCart')}
             </button>
           </div>
         </div>
@@ -277,7 +281,7 @@ export default function ListingDetailPage() {
       {sameStoreListings.length > 0 && (
         <div className="border-t pt-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">
-            More from {listing.seller.storeName}
+            {t('listing.moreFrom')} {listing.seller.storeName}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {sameStoreListings.map((l) => {
@@ -289,7 +293,7 @@ export default function ListingDetailPage() {
                 addItem({
                   listingId: l.id,
                   quantity: qty,
-                  title: l.title || l.category?.name || 'Fish',
+                  title: l.title || l.category?.name || t('listing.general'),
                   price: Number(l.price),
                   cleaningCost: Number(l.cleaningCost ?? 0),
                   cleaning: false,
@@ -325,8 +329,8 @@ export default function ListingDetailPage() {
                           <Fish className="h-12 w-12" />
                         </div>
                       )}
-                      <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
-                        {l.category?.name || 'General'}
+                      <div className="absolute top-2 ltr:left-2 rtl:right-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
+                        {l.category?.name || t('listing.general')}
                       </div>
                     </div>
                   </Link>
@@ -355,7 +359,7 @@ export default function ListingDetailPage() {
                         }`}
                       >
                         <ShoppingCart className="h-3.5 w-3.5" />
-                        {justAdded ? 'Added!' : 'Add'}
+                        {justAdded ? t('listing.added') : t('listing.add')}
                       </button>
                     </div>
                   </div>

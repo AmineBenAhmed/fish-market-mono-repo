@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { MapPin, Fish, Store } from 'lucide-react';
 import type { Listing } from '@/lib/types';
+import { useLocale } from '@/lib/i18n/context';
 
 interface Props {
   listing: Listing;
@@ -20,8 +21,9 @@ function getImageUrl(listing: Listing): string | null {
 
 export function ListingCard({ listing }: Props) {
   const router = useRouter();
+  const { t } = useLocale();
   const imageUrl = getImageUrl(listing);
-  const categoryName = listing.category?.name || 'General';
+  const categoryName = listing.category?.name || t('listing.general');
   const storeLogo = listing.seller?.storeLogoUrl;
 
   return (
@@ -41,7 +43,7 @@ export function ListingCard({ listing }: Props) {
             <Fish className="h-16 w-16" />
           </div>
         )}
-        <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
+        <div className="absolute top-2 ltr:left-2 rtl:right-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
           {categoryName}
         </div>
       </div>
