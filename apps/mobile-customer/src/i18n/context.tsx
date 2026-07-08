@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { type Locale, getTranslation, getDir, localeNames } from './translations';
 
 interface I18nContextValue {
@@ -12,24 +11,11 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-const STORAGE_KEY = 'fishmarket_locale';
-
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('fr');
-  const [ready, setReady] = useState(false);
+  const [locale] = useState<Locale>('fr');
 
-  useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      if (stored === 'en' || stored === 'fr' || stored === 'ar') {
-        setLocaleState(stored);
-      }
-      setReady(true);
-    });
-  }, []);
-
-  function setLocale(l: Locale) {
-    setLocaleState(l);
-    AsyncStorage.setItem(STORAGE_KEY, l);
+  function setLocale(_l: Locale) {
+    // Locked to French — kept as noop for future use
   }
 
   function t(key: string): string {
@@ -37,8 +23,6 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   }
 
   const dir = getDir(locale);
-
-  if (!ready) return null;
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t, dir, localeNames }}>

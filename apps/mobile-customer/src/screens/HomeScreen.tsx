@@ -185,11 +185,7 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
               </TouchableOpacity>
             </View>
             <Text style={styles.sectionCount}>
-              {loading
-                ? '...'
-                : `${filteredListings.length} ${
-                    filteredListings.length !== 1 ? t('home.listings_plural') : t('home.listing')
-                  } ${t('home.available')}`}
+              {loading ? '...' : `Nos poissoneries (${filteredListings.length})`}
             </Text>
           </View>
 

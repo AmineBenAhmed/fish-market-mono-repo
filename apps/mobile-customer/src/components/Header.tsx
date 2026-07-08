@@ -2,13 +2,6 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/stores/cart';
 import { useLocale } from '@/i18n/context';
-import type { Locale } from '@/i18n/translations';
-
-const languages: { key: Locale; label: string }[] = [
-  { key: 'fr', label: 'FR' },
-  { key: 'en', label: 'EN' },
-  { key: 'ar', label: 'AR' },
-];
 
 interface HeaderProps {
   onCartPress: () => void;
@@ -16,24 +9,12 @@ interface HeaderProps {
 
 export function Header({ onCartPress }: HeaderProps) {
   const { itemCount, ready } = useCart();
-  const { t, locale, setLocale } = useLocale();
+  const { t } = useLocale();
 
   return (
     <View style={styles.container}>
       <View style={styles.topRow}>
-        <View style={styles.left}>
-          {languages.map((lang) => (
-            <TouchableOpacity
-              key={lang.key}
-              onPress={() => setLocale(lang.key)}
-              style={[styles.langButton, locale === lang.key && styles.langButtonActive]}
-            >
-              <Text style={[styles.langText, locale === lang.key && styles.langTextActive]}>
-                {lang.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <View style={styles.left} />
 
         <TouchableOpacity onPress={onCartPress} style={styles.cartButton}>
           <Ionicons name="cart-outline" size={20} color="#fff" />
@@ -49,6 +30,7 @@ export function Header({ onCartPress }: HeaderProps) {
         <Text style={styles.tagline} numberOfLines={1} ellipsizeMode="tail">
           {t('header.tagline')}
         </Text>
+        <Text style={styles.subtitle}>nous sommes disponible seulement à Sousse</Text>
       </View>
     </View>
   );
@@ -71,27 +53,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     height: 28,
-  },
-  left: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  langButton: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  langButtonActive: {
-    backgroundColor: '#fff',
-  },
-  langText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.7)',
-  },
-  langTextActive: {
-    color: '#1d4ed8',
   },
   cartButton: {
     padding: 6,
@@ -124,5 +85,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 8,
+    color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

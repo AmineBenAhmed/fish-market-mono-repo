@@ -11,7 +11,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { fetchListing, fetchSellerListings } from '@/services/api';
 import { useCart } from '@/stores/cart';
-import { QuantityPicker } from '@/components/QuantityPicker';
 import { ListingCard } from '@/components/ListingCard';
 import type { Listing } from '@/types';
 import { useLocale } from '@/i18n/context';
@@ -61,7 +60,6 @@ export function ListingDetailScreen({
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [cleaning, setCleaning] = useState(false);
   const [added, setAdded] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -74,8 +72,6 @@ export function ListingDetailScreen({
       .then((res) => {
         const listingData = res.data as unknown as Listing;
         setListing(listingData);
-        setQuantity(1);
-
         if (listingData.seller?.id) {
           fetchSellerListings(listingData.seller.id)
             .then((sellerRes) => {
@@ -117,7 +113,7 @@ export function ListingDetailScreen({
   const handleAddToCart = () => {
     addItem({
       listingId: listing.id,
-      quantity,
+      quantity: 1,
       title: listing.title || listing.category?.name || t('listing.general'),
       price: Number(listing.effectivePrice ?? listing.price),
       cleaningCost: Number(listing.cleaningCost ?? 0),
@@ -128,15 +124,14 @@ export function ListingDetailScreen({
       storeName: seller?.storeName || '',
       productName: listing.title || listing.category?.name || 'Fish',
       variantName: listing.variant?.name || '',
-      maxQuantity: listing.quantity,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
   const subtotal =
-    Number(listing.effectivePrice ?? listing.price) * quantity +
-    (cleaning ? Number(listing.cleaningCost ?? 0) * quantity : 0);
+    Number(listing.effectivePrice ?? listing.price) +
+    (cleaning ? Number(listing.cleaningCost ?? 0) : 0);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -220,12 +215,7 @@ export function ListingDetailScreen({
               </Text>
             </View>
           ) : null}
-          <View style={styles.detailItem}>
-            <Text style={styles.detailLabel}>{t('listing.available')}</Text>
-            <Text style={styles.detailValue}>
-              {listing.quantity} {listing.unit}
-            </Text>
-          </View>
+
           {listing.catchDate ? (
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>{t('listing.catchDate')}</Text>
@@ -237,11 +227,6 @@ export function ListingDetailScreen({
         </View>
 
         <View style={styles.actionSection}>
-          <View style={styles.quantityRow}>
-            <Text style={styles.actionLabel}>{t('listing.quantity')}</Text>
-            <QuantityPicker value={quantity} max={listing.quantity} onChange={setQuantity} />
-          </View>
-
           <TouchableOpacity onPress={() => setCleaning(!cleaning)} style={styles.cleaningRow}>
             <View style={[styles.checkbox, cleaning && styles.checkboxActive]}>
               {cleaning ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}

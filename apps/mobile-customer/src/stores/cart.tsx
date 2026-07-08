@@ -58,7 +58,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((i) =>
           i.listingId === newItem.listingId && i.cleaning === newItem.cleaning
-            ? { ...i, quantity: Math.min(i.quantity + newItem.quantity, newItem.maxQuantity) }
+            ? { ...i, quantity: i.quantity + newItem.quantity }
             : i,
         );
       }

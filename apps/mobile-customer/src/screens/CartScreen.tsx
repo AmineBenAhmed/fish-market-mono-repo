@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '@/stores/cart';
-import { QuantityPicker } from '@/components/QuantityPicker';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import { createOrder } from '@/services/api';
 import { useLocale } from '@/i18n/context';
@@ -132,11 +131,6 @@ export function CartScreen({ onNavigateHome }: CartScreenProps) {
                   </Text>
                 )}
                 <View style={styles.itemActions}>
-                  <QuantityPicker
-                    value={item.quantity}
-                    max={item.maxQuantity}
-                    onChange={(q) => updateQuantity(item.listingId, item.cleaning, q)}
-                  />
                   <Text style={styles.itemTotal}>
                     {(
                       item.price * item.quantity +

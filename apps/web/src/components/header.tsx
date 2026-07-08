@@ -36,8 +36,11 @@ export function Header() {
           ))}
         </div>
 
-        <div className="text-center text-sm sm:text-base leading-snug font-bold text-white">
-          <p>{t('header.tagline')}</p>
+        <div className="text-center">
+          <p className="text-sm sm:text-base leading-snug font-bold text-white">
+            {t('header.tagline')}
+          </p>
+          <p className="text-xs text-white/70 mt-0.5">nous sommes disponible seulement à Sousse</p>
         </div>
 
         <Link
