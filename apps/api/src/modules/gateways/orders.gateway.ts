@@ -16,6 +16,28 @@ interface OrderCreatedPayload {
   total: number;
 }
 
+interface DeliveryBasePayload {
+  deliveryId: string;
+  orderId: string;
+  driverId: string;
+}
+
+interface DeliveryAssignedPayload extends DeliveryBasePayload {
+  assignedBy: string;
+}
+
+interface DeliveryCompletedPayload extends DeliveryBasePayload {
+  deliveredAt: Date;
+}
+
+interface DeliveryFailedPayload extends DeliveryBasePayload {
+  reason: string;
+}
+
+interface DeliveryCancelledPayload extends DeliveryBasePayload {
+  reason?: string;
+}
+
 @WebSocketGateway({
   cors: {
     origin: '*',
@@ -40,5 +62,50 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleOrderCreated(payload: OrderCreatedPayload): void {
     this.logger.log(`Broadcasting order.created: #${payload.orderNumber} (${payload.total})`);
     this.server.emit('order.created', payload);
+  }
+
+  @OnEvent('delivery.assigned')
+  handleDeliveryAssigned(payload: DeliveryAssignedPayload): void {
+    this.server.emit('delivery.assigned', payload);
+  }
+
+  @OnEvent('delivery.accepted')
+  handleDeliveryAccepted(payload: DeliveryBasePayload): void {
+    this.server.emit('delivery.accepted', payload);
+  }
+
+  @OnEvent('delivery.rejected')
+  handleDeliveryRejected(payload: DeliveryBasePayload): void {
+    this.server.emit('delivery.rejected', payload);
+  }
+
+  @OnEvent('delivery.picking-up')
+  handleDeliveryPickingUp(payload: DeliveryBasePayload): void {
+    this.server.emit('delivery.picking-up', payload);
+  }
+
+  @OnEvent('delivery.picked-up')
+  handleDeliveryPickedUp(payload: DeliveryBasePayload): void {
+    this.server.emit('delivery.picked-up', payload);
+  }
+
+  @OnEvent('delivery.in-transit')
+  handleDeliveryInTransit(payload: DeliveryBasePayload): void {
+    this.server.emit('delivery.in-transit', payload);
+  }
+
+  @OnEvent('delivery.completed')
+  handleDeliveryCompleted(payload: DeliveryCompletedPayload): void {
+    this.server.emit('delivery.completed', payload);
+  }
+
+  @OnEvent('delivery.failed')
+  handleDeliveryFailed(payload: DeliveryFailedPayload): void {
+    this.server.emit('delivery.failed', payload);
+  }
+
+  @OnEvent('delivery.cancelled')
+  handleDeliveryCancelled(payload: DeliveryCancelledPayload): void {
+    this.server.emit('delivery.cancelled', payload);
   }
 }

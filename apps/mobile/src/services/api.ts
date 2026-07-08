@@ -36,8 +36,10 @@ export function unwrap<T>(response: { data: { data: T } }): T {
   return response.data.data;
 }
 
-export function unwrapPaginated<T>(response: { data: { data: T[]; meta: unknown } }) {
-  return { data: response.data.data, meta: response.data.meta };
+export function unwrapPaginated<T>(response: {
+  data: { success: boolean; data: { data: T[]; meta: unknown } };
+}) {
+  return { data: response.data.data.data, meta: response.data.data.meta };
 }
 
 export { api };

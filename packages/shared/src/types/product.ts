@@ -50,7 +50,6 @@ export interface SellerListing {
   variantId: string;
   date: string;
   price: number;
-  quantity: number;
   status: ListingStatus;
   notes?: string;
   product?: FishProduct;

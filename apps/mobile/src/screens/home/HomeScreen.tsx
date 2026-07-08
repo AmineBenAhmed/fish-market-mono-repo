@@ -37,7 +37,7 @@ export function HomeScreen() {
       { status: 'ASSIGNED,ACCEPTED,PICKING_UP,PICKED_UP,IN_TRANSIT' },
     ],
     queryFn: () => deliveriesService.list({ limit: 20 }),
-    refetchInterval: 30000,
+    refetchInterval: 2000,
   });
 
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -92,23 +92,23 @@ export function HomeScreen() {
     >
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Olá, {user?.name?.split(' ')[0] || 'Motorista'}</Text>
-          <Text style={styles.subtitle}>Pronto para entregas</Text>
+          <Text style={styles.greeting}>Bonjour, {user?.name?.split(' ')[0] || 'Chauffeur'}</Text>
+          <Text style={styles.subtitle}>Prêt pour les livraisons</Text>
         </View>
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{stats?.activeCount ?? 0}</Text>
-            <Text style={styles.statLabel}>Ativas</Text>
+            <Text style={styles.statLabel}>Actives</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statNumber}>{stats?.completedDeliveries ?? 0}</Text>
-            <Text style={styles.statLabel}>Entregues</Text>
+            <Text style={styles.statLabel}>Livrées</Text>
           </View>
         </View>
       </View>
 
       <View style={styles.onlineRow}>
-        <Text style={styles.onlineLabel}>Status</Text>
+        <Text style={styles.onlineLabel}>Statut</Text>
         <TouchableOpacity
           style={[styles.onlineToggle, isOnline ? styles.onlineActive : styles.onlineInactive]}
           onPress={() => statusMutation.mutate(isOnline ? 'OFFLINE' : 'ONLINE')}
@@ -117,7 +117,9 @@ export function HomeScreen() {
           {statusMutation.isPending ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.onlineToggleText}>{isOnline ? '🟢 Online' : '🔴 Offline'}</Text>
+            <Text style={styles.onlineToggleText}>
+              {isOnline ? '🟢 En ligne' : '🔴 Hors ligne'}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -125,7 +127,7 @@ export function HomeScreen() {
       {pendingAssignments.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            🆕 Novas Atribuições ({pendingAssignments.length})
+            🆕 Nouvelles Attributions ({pendingAssignments.length})
           </Text>
           {pendingAssignments.slice(0, 3).map((d) => (
             <TouchableOpacity
@@ -139,13 +141,13 @@ export function HomeScreen() {
                 </Text>
                 <DeliveryStatusBadge status={d.status as any} size="sm" />
               </View>
-              <Text style={styles.customerName}>👤 {d.order?.customer?.name || 'Cliente'}</Text>
+              <Text style={styles.customerName}>👤 {d.order?.customer?.name || 'Client'}</Text>
               <Text style={styles.timeAgo}>{formatRelativeTime(d.createdAt)}</Text>
               <TouchableOpacity
                 style={styles.acceptBtn}
                 onPress={() => acceptMutation.mutate(d.id)}
               >
-                <Text style={styles.acceptBtnText}>✅ Aceitar</Text>
+                <Text style={styles.acceptBtnText}>✅ Accepter</Text>
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
@@ -154,7 +156,7 @@ export function HomeScreen() {
 
       {activeDelivery ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📦 Entrega Ativa</Text>
+          <Text style={styles.sectionTitle}>📦 Livraison Active</Text>
           <TouchableOpacity
             style={styles.activeCard}
             onPress={() => nav.navigate('ActiveDelivery', { deliveryId: activeDelivery.id })}
@@ -166,22 +168,22 @@ export function HomeScreen() {
               <DeliveryStatusBadge status={activeDelivery.status as any} />
             </View>
             <Text style={styles.customerName}>
-              👤 {activeDelivery.order?.customer?.name || 'Cliente'}
+              👤 {activeDelivery.order?.customer?.name || 'Client'}
             </Text>
             {activeDelivery.order?.total !== undefined && (
               <Text style={styles.orderTotal}>
                 {formatCurrency(Number(activeDelivery.order.total))}
               </Text>
             )}
-            <Text style={styles.tapHint}>Toque para continuar →</Text>
+            <Text style={styles.tapHint}>Appuyez pour continuer →</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.section}>
           <EmptyState
             icon="🚚"
-            title="Nenhuma entrega ativa"
-            message="Aguardando novas atribuições"
+            title="Aucune livraison active"
+            message="En attente de nouvelles attributions"
           />
         </View>
       )}

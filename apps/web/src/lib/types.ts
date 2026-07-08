@@ -34,8 +34,8 @@ export interface Listing {
   title: string | null;
   description: string | null;
   price: number;
+  effectivePrice?: number;
   cleaningCost?: number;
-  quantity: number;
   unit: string;
   currency: string;
   status: string;
@@ -93,7 +93,6 @@ export interface CartItem {
   storeName: string;
   productName: string;
   variantName: string;
-  maxQuantity: number;
 }
 
 export interface CreateOrderPayload {

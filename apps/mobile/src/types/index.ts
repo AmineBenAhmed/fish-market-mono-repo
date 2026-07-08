@@ -58,12 +58,27 @@ export interface Delivery {
   driverLocation?: { lat: number; lng: number } | null;
 }
 
+export interface SellerInfo {
+  id: string;
+  name: string;
+  phone?: string;
+  sellerProfiles: {
+    storeName: string;
+    pickupAddress?: string;
+    city: string;
+    state: string;
+    lat?: number;
+    lng?: number;
+  }[];
+}
+
 export interface OrderSummary {
   id: string;
   orderNumber: string;
   status: string;
   total?: number;
   customer?: { id: string; name: string; phone?: string };
+  seller?: SellerInfo;
   items?: OrderItemInfo[];
 }
 

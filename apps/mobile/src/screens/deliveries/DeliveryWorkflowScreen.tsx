@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -22,18 +23,18 @@ import {
   deliveryActionLabel,
   deliveryActionIcon,
 } from '../../lib/utils';
-import type { Delivery, DeliveryAction, DeliveryStatusValue } from '../../types';
+import type { Delivery, DeliveryAction, DeliveryStatusValue, SellerInfo } from '../../types';
 import type { HomeStackParamList } from '../../navigation/driver-tab-navigator';
 
 type RouteParams = { deliveryId: string };
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'ActiveDelivery'>;
 
 const STEPS = [
-  { label: 'Aceitar', statusKey: 'ACCEPTED' as DeliveryStatusValue },
-  { label: 'Chegar', statusKey: 'PICKING_UP' as DeliveryStatusValue },
-  { label: 'Coletar', statusKey: 'PICKED_UP' as DeliveryStatusValue },
-  { label: 'Transportar', statusKey: 'IN_TRANSIT' as DeliveryStatusValue },
-  { label: 'Entregar', statusKey: 'DELIVERED' as DeliveryStatusValue },
+  { label: 'Accepter', statusKey: 'ACCEPTED' as DeliveryStatusValue },
+  { label: 'Arriver', statusKey: 'PICKING_UP' as DeliveryStatusValue },
+  { label: 'Collecter', statusKey: 'PICKED_UP' as DeliveryStatusValue },
+  { label: 'Transporter', statusKey: 'IN_TRANSIT' as DeliveryStatusValue },
+  { label: 'Livrer', statusKey: 'DELIVERED' as DeliveryStatusValue },
 ];
 
 function getNextAction(status: string): DeliveryAction | null {
@@ -86,16 +87,16 @@ export function DeliveryWorkflowScreen() {
       queryClient.invalidateQueries({ queryKey: ['driver', 'stats'] });
     },
     onError: (err: any) => {
-      const msg = err?.response?.data?.message || 'Erro ao atualizar entrega';
-      Alert.alert('Erro', msg);
+      const msg = err?.response?.data?.message || 'Erreur lors de la mise à jour';
+      Alert.alert('Erreur', msg);
     },
   });
 
   const handleReject = useCallback(() => {
-    Alert.alert('Rejeitar Entrega', 'Tem certeza que deseja rejeitar esta entrega?', [
-      { text: 'Cancelar', style: 'cancel' },
+    Alert.alert('Refuser la Livraison', 'Êtes-vous sûr de vouloir refuser cette livraison ?', [
+      { text: 'Annuler', style: 'cancel' },
       {
-        text: 'Rejeitar',
+        text: 'Refuser',
         style: 'destructive',
         onPress: async () => {
           try {
@@ -103,7 +104,7 @@ export function DeliveryWorkflowScreen() {
             queryClient.invalidateQueries({ queryKey: ['driver', 'deliveries'] });
             nav.goBack();
           } catch (err: any) {
-            Alert.alert('Erro', err?.response?.data?.message || 'Erro ao rejeitar');
+            Alert.alert('Erreur', err?.response?.data?.message || 'Erreur lors du refus');
           }
         },
       },
@@ -114,9 +115,9 @@ export function DeliveryWorkflowScreen() {
   if (error || !delivery) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Erro ao carregar entrega</Text>
+        <Text style={styles.errorText}>Erreur de chargement</Text>
         <TouchableOpacity style={styles.backBtn} onPress={() => nav.goBack()}>
-          <Text style={styles.backBtnText}>Voltar</Text>
+          <Text style={styles.backBtnText}>Retour</Text>
         </TouchableOpacity>
       </View>
     );
@@ -132,26 +133,66 @@ export function DeliveryWorkflowScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.headerBack}>
-          <Text style={styles.headerBackText}>← Voltar</Text>
+          <Text style={styles.headerBackText}>← Retour</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Entrega</Text>
+        <Text style={styles.headerTitle}>Livraison</Text>
         <DeliveryStatusBadge status={delivery.status as any} />
       </View>
 
       {/* Order Info */}
       <View style={styles.orderInfo}>
         <Text style={styles.orderNumber}>
-          Pedido #{delivery.order?.orderNumber?.slice(-8) || delivery.orderId.slice(-8)}
+          Commande #{delivery.order?.orderNumber?.slice(-8) || delivery.orderId.slice(-8)}
         </Text>
         {delivery.order?.total !== undefined && (
           <Text style={styles.orderTotal}>{formatCurrency(Number(delivery.order.total))}</Text>
         )}
       </View>
 
+      {/* Seller Info */}
+      {delivery.order?.seller && (
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>🏪 Magasin</Text>
+          <Text style={styles.infoValue}>
+            {delivery.order.seller.sellerProfiles?.[0]?.storeName || delivery.order.seller.name}
+          </Text>
+          {delivery.order.seller.phone && (
+            <Text style={styles.infoValue}>📞 {delivery.order.seller.phone}</Text>
+          )}
+          {(delivery.order.seller.sellerProfiles?.[0]?.pickupAddress ||
+            delivery.order.seller.sellerProfiles?.[0]?.city) && (
+            <Text style={styles.infoValue}>
+              📍{' '}
+              {[
+                delivery.order.seller.sellerProfiles[0].pickupAddress,
+                delivery.order.seller.sellerProfiles[0].city,
+                delivery.order.seller.sellerProfiles[0].state,
+              ]
+                .filter(Boolean)
+                .join(', ')}
+            </Text>
+          )}
+          {delivery.order.seller.sellerProfiles?.[0]?.lat &&
+            delivery.order.seller.sellerProfiles?.[0]?.lng && (
+              <TouchableOpacity
+                style={styles.navBtn}
+                onPress={() => {
+                  const { lat, lng } = delivery.order!.seller!.sellerProfiles[0];
+                  Linking.openURL(
+                    `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
+                  );
+                }}
+              >
+                <Text style={styles.navBtnText}>🗺️ Naviguer vers le Magasin</Text>
+              </TouchableOpacity>
+            )}
+        </View>
+      )}
+
       {/* Customer Info */}
       {delivery.order?.customer && (
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>👤 Cliente</Text>
+          <Text style={styles.infoTitle}>👤 Client</Text>
           <Text style={styles.infoValue}>{delivery.order.customer.name}</Text>
           {delivery.order.customer.phone && (
             <Text style={styles.infoValue}>📞 {delivery.order.customer.phone}</Text>
@@ -162,7 +203,7 @@ export function DeliveryWorkflowScreen() {
       {/* Address */}
       {delivery.address && (
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>📍 Endereço</Text>
+          <Text style={styles.infoTitle}>📍 Adresse</Text>
           <Text style={styles.infoValue}>
             {delivery.address.street}, {delivery.address.number}
           </Text>
@@ -175,7 +216,7 @@ export function DeliveryWorkflowScreen() {
       {/* Order Items */}
       {delivery.order?.items && delivery.order.items.length > 0 && (
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>📦 Itens</Text>
+          <Text style={styles.infoTitle}>📦 Articles</Text>
           {delivery.order.items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
               <Text style={styles.itemName}>
@@ -189,7 +230,7 @@ export function DeliveryWorkflowScreen() {
 
       {/* Step Indicator */}
       <View style={styles.stepCard}>
-        <Text style={styles.infoTitle}>Progresso</Text>
+        <Text style={styles.infoTitle}>Progression</Text>
         <StepIndicator
           steps={STEPS.map((s, i) => ({
             label: s.label,
@@ -219,7 +260,7 @@ export function DeliveryWorkflowScreen() {
 
           {isAssigned && (
             <TouchableOpacity style={styles.rejectBtn} onPress={handleReject}>
-              <Text style={styles.rejectBtnText}>❌ Recusar Entrega</Text>
+              <Text style={styles.rejectBtnText}>❌ Refuser la Livraison</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -229,10 +270,10 @@ export function DeliveryWorkflowScreen() {
       {delivery.status === 'DELIVERED' && (
         <View style={styles.completedCard}>
           <Text style={styles.completedIcon}>🎉</Text>
-          <Text style={styles.completedText}>Entrega concluída!</Text>
+          <Text style={styles.completedText}>Livraison terminée !</Text>
           {delivery.deliveredAt && (
             <Text style={styles.completedTime}>
-              {new Date(delivery.deliveredAt).toLocaleString('pt-BR')}
+              {new Date(delivery.deliveredAt).toLocaleString('fr-FR')}
             </Text>
           )}
         </View>
@@ -243,7 +284,7 @@ export function DeliveryWorkflowScreen() {
         <View style={styles.cancelledCard}>
           <Text style={styles.cancelledIcon}>❌</Text>
           <Text style={styles.cancelledText}>
-            {delivery.status === 'CANCELLED' ? 'Cancelada' : 'Falha na entrega'}
+            {delivery.status === 'CANCELLED' ? 'Annulée' : 'Échec de livraison'}
           </Text>
           {delivery.failReason && <Text style={styles.cancelledReason}>{delivery.failReason}</Text>}
         </View>
@@ -450,6 +491,18 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 4,
     textAlign: 'center',
+  },
+  navBtn: {
+    backgroundColor: '#f59e0b',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  navBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
   },
   errorContainer: {
     flex: 1,

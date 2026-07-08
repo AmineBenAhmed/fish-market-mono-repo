@@ -1,4 +1,5 @@
 export { api } from './api';
+export { analyticsService } from './analytics.service';
 export { authService } from './auth.service';
 export { categoriesService } from './categories.service';
 export { cloudinaryService } from './cloudinary.service';

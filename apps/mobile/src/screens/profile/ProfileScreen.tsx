@@ -1,5 +1,15 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TextInput,
+  Modal,
+} from 'react-native';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { driverService } from '../../services/driver';
 import { walletService } from '../../services/wallet';
@@ -9,6 +19,10 @@ import { formatCurrency } from '../../lib/utils';
 
 export function ProfileScreen() {
   const { user, logout } = useAuthStore();
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['driver', 'profile'],
@@ -20,19 +34,55 @@ export function ProfileScreen() {
     queryFn: walletService.getWallet,
   });
 
+  const { data: earnings, isLoading: earningsLoading } = useQuery({
+    queryKey: ['driver', 'earnings'],
+    queryFn: driverService.getEarnings,
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: () => driverService.changePassword(currentPassword, newPassword),
+    onSuccess: () => {
+      Alert.alert('Succès', 'Mot de passe modifié avec succès');
+      setPasswordModalVisible(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || 'Erreur lors du changement de mot de passe';
+      Alert.alert('Erreur', message);
+    },
+  });
+
   const handleLogout = () => {
-    Alert.alert('Sair', 'Tem certeza que deseja sair?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: logout },
+    Alert.alert('Déconnexion', 'Êtes-vous sûr de vouloir vous déconnecter ?', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Déconnexion', style: 'destructive', onPress: logout },
     ]);
   };
 
-  if (profileLoading || walletLoading) return <LoadingScreen />;
+  const handleChangePassword = () => {
+    if (!newPassword) {
+      Alert.alert('Erreur', 'Veuillez saisir le nouveau mot de passe');
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      return;
+    }
+    changePasswordMutation.mutate();
+  };
+
+  if (profileLoading || walletLoading || earningsLoading) return <LoadingScreen />;
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>👤 Perfil</Text>
+        <Text style={styles.headerTitle}>Profil</Text>
       </View>
 
       {/* User Info */}
@@ -40,25 +90,41 @@ export function ProfileScreen() {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{user?.name?.charAt(0)?.toUpperCase() || 'M'}</Text>
         </View>
-        <Text style={styles.userName}>{user?.name || 'Motorista'}</Text>
+        <Text style={styles.userName}>{user?.name || 'Chauffeur'}</Text>
         <Text style={styles.userEmail}>{user?.email || ''}</Text>
         <View style={styles.roleBadge}>
-          <Text style={styles.roleText}>Motorista</Text>
+          <Text style={styles.roleText}>Chauffeur</Text>
         </View>
       </View>
+
+      {/* Earnings */}
+      {earnings && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Gains</Text>
+          <Text style={styles.balance}>{formatCurrency(earnings.totalEarnings)}</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Total des livraisons</Text>
+            <Text style={styles.infoValue}>{earnings.completedCount}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Tarif par livraison</Text>
+            <Text style={styles.infoValue}>{formatCurrency(earnings.deliveryFee)}</Text>
+          </View>
+        </View>
+      )}
 
       {/* Wallet */}
       {wallet && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>💰 Carteira</Text>
+          <Text style={styles.cardTitle}>Portefeuille</Text>
           <Text style={styles.balance}>{formatCurrency(wallet.balance)}</Text>
-          <View style={styles.walletRow}>
-            <Text style={styles.walletLabel}>Disponível</Text>
-            <Text style={styles.walletValue}>{formatCurrency(wallet.availableBalance)}</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Disponible</Text>
+            <Text style={styles.infoValue}>{formatCurrency(wallet.availableBalance)}</Text>
           </View>
-          <View style={styles.walletRow}>
-            <Text style={styles.walletLabel}>Pendente</Text>
-            <Text style={styles.walletValue}>{formatCurrency(wallet.pendingBalance)}</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>En attente</Text>
+            <Text style={styles.infoValue}>{formatCurrency(wallet.pendingBalance)}</Text>
           </View>
         </View>
       )}
@@ -66,48 +132,113 @@ export function ProfileScreen() {
       {/* Driver Info */}
       {profile && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🚚 Informações do Motorista</Text>
+          <Text style={styles.cardTitle}>Infos du Chauffeur</Text>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Status</Text>
+            <Text style={styles.infoLabel}>Statut</Text>
             <Text
               style={[
                 styles.infoValue,
                 profile.status === 'ONLINE' ? styles.online : styles.offline,
               ]}
             >
-              {profile.status === 'ONLINE' ? '🟢 Online' : '🔴 Offline'}
+              {profile.status === 'ONLINE' ? 'En ligne' : 'Hors ligne'}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Entregas Ativas</Text>
+            <Text style={styles.infoLabel}>Livraisons Actives</Text>
             <Text style={styles.infoValue}>
               {profile.activeDeliveries}/{profile.maxDeliveries}
             </Text>
           </View>
           {profile.city && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Cidade</Text>
+              <Text style={styles.infoLabel}>Ville</Text>
               <Text style={styles.infoValue}>{profile.city}</Text>
             </View>
           )}
           {profile.vehicleType && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Veículo</Text>
+              <Text style={styles.infoLabel}>Véhicule</Text>
               <Text style={styles.infoValue}>{profile.vehicleType}</Text>
             </View>
           )}
           {profile.vehiclePlate && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Placa</Text>
+              <Text style={styles.infoLabel}>Plaque</Text>
               <Text style={styles.infoValue}>{profile.vehiclePlate}</Text>
             </View>
           )}
         </View>
       )}
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>🚪 Sair</Text>
+      {/* Change Password */}
+      <TouchableOpacity style={styles.menuBtn} onPress={() => setPasswordModalVisible(true)}>
+        <Text style={styles.menuBtnText}>Changer le Mot de Passe</Text>
       </TouchableOpacity>
+
+      {/* Logout */}
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Déconnexion</Text>
+      </TouchableOpacity>
+
+      {/* Password Change Modal */}
+      <Modal visible={passwordModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Changer le Mot de Passe</Text>
+
+            <Text style={styles.inputLabel}>Mot de Passe Actuel</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              placeholder="Saisissez votre mot de passe actuel"
+            />
+
+            <Text style={styles.inputLabel}>Nouveau Mot de Passe</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="Min. 6 caractères"
+            />
+
+            <Text style={styles.inputLabel}>Confirmer le Mot de Passe</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Répétez le nouveau mot de passe"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => {
+                  setPasswordModalVisible(false);
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+              >
+                <Text style={styles.cancelBtnText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmBtn}
+                onPress={handleChangePassword}
+                disabled={changePasswordMutation.isPending}
+              >
+                <Text style={styles.confirmBtnText}>
+                  {changePasswordMutation.isPending ? 'Modification...' : 'Changer'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -175,13 +306,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   balance: { fontSize: 32, fontWeight: '800', color: '#22c55e', marginBottom: 12 },
-  walletRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  walletLabel: { fontSize: 14, color: '#64748b' },
-  walletValue: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -193,6 +317,17 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
   online: { color: '#22c55e' },
   offline: { color: '#ef4444' },
+  menuBtn: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2563eb',
+  },
+  menuBtnText: { color: '#2563eb', fontSize: 16, fontWeight: '700' },
   logoutBtn: {
     margin: 16,
     backgroundColor: '#ffffff',
@@ -203,4 +338,55 @@ const styles = StyleSheet.create({
     borderColor: '#ef4444',
   },
   logoutText: { color: '#ef4444', fontSize: 16, fontWeight: '700' },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1e293b',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: '#64748b', marginBottom: 4, marginTop: 8 },
+  input: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
+    color: '#1e293b',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  cancelBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+  },
+  cancelBtnText: { color: '#64748b', fontWeight: '700', fontSize: 15 },
+  confirmBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: '#2563eb',
+  },
+  confirmBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
 });

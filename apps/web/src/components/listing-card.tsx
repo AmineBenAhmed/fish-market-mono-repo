@@ -62,7 +62,7 @@ export function ListingCard({ listing }: Props) {
         )}
         <div className="flex items-center justify-between pt-1">
           <span className="text-lg font-bold text-blue-600">
-            {listing.currency} {Number(listing.price).toFixed(2)}
+            {listing.currency} {Number(listing.effectivePrice ?? listing.price).toFixed(2)}
             {listing.unit ? ` / ${listing.unit}` : ''}
           </span>
           <div className="flex items-center gap-1 text-xs text-gray-400">

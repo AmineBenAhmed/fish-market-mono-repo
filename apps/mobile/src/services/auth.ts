@@ -2,8 +2,8 @@ import { api, unwrap } from './api';
 import type { AuthResponse } from '../types';
 
 export const authService = {
-  login: async (email: string, password: string) => {
-    const res = await api.post('/auth/login', { email, password });
+  login: async (phone: string, password: string) => {
+    const res = await api.post('/auth/login', { phone, password });
     return unwrap<AuthResponse>(res);
   },
 

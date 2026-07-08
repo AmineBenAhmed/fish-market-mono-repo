@@ -43,6 +43,24 @@ export function DriverDetailPage() {
     enabled: !!id,
   });
 
+  const [newPassword, setNewPassword] = useState('');
+
+  const resetMutation = useMutation({
+    mutationFn: (password: string) => driversService.resetDriverPassword(id!, password),
+    onSuccess: () => {
+      toast.success('Password reset successfully');
+      setNewPassword('');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to reset password');
+    },
+  });
+
+  const handleResetPassword = () => {
+    if (!newPassword) return;
+    resetMutation.mutate(newPassword);
+  };
+
   const [form, setForm] = useState({
     name: '',
     phone: '',
@@ -57,6 +75,7 @@ export function DriverDetailPage() {
     workingZone: '',
     vehiclePlate: '',
     licenseNumber: '',
+    deliveryFee: '',
   });
 
   useEffect(() => {
@@ -75,6 +94,7 @@ export function DriverDetailPage() {
         workingZone: driver.workingZone || '',
         vehiclePlate: driver.vehiclePlate || '',
         licenseNumber: driver.licenseNumber || '',
+        deliveryFee: driver.deliveryFee?.toString() || '',
       });
     }
   }, [driver]);
@@ -117,6 +137,8 @@ export function DriverDetailPage() {
       data.vehiclePlate = form.vehiclePlate || undefined;
     if (form.licenseNumber !== (driver?.licenseNumber || ''))
       data.licenseNumber = form.licenseNumber || undefined;
+    if (form.deliveryFee !== (driver?.deliveryFee?.toString() || ''))
+      data.deliveryFee = form.deliveryFee ? parseFloat(form.deliveryFee) : undefined;
 
     if (Object.keys(data).length === 0) {
       toast.info('No changes to save');
@@ -248,6 +270,17 @@ export function DriverDetailPage() {
                 />
               </div>
               <div>
+                <label className="text-sm font-medium mb-1 block">Delivery Fee (TND)</label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={form.deliveryFee}
+                  onChange={(e) => handleChange('deliveryFee', e.target.value)}
+                  placeholder="e.g. 5"
+                />
+              </div>
+              <div>
                 <label className="text-sm font-medium mb-1 block">Status</label>
                 <Select value={form.status} onValueChange={(v) => handleChange('status', v)}>
                   <SelectTrigger>
@@ -282,6 +315,33 @@ export function DriverDetailPage() {
           </p>
         )}
       </form>
+
+      {/* Password Reset */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end gap-4">
+            <div className="flex-1">
+              <label className="text-sm font-medium mb-1 block">New Password</label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+            <Button
+              onClick={handleResetPassword}
+              disabled={!newPassword || resetMutation.isPending}
+            >
+              {resetMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Reset Password
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Audit Logs */}
       <Card>

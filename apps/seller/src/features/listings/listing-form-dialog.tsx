@@ -52,7 +52,6 @@ export interface ListingFormSubmitData {
   categoryId: string;
   description: string;
   price: number;
-  quantity: number;
   condition: string;
   origin: string;
   imageIds?: string[];
@@ -88,7 +87,6 @@ export function ListingFormDialog({
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('');
   const [condition, setCondition] = useState('FRESH');
   const [origin, setOrigin] = useState('');
   const [cleaningCost, setCleaningCost] = useState('');
@@ -111,7 +109,6 @@ export function ListingFormDialog({
       }
       setDescription(editListing.description ?? '');
       setPrice(String(editListing.price ?? ''));
-      setQuantity(String(editListing.quantity ?? ''));
       setCondition(editListing.condition ?? 'FRESH');
       setOrigin(editListing.origin ?? '');
       setCleaningCost(editListing.cleaningCost ? String(editListing.cleaningCost) : '');
@@ -136,7 +133,6 @@ export function ListingFormDialog({
     setSelectedCategoryId('');
     setDescription('');
     setPrice('');
-    setQuantity('');
     setCondition('FRESH');
     setOrigin('');
     setCleaningCost('');
@@ -148,7 +144,6 @@ export function ListingFormDialog({
     const errs: Record<string, string> = {};
     if (!selectedCategoryId) errs.category = 'Please select a fish category';
     if (!price || Number(price) <= 0) errs.price = 'Price must be greater than 0';
-    if (!quantity || Number(quantity) <= 0) errs.quantity = 'Quantity must be greater than 0';
     if ((images ?? []).length > 4) errs.images = 'Maximum 4 photos allowed';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -178,7 +173,6 @@ export function ListingFormDialog({
       categoryId: selectedCategoryId,
       description,
       price: Number(price),
-      quantity: Number(quantity),
       condition,
       origin,
       cleaningCost: cleaningCost ? Number(cleaningCost) : undefined,
@@ -294,35 +288,6 @@ export function ListingFormDialog({
                   </div>
                 </div>
                 {errors.price && <p className="text-xs text-destructive">{errors.price}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Available Quantity <span className="text-destructive">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="1"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                    />
-                  </div>
-                  <div className="w-28">
-                    <Select defaultValue="Kg">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Kg">Kg</SelectItem>
-                        <SelectItem value="Piece">Piece</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                {errors.quantity && <p className="text-xs text-destructive">{errors.quantity}</p>}
               </div>
             </div>
 

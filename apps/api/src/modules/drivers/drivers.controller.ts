@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 
 import { CurrentUser } from '../../common/decorators';
 import { JwtPayload } from '../../common/interfaces';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { DriversService } from './drivers.service';
 import { UpdateDriverDto } from './dto/update-driver.dto';
 
@@ -38,5 +39,20 @@ export class DriversController {
   @ApiResponse({ status: 200, description: 'Driver is now offline' })
   async goOffline(@CurrentUser() user: JwtPayload) {
     return this.driversService.setOnlineStatus(user.sub, 'OFFLINE');
+  }
+
+  @Patch('me/password')
+  @ApiOperation({ summary: 'Change own password' })
+  @ApiResponse({ status: 200, description: 'Password changed' })
+  async changePassword(@CurrentUser() user: JwtPayload, @Body() dto: ChangePasswordDto) {
+    await this.driversService.changePassword(user.sub, dto.currentPassword, dto.newPassword);
+    return { message: 'Senha alterada com sucesso' };
+  }
+
+  @Get('me/earnings')
+  @ApiOperation({ summary: 'Get own earnings' })
+  @ApiResponse({ status: 200, description: 'Earnings data' })
+  async getEarnings(@CurrentUser() user: JwtPayload) {
+    return this.driversService.getEarnings(user.sub);
   }
 }

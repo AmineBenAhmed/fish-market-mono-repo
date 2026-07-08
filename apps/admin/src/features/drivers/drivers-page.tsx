@@ -91,6 +91,11 @@ export function DriversPage() {
                 ),
               },
               {
+                key: 'phone',
+                header: 'Phone',
+                render: (d: DriverProfile) => d.user?.phone || d.phone || '-',
+              },
+              {
                 key: 'status',
                 header: 'Status',
                 render: (d: DriverProfile) => (
@@ -128,6 +133,11 @@ export function DriversPage() {
                 key: 'vehicleType',
                 header: 'Vehicle',
                 render: (d: DriverProfile) => d.vehicleType || '-',
+              },
+              {
+                key: 'deliveryFee',
+                header: 'Delivery Fee',
+                render: (d: DriverProfile) => (d.deliveryFee ? `${d.deliveryFee} TND` : '-'),
               },
               { key: 'city', header: 'City', render: (d: DriverProfile) => d.city || '-' },
               {

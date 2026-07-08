@@ -33,10 +33,10 @@ export function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🔔 Notificações</Text>
+        <Text style={styles.headerTitle}>🔔 Notifications</Text>
         {unreadCount > 0 && (
           <TouchableOpacity onPress={() => markAllMutation.mutate()}>
-            <Text style={styles.markAllText}>Marcar todas lidas</Text>
+            <Text style={styles.markAllText}>Tout marquer comme lu</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -46,7 +46,7 @@ export function NotificationsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <EmptyState icon="🔔" title="Nenhuma notificação" message="Você está em dia!" />
+          <EmptyState icon="🔔" title="Aucune notification" message="Vous êtes à jour !" />
         }
         renderItem={({ item }) => (
           <TouchableOpacity

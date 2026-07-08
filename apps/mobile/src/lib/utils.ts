@@ -9,7 +9,7 @@ export function formatCurrency(value: number): string {
 
 export function formatDate(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('pt-BR', {
+  return d.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -26,11 +26,11 @@ export function formatRelativeTime(date: string | Date): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return 'agora';
+  if (diffMins < 1) return 'maintenant';
   if (diffMins < 60) return `${diffMins}min`;
   if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}d`;
-  return then.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  if (diffDays < 7) return `${diffDays}j`;
+  return then.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
 export function deliveryStepFromStatus(status: string): number {
@@ -47,11 +47,11 @@ export function deliveryStepFromStatus(status: string): number {
 
 export function deliveryActionLabel(action: string): string {
   const labels: Record<string, string> = {
-    accept: 'Aceitar Entrega',
-    arrive: 'Cheguei ao Vendedor',
-    pickup: 'Coletar Pedido',
-    transit: 'Sair para Entrega',
-    complete: 'Confirmar Entrega',
+    accept: 'Accepter la Livraison',
+    arrive: 'Arrivé chez le Vendeur',
+    pickup: 'Collecter la Commande',
+    transit: 'Partir pour Livraison',
+    complete: 'Confirmer la Livraison',
   };
   return labels[action] ?? action;
 }

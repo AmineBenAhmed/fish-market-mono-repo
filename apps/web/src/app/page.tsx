@@ -130,11 +130,7 @@ export default function HomePage() {
               {showingCategory?.name ||
                 (selectedCondition ? t('home.filteredListings') : t('home.listings'))}
             </h1>
-            <p className="text-gray-500 mt-1">
-              {listings.length}{' '}
-              {listings.length !== 1 ? t('home.listings_plural') : t('home.listing')}{' '}
-              {t('home.available')}
-            </p>
+            <p className="text-gray-500 mt-1">Nos poissoneries ({listings.length})</p>
           </div>
 
           {error && <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">{error}</div>}

@@ -66,10 +66,6 @@ export class CartService {
       throw new BadRequestException('Listing is not active');
     }
 
-    if (listing.quantity < dto.quantity) {
-      throw new BadRequestException(`Insufficient stock. Available: ${listing.quantity}`);
-    }
-
     if (!listing.variantId) {
       throw new BadRequestException('Listing must have a variant');
     }
@@ -79,13 +75,9 @@ export class CartService {
     });
 
     if (existing) {
-      const newQty = existing.quantity + dto.quantity;
-      if (newQty > listing.quantity) {
-        throw new BadRequestException(`Insufficient stock. Available: ${listing.quantity}`);
-      }
       return this.prisma.cartItem.update({
         where: { id: existing.id },
-        data: { quantity: newQty, listingId: dto.listingId },
+        data: { quantity: existing.quantity + dto.quantity, listingId: dto.listingId },
         include: { listing: { include: { category: true, variant: true, seller: true } } },
       });
     }
@@ -111,10 +103,6 @@ export class CartService {
 
     if (!item) {
       throw new NotFoundException('Cart item not found');
-    }
-
-    if (dto.quantity > item.listing.quantity) {
-      throw new BadRequestException(`Insufficient stock. Available: ${item.listing.quantity}`);
     }
 
     return this.prisma.cartItem.update({

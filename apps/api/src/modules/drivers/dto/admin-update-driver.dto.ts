@@ -62,4 +62,8 @@ export class AdminUpdateDriverDto {
   @IsNumber()
   @IsOptional()
   maxLoadKg?: number;
+
+  @IsNumber()
+  @IsOptional()
+  deliveryFee?: number;
 }

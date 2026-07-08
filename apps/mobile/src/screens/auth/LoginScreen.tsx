@@ -15,28 +15,28 @@ import { authService } from '../../services/auth';
 import { useAuthStore } from '../../stores/auth';
 
 export function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Erro', 'Preencha email e senha');
+    if (!phone.trim() || !password.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir votre téléphone et mot de passe');
       return;
     }
     setLoading(true);
     try {
-      const result = await authService.login(email.trim(), password);
+      const result = await authService.login(phone.trim(), password);
       if (result.user.role !== 'DRIVER') {
-        Alert.alert('Acesso Negado', 'Apenas motoristas podem usar este aplicativo');
+        Alert.alert('Accès Refusé', 'Seuls les chauffeurs peuvent utiliser cette application');
         setLoading(false);
         return;
       }
       await login(result.accessToken, result.user);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Erro ao fazer login';
-      Alert.alert('Erro', msg);
+      const msg = err?.response?.data?.message || 'Erreur de connexion';
+      Alert.alert('Erreur', msg);
     } finally {
       setLoading(false);
     }
@@ -50,22 +50,22 @@ export function LoginScreen() {
       <View style={styles.content}>
         <Text style={styles.logo}>🚚</Text>
         <Text style={styles.title}>FishMarket</Text>
-        <Text style={styles.subtitle}>Motorista</Text>
+        <Text style={styles.subtitle}>Chauffeur</Text>
 
         <View style={styles.form}>
           <TextInput
             style={styles.input}
-            placeholder="Email"
+            placeholder="Téléphone"
             placeholderTextColor="#94a3b8"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
             autoCapitalize="none"
             editable={!loading}
           />
           <TextInput
             style={styles.input}
-            placeholder="Senha"
+            placeholder="Mot de passe"
             placeholderTextColor="#94a3b8"
             value={password}
             onChangeText={setPassword}
@@ -80,7 +80,7 @@ export function LoginScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Entrar</Text>
+              <Text style={styles.buttonText}>Connexion</Text>
             )}
           </TouchableOpacity>
         </View>

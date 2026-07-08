@@ -1,21 +1,27 @@
-import { useEffect } from 'react';
+import { useEffect, useReducer } from 'react';
 import { useAuthStore } from '../stores/auth';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { AuthNavigator } from './auth-navigator';
 import { DriverTabNavigator } from './driver-tab-navigator';
 
 export function RootNavigator() {
-  const { isLoading, isAuthenticated, restoreSession } = useAuthStore();
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
   useEffect(() => {
-    restoreSession();
+    const unsub = useAuthStore.subscribe(() => {
+      forceUpdate();
+    });
+    useAuthStore.getState().restoreSession();
+    return unsub;
   }, []);
+
+  const { isLoading, token } = useAuthStore.getState();
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated()) {
+  if (!token) {
     return <AuthNavigator />;
   }
 

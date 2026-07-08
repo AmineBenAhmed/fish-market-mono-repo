@@ -51,7 +51,6 @@ export interface Listing {
   variantId?: string | null;
   variantName?: string;
   price: number;
-  quantity: number;
   unit: string;
   status: string;
   date: string;
@@ -75,7 +74,6 @@ export interface Listing {
     name: string;
     unit: string;
   } | null;
-  boughtQuantity?: number;
   boughtTotal?: number;
   createdAt: string;
   updatedAt: string;

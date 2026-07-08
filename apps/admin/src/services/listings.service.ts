@@ -23,7 +23,6 @@ export const listingsService = {
     categoryId: string;
     date: string;
     price: number;
-    quantity: number;
     title?: string;
     description?: string;
     catchDate?: string;

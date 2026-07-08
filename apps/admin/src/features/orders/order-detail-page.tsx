@@ -23,6 +23,9 @@ const orderStatuses = [
   'CONFIRMED',
   'PREPARING',
   'READY_FOR_PICKUP',
+  'ACCEPTED',
+  'ARRIVED',
+  'PICKED_UP',
   'OUT_FOR_DELIVERY',
   'DELIVERED',
   'CANCELLED',
@@ -66,6 +69,17 @@ export function OrderDetailPage() {
     onError: (err: any) => {
       const message = err?.response?.data?.message || err?.message || 'Failed to assign driver';
       toast.error(message);
+    },
+  });
+
+  const unassignDriverMutation = useMutation({
+    mutationFn: () => ordersService.unassignDriver(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
+      toast.success('Driver unassigned');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to unassign driver');
     },
   });
 
@@ -257,7 +271,17 @@ export function OrderDetailPage() {
                     <p className="text-sm text-muted-foreground">{order.delivery.driver.phone}</p>
                   )}
                 </div>
-                <Badge variant="secondary">Assigned</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">Assigned</Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => unassignDriverMutation.mutate()}
+                    disabled={unassignDriverMutation.isPending}
+                  >
+                    Unassign
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (

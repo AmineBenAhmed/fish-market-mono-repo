@@ -131,11 +131,6 @@ export function ListingsPage() {
                 ),
               },
               {
-                key: 'quantity',
-                header: 'Qty',
-                render: (l: Listing) => <span>{l.quantity}</span>,
-              },
-              {
                 key: 'status',
                 header: 'Status',
                 render: (l: Listing) => <Badge className={statusColor(l.status)}>{l.status}</Badge>,

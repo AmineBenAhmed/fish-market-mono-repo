@@ -1,6 +1,13 @@
 import { api, unwrap } from './api';
 import type { DriverProfile, DriverStats } from '../types';
 
+export interface DriverEarnings {
+  totalEarnings: number;
+  deliveryFee: number;
+  completedCount: number;
+  recentDeliveries: Array<{ id: string; createdAt: string }>;
+}
+
 export const driverService = {
   getProfile: async () => {
     const res = await api.get('/drivers/me');
@@ -30,5 +37,15 @@ export const driverService = {
   getStats: async () => {
     const res = await api.get('/driver/stats');
     return unwrap<DriverStats>(res);
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const res = await api.patch('/drivers/me/password', { currentPassword, newPassword });
+    return unwrap<{ message: string }>(res);
+  },
+
+  getEarnings: async () => {
+    const res = await api.get('/drivers/me/earnings');
+    return unwrap<DriverEarnings>(res);
   },
 };

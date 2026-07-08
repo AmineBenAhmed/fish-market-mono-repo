@@ -16,10 +16,10 @@ type Nav = NativeStackNavigationProp<HistoryStackParamList, 'HistoryMain'>;
 
 const STATUS_TABS = ['all', 'DELIVERED', 'CANCELLED', 'FAILED'] as const;
 const TAB_LABELS: Record<string, string> = {
-  all: 'Todas',
-  DELIVERED: 'Entregues',
-  CANCELLED: 'Canceladas',
-  FAILED: 'Falha',
+  all: 'Toutes',
+  DELIVERED: 'Livrées',
+  CANCELLED: 'Annulées',
+  FAILED: 'Échec',
 };
 
 export function HistoryScreen() {
@@ -49,7 +49,7 @@ export function HistoryScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>📋 Histórico</Text>
+        <Text style={styles.headerTitle}>📋 Historique</Text>
       </View>
 
       <View style={styles.tabs}>
@@ -74,8 +74,8 @@ export function HistoryScreen() {
         ListEmptyComponent={
           <EmptyState
             icon="📭"
-            title="Nenhuma entrega"
-            message="Você ainda não tem entregas nesta categoria"
+            title="Aucune livraison"
+            message="Vous n'avez pas encore de livraisons dans cette catégorie"
           />
         }
         renderItem={({ item }) => (

@@ -94,22 +94,6 @@ export function ListingDetailPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <ShoppingCart className="h-3 w-3" /> Quantity
-                  </p>
-                  <p className="text-lg font-bold">{listing.quantity}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {listing.unit || 'units'} available
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <ShoppingCart className="h-3 w-3" /> Bought
-                  </p>
-                  <p className="text-lg font-bold text-primary">{listing.boughtQuantity ?? 0}</p>
-                  <p className="text-xs text-muted-foreground">units sold</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <ShoppingCart className="h-3 w-3" /> Revenue
                   </p>
                   <p className="text-lg font-bold text-emerald-600">

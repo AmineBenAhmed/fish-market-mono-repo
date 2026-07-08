@@ -29,6 +29,10 @@ export class UpdateDriverDto {
   @IsOptional()
   maxLoadKg?: number;
 
+  @IsNumber()
+  @IsOptional()
+  deliveryFee?: number;
+
   @IsBoolean()
   @IsOptional()
   isAvailable?: boolean;

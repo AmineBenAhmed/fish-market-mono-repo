@@ -72,11 +72,11 @@ function ProfileStackScreen() {
 
 function TabIcon({ label, focused }: { label: string; focused: boolean }) {
   const icons: Record<string, string> = {
-    Início: '🏠',
-    Entregas: '📦',
-    Histórico: '📋',
-    Notificações: '🔔',
-    Perfil: '👤',
+    Accueil: '🏠',
+    Livraisons: '📦',
+    Historique: '📋',
+    Notifications: '🔔',
+    Profil: '👤',
   };
   return (
     <Text style={{ fontSize: Platform.OS === 'ios' ? 22 : 20, opacity: focused ? 1 : 0.5 }}>
@@ -107,11 +107,11 @@ export function DriverTabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Início" component={HomeStackScreen} />
-      <Tab.Screen name="Entregas" component={DeliveriesStackScreen} />
-      <Tab.Screen name="Histórico" component={HistoryStackScreen} />
-      <Tab.Screen name="Notificações" component={NotificationsScreen} />
-      <Tab.Screen name="Perfil" component={ProfileStackScreen} />
+      <Tab.Screen name="Accueil" component={HomeStackScreen} />
+      <Tab.Screen name="Livraisons" component={DeliveriesStackScreen} />
+      <Tab.Screen name="Historique" component={HistoryStackScreen} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} />
+      <Tab.Screen name="Profil" component={ProfileStackScreen} />
     </Tab.Navigator>
   );
 }

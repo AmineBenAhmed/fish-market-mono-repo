@@ -1,6 +1,7 @@
 import * as crypto from 'node:crypto';
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderStatus, Prisma } from '@prisma/client';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
@@ -22,7 +23,10 @@ interface FindTodayParams {
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   async findToday(params: FindTodayParams = {}) {
     const today = new Date();
@@ -31,7 +35,6 @@ export class MarketplaceService {
     const where: Prisma.SellerListingWhereInput = {
       date: today,
       status: 'ACTIVE',
-      quantity: { gt: 0 },
     };
 
     if (params.city) {
@@ -82,7 +85,7 @@ export class MarketplaceService {
 
     const { page, limit, skip } = parsePagination(params.page, params.limit);
 
-    const [data, total] = await Promise.all([
+    const [listings, total] = await Promise.all([
       this.prisma.sellerListing.findMany({
         where,
         include: {
@@ -96,6 +99,7 @@ export class MarketplaceService {
               state: true,
               photo: true,
               storeLogoUrl: true,
+              commissionRate: true,
             },
           },
         },
@@ -105,6 +109,11 @@ export class MarketplaceService {
       }),
       this.prisma.sellerListing.count({ where }),
     ]);
+
+    const data = listings.map((l) => ({
+      ...l,
+      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate ?? 0)),
+    }));
 
     return {
       data,
@@ -139,7 +148,6 @@ export class MarketplaceService {
   }) {
     const where: Prisma.SellerListingWhereInput = {
       status: 'ACTIVE',
-      quantity: { gt: 0 },
     };
 
     if (params.categoryId) {
@@ -162,7 +170,7 @@ export class MarketplaceService {
 
     const { page, limit, skip } = parsePagination(params.page, params.limit);
 
-    const [data, total] = await Promise.all([
+    const [listings, total] = await Promise.all([
       this.prisma.sellerListing.findMany({
         where,
         include: {
@@ -176,6 +184,7 @@ export class MarketplaceService {
               state: true,
               photo: true,
               storeLogoUrl: true,
+              commissionRate: true,
             },
           },
           images: {
@@ -191,6 +200,11 @@ export class MarketplaceService {
       this.prisma.sellerListing.count({ where }),
     ]);
 
+    const data = listings.map((l) => ({
+      ...l,
+      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate ?? 0)),
+    }));
+
     return {
       data,
       meta: createPaginationMeta(total, page, limit),
@@ -199,7 +213,7 @@ export class MarketplaceService {
 
   async findOneListing(listingId: string) {
     const listing = await this.prisma.sellerListing.findFirst({
-      where: { id: listingId, status: 'ACTIVE', quantity: { gt: 0 } },
+      where: { id: listingId, status: 'ACTIVE' },
       include: {
         category: true,
         variant: true,
@@ -209,6 +223,7 @@ export class MarketplaceService {
             storeName: true,
             city: true,
             state: true,
+            commissionRate: true,
           },
         },
         images: {
@@ -223,7 +238,10 @@ export class MarketplaceService {
       throw new NotFoundException('Listing not found');
     }
 
-    return listing;
+    return {
+      ...listing,
+      effectivePrice: Number(listing.price) * (1 + (listing.seller.commissionRate ?? 0)),
+    };
   }
 
   async createOrder(dto: CreateOrderDto) {
@@ -255,37 +273,73 @@ export class MarketplaceService {
           `Listing "${listing.title ?? listing.category.name}" is not active`,
         );
       }
-      if (listing.quantity < item.quantity) {
-        throw new BadRequestException(
-          `Insufficient stock for "${listing.title ?? listing.category.name}"`,
-        );
-      }
     }
 
-    const guestEmail = `guest-${crypto.randomUUID().slice(0, 8)}@fishmarket.app`;
+    let guestUser = customerPhone
+      ? await this.prisma.user.findFirst({
+          where: { phone: customerPhone, role: 'CUSTOMER', deletedAt: null },
+        })
+      : null;
 
-    const guestUser = await this.prisma.user.create({
-      data: {
-        email: guestEmail,
-        passwordHash: crypto.randomUUID(),
-        name: customerName,
-        phone: customerPhone,
-        role: 'CUSTOMER',
-      },
-    });
+    if (guestUser) {
+      if (guestUser.name !== customerName) {
+        await this.prisma.user.update({
+          where: { id: guestUser.id },
+          data: { name: customerName },
+        });
+      }
 
-    await this.prisma.userAddress.create({
-      data: {
-        userId: guestUser.id,
-        label: 'Guest Address',
-        street: customerAddress,
-        number: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        zipCode: '',
-      },
-    });
+      const existingAddress = await this.prisma.userAddress.findFirst({
+        where: { userId: guestUser.id },
+      });
+
+      if (existingAddress) {
+        if (existingAddress.street !== customerAddress) {
+          await this.prisma.userAddress.update({
+            where: { id: existingAddress.id },
+            data: { street: customerAddress },
+          });
+        }
+      } else {
+        await this.prisma.userAddress.create({
+          data: {
+            userId: guestUser.id,
+            label: 'Adresse de livraison',
+            street: customerAddress,
+            number: '',
+            neighborhood: '',
+            city: '',
+            state: '',
+            zipCode: '',
+          },
+        });
+      }
+    } else {
+      const guestEmail = `guest-${crypto.randomUUID().slice(0, 8)}@fishmarket.app`;
+
+      guestUser = await this.prisma.user.create({
+        data: {
+          email: guestEmail,
+          passwordHash: crypto.randomUUID(),
+          name: customerName,
+          phone: customerPhone,
+          role: 'CUSTOMER',
+        },
+      });
+
+      await this.prisma.userAddress.create({
+        data: {
+          userId: guestUser.id,
+          label: 'Adresse de livraison',
+          street: customerAddress,
+          number: '',
+          neighborhood: '',
+          city: '',
+          state: '',
+          zipCode: '',
+        },
+      });
+    }
 
     const groupedBySeller = new Map<string, typeof items>();
     for (const item of items) {
@@ -299,7 +353,7 @@ export class MarketplaceService {
 
     const orderNumber = this.generateOrderNumber();
 
-    const result = await this.prisma.$transaction(async (tx) => {
+    const { parentOrder, childOrders } = await this.prisma.$transaction(async (tx) => {
       const sellerOrders: {
         data: Prisma.OrderCreateInput;
         items: typeof items;
@@ -339,12 +393,12 @@ export class MarketplaceService {
         });
       }
 
-      let parentOrderId: string | null = null;
+      let parentOrder: any = null;
 
       if (sellerOrders.length > 1) {
         const parentTotal = sellerOrders.reduce((sum, so) => sum + (so.data.total as number), 0);
 
-        const parent = await tx.order.create({
+        parentOrder = await tx.order.create({
           data: {
             orderNumber,
             customer: { connect: { id: guestUser.id } },
@@ -356,10 +410,9 @@ export class MarketplaceService {
             total: parentTotal,
           },
         });
-        parentOrderId = parent.id;
 
         for (const so of sellerOrders) {
-          so.data.parentOrder = { connect: { id: parent.id } };
+          so.data.parentOrder = { connect: { id: parentOrder.id } };
         }
       }
 
@@ -370,11 +423,6 @@ export class MarketplaceService {
 
         for (const cartItem of so.items) {
           const listing = listingMap.get(cartItem.listingId)!;
-          await tx.sellerListing.update({
-            where: { id: cartItem.listingId },
-            data: { quantity: { decrement: cartItem.quantity } },
-          });
-
           const cleaningCost = cartItem.cleaning ? Number(listing.cleaningCost ?? 0) : 0;
           const effectiveUnitPrice = Number(listing.price) + cleaningCost;
 
@@ -406,8 +454,28 @@ export class MarketplaceService {
         createdOrders.push(created);
       }
 
-      return { parentOrderId, childOrders: createdOrders };
+      return { parentOrder, childOrders: createdOrders };
     });
+
+    for (const order of childOrders) {
+      this.eventEmitter.emit('order.created', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        customerId: guestUser.id,
+        sellerId: order.sellerId ?? null,
+        total: Number(order.total),
+      });
+    }
+
+    if (parentOrder) {
+      this.eventEmitter.emit('order.created', {
+        orderId: parentOrder.id,
+        orderNumber: parentOrder.orderNumber,
+        customerId: guestUser.id,
+        sellerId: null,
+        total: Number(parentOrder.total),
+      });
+    }
 
     return {
       message: 'Order created successfully',
@@ -424,7 +492,7 @@ export class MarketplaceService {
   }
 
   async findBySeller(sellerProfileId: string) {
-    const seller = await this.prisma.sellerProfile.findUnique({
+    const sellerProfile = await this.prisma.sellerProfile.findUnique({
       where: { id: sellerProfileId },
       select: {
         id: true,
@@ -434,14 +502,14 @@ export class MarketplaceService {
       },
     });
 
-    if (!seller) {
+    if (!sellerProfile) {
       throw new NotFoundException('Seller not found');
     }
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    const listings = await this.prisma.sellerListing.findMany({
+    const rawListings = await this.prisma.sellerListing.findMany({
       where: {
         sellerId: sellerProfileId,
         date: today,
@@ -459,12 +527,18 @@ export class MarketplaceService {
             state: true,
             photo: true,
             storeLogoUrl: true,
+            commissionRate: true,
           },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return { seller, listings };
+    const listings = rawListings.map((l) => ({
+      ...l,
+      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate ?? 0)),
+    }));
+
+    return { seller: sellerProfile, listings };
   }
 }

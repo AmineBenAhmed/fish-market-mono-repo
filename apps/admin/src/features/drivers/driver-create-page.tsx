@@ -39,6 +39,8 @@ export function DriverCreatePage() {
     idCardNumber: '',
     idCardPhoto: '',
     workingZone: '',
+    deliveryFee: '',
+    password: '',
   });
 
   const [uploading, setUploading] = useState(false);
@@ -87,6 +89,8 @@ export function DriverCreatePage() {
       idCardNumber: form.idCardNumber || undefined,
       idCardPhoto: form.idCardPhoto || undefined,
       workingZone: form.workingZone || undefined,
+      deliveryFee: form.deliveryFee ? parseFloat(form.deliveryFee) : undefined,
+      password: form.password || undefined,
     });
   };
 
@@ -240,6 +244,28 @@ export function DriverCreatePage() {
                   value={form.workingZone}
                   onChange={(e) => handleChange('workingZone', e.target.value)}
                   placeholder="e.g. Downtown, North District"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Delivery Fee (TND)</label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  value={form.deliveryFee}
+                  onChange={(e) => handleChange('deliveryFee', e.target.value)}
+                  placeholder="e.g. 5"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Password <span className="text-xs text-muted-foreground">(for driver login)</span>
+                </label>
+                <Input
+                  type="password"
+                  value={form.password}
+                  onChange={(e) => handleChange('password', e.target.value)}
+                  placeholder="Leave empty for random"
                 />
               </div>
             </CardContent>

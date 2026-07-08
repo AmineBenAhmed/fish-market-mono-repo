@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { type Locale, getTranslation, getDir, localeNames } from './translations';
 
 interface I18nContextValue {
@@ -13,21 +13,11 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-const STORAGE_KEY = 'fishmarket_locale';
-
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('fr');
+  const [locale] = useState<Locale>('fr');
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'en' || stored === 'fr' || stored === 'ar') {
-      setLocaleState(stored);
-    }
-  }, []);
-
-  function setLocale(l: Locale) {
-    setLocaleState(l);
-    localStorage.setItem(STORAGE_KEY, l);
+  function setLocale(_l: Locale) {
+    // Locked to French — kept as noop for future use
   }
 
   function t(key: string): string {

@@ -8,6 +8,7 @@ import { JwtAuthGuard, PermissionsGuard, RolesGuard } from './common/guards';
 import { LoggingInterceptor } from './common/interceptors';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AddressesModule } from './modules/addresses/addresses.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminOrdersModule } from './modules/admin-orders/admin-orders.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -73,6 +74,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
     OrdersModule,
     SellerOrdersModule,
     AdminOrdersModule,
+    AnalyticsModule,
     AuditLogModule,
     EventsModule,
     NotificationModule,

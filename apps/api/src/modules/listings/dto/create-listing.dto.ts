@@ -29,10 +29,6 @@ export class CreateListingDto {
   @Min(0)
   price!: number;
 
-  @IsNumber()
-  @Min(1)
-  quantity!: number;
-
   @IsString()
   @IsOptional()
   @MaxLength(200)

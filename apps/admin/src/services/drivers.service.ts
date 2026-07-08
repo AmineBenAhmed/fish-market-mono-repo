@@ -12,6 +12,8 @@ export interface CreateDriverPayload {
   idCardNumber?: string;
   idCardPhoto?: string;
   workingZone?: string;
+  deliveryFee?: number;
+  password?: string;
 }
 
 export const driversService = {
@@ -45,5 +47,9 @@ export const driversService = {
   async getDriverAuditLogs(id: string): Promise<any[]> {
     const result = await api.get(`/audit-logs`, { params: { entity: 'Driver', entityId: id } });
     return unwrap<any[]>(result);
+  },
+
+  async resetDriverPassword(id: string, newPassword: string): Promise<void> {
+    await api.patch(`/admin/drivers/${id}/password`, { newPassword });
   },
 };

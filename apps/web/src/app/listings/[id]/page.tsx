@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchListing, fetchSellerListings } from '@/lib/api';
 import { useCart } from '@/hooks/use-cart';
-import { QuantityPicker } from '@/components/quantity-picker';
 import type { Listing } from '@/lib/types';
 import { useLocale } from '@/lib/i18n/context';
 import {
@@ -46,12 +45,10 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [cleaning, setCleaning] = useState(false);
   const [added, setAdded] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [sameStoreListings, setSameStoreListings] = useState<Listing[]>([]);
-  const [sameStoreQty, setSameStoreQty] = useState<Record<string, number>>({});
   const [sameStoreAdded, setSameStoreAdded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -61,8 +58,6 @@ export default function ListingDetailPage() {
       .then((res) => {
         const listingData = res.data as unknown as Listing;
         setListing(listingData);
-        setQuantity(1);
-
         if (listingData.seller?.id) {
           fetchSellerListings(listingData.seller.id)
             .then((sellerRes) => {
@@ -103,9 +98,9 @@ export default function ListingDetailPage() {
   const handleAddToCart = () => {
     addItem({
       listingId: listing.id,
-      quantity,
+      quantity: 1,
       title: listing.title || listing.category?.name || t('listing.general'),
-      price: Number(listing.price),
+      price: Number(listing.effectivePrice ?? listing.price),
       cleaningCost: Number(listing.cleaningCost ?? 0),
       cleaning,
       unit: listing.unit,
@@ -114,7 +109,6 @@ export default function ListingDetailPage() {
       storeName: listing.seller.storeName,
       productName: listing.title || listing.category?.name || 'Fish',
       variantName: listing.variant?.name || '',
-      maxQuantity: listing.quantity,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -189,7 +183,7 @@ export default function ListingDetailPage() {
           </div>
 
           <div className="text-3xl font-bold text-blue-600">
-            {listing.currency} {Number(listing.price).toFixed(2)}
+            {listing.currency} {Number(listing.effectivePrice ?? listing.price).toFixed(2)}
             {listing.unit && <span className="text-lg text-gray-400"> / {listing.unit}</span>}
           </div>
 
@@ -214,12 +208,6 @@ export default function ListingDetailPage() {
                 </p>
               </div>
             )}
-            <div>
-              <span className="text-gray-400">{t('listing.available')}</span>
-              <p className="font-medium">
-                {listing.quantity} {listing.unit}
-              </p>
-            </div>
             {listing.catchDate && (
               <div>
                 <span className="text-gray-400">{t('listing.catchDate')}</span>
@@ -229,11 +217,6 @@ export default function ListingDetailPage() {
           </div>
 
           <div className="border-t pt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{t('listing.quantity')}</span>
-              <QuantityPicker value={quantity} max={listing.quantity} onChange={setQuantity} />
-            </div>
-
             <label className="flex items-center gap-3 cursor-pointer group">
               <div
                 className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
@@ -259,8 +242,8 @@ export default function ListingDetailPage() {
               <span className="font-semibold">
                 {listing.currency}{' '}
                 {(
-                  Number(listing.price) * quantity +
-                  (cleaning ? Number(listing.cleaningCost ?? 0) * quantity : 0)
+                  Number(listing.effectivePrice ?? listing.price) +
+                  (cleaning ? Number(listing.cleaningCost ?? 0) : 0)
                 ).toFixed(2)}
               </span>
             </div>
@@ -285,14 +268,13 @@ export default function ListingDetailPage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {sameStoreListings.map((l) => {
-              const qty = sameStoreQty[l.id] ?? 1;
               const justAdded = sameStoreAdded[l.id];
 
               const handleAdd = () => {
                 const img = getImages(l);
                 addItem({
                   listingId: l.id,
-                  quantity: qty,
+                  quantity: 1,
                   title: l.title || l.category?.name || t('listing.general'),
                   price: Number(l.price),
                   cleaningCost: Number(l.cleaningCost ?? 0),
@@ -303,7 +285,6 @@ export default function ListingDetailPage() {
                   storeName: l.seller.storeName,
                   productName: l.title || l.category?.name || 'Fish',
                   variantName: l.variant?.name || '',
-                  maxQuantity: l.quantity,
                 });
                 setSameStoreAdded((prev) => ({ ...prev, [l.id]: true }));
                 setTimeout(() => {
@@ -344,24 +325,17 @@ export default function ListingDetailPage() {
                         {l.unit ? `/${l.unit}` : ''}
                       </span>
                     </Link>
-                    <div className="flex items-center gap-2 pt-1">
-                      <QuantityPicker
-                        value={qty}
-                        max={l.quantity}
-                        onChange={(v) => setSameStoreQty((prev) => ({ ...prev, [l.id]: v }))}
-                      />
-                      <button
-                        onClick={handleAdd}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                          justAdded
-                            ? 'bg-green-500 text-white'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
-                      >
-                        <ShoppingCart className="h-3.5 w-3.5" />
-                        {justAdded ? t('listing.added') : t('listing.add')}
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleAdd}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                        justAdded
+                          ? 'bg-green-500 text-white'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      <ShoppingCart className="h-3.5 w-3.5" />
+                      {justAdded ? t('listing.added') : t('listing.add')}
+                    </button>
                   </div>
                 </div>
               );

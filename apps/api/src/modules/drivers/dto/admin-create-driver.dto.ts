@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 
 import { DriverStatus } from '@prisma/client';
 
@@ -44,4 +44,12 @@ export class AdminCreateDriverDto {
   @IsString()
   @IsOptional()
   workingZone?: string;
+
+  @IsNumber()
+  @IsOptional()
+  deliveryFee?: number;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
 }

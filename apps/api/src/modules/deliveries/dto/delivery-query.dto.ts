@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class DeliveryQueryDto {
   @IsString()
@@ -17,11 +18,13 @@ export class DeliveryQueryDto {
   @IsOptional()
   endDate?: string;
 
-  @IsString()
+  @Type(() => Number)
+  @IsNumber()
   @IsOptional()
   page?: number;
 
-  @IsString()
+  @Type(() => Number)
+  @IsNumber()
   @IsOptional()
   limit?: number;
 }

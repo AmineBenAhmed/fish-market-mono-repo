@@ -130,7 +130,7 @@ export default function CartPage() {
             <div className="flex items-center gap-4">
               <QuantityPicker
                 value={item.quantity}
-                max={item.maxQuantity}
+                max={9999}
                 onChange={(q) => updateQuantity(item.listingId, item.cleaning, q)}
               />
               <p className="font-semibold text-blue-600 w-24 text-right">

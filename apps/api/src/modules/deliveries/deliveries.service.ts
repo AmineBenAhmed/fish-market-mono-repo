@@ -86,9 +86,6 @@ export class DeliveriesService {
     if (!driver) throw new NotFoundException('Driver not found');
     if (driver.status === 'OFFLINE') throw new BadRequestException('Driver is offline');
     if (!driver.isAvailable) throw new BadRequestException('Driver is not available');
-    if (driver.activeDeliveries >= driver.maxDeliveries) {
-      throw new BadRequestException('Driver has reached maximum active deliveries');
-    }
 
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.delivery.update({
@@ -150,12 +147,7 @@ export class DeliveriesService {
       select: { orderId: true },
     });
 
-    const result = await this.transition(
-      deliveryId,
-      driverId,
-      DeliveryStatus.ACCEPTED,
-      'acceptedAt',
-    );
+    const result = await this.transition(deliveryId, driverId, DeliveryStatus.ACCEPTED, null);
 
     this.eventEmitter.emit('delivery.accepted', {
       deliveryId,
@@ -167,16 +159,39 @@ export class DeliveriesService {
   }
 
   async rejectDelivery(deliveryId: string, driverId: string) {
-    const delivery = await this.prisma.delivery.findUnique({ where: { id: deliveryId } });
+    const delivery = await this.prisma.delivery.findUnique({
+      where: { id: deliveryId },
+      include: {
+        order: { select: { id: true, status: true } },
+        driver: { select: { name: true } },
+      },
+    });
     if (!delivery) throw new NotFoundException('Delivery not found');
     if (delivery.driverId !== driverId) throw new NotFoundException('Delivery not found');
 
     this.stateService.validateTransition(delivery.status, DeliveryStatus.CANCELLED);
 
+    const driverName = delivery.driver?.name || driverId;
+
     await this.prisma.$transaction(async (tx) => {
       await tx.delivery.update({
         where: { id: deliveryId },
         data: { status: DeliveryStatus.CANCELLED, driverId: null },
+      });
+
+      await tx.order.update({
+        where: { id: delivery.order.id },
+        data: { status: OrderStatus.READY_FOR_PICKUP },
+      });
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: delivery.order.id,
+          fromStatus: delivery.order.status as OrderStatus,
+          toStatus: OrderStatus.READY_FOR_PICKUP,
+          changedById: driverId,
+          reason: `Driver ${driverName} refused the delivery`,
+        },
       });
 
       await tx.driverProfile.update({
@@ -198,7 +213,20 @@ export class DeliveriesService {
   }
 
   async startPickup(deliveryId: string, driverId: string) {
-    return this.transition(deliveryId, driverId, DeliveryStatus.PICKING_UP, null);
+    const delivery = await this.prisma.delivery.findUnique({
+      where: { id: deliveryId },
+      select: { orderId: true },
+    });
+
+    const result = await this.transition(deliveryId, driverId, DeliveryStatus.PICKING_UP, null);
+
+    this.eventEmitter.emit('delivery.picking-up', {
+      deliveryId,
+      orderId: delivery?.orderId ?? '',
+      driverId,
+    });
+
+    return result;
   }
 
   async pickup(deliveryId: string, driverId: string) {
@@ -243,7 +271,7 @@ export class DeliveriesService {
   async complete(deliveryId: string, driverId: string) {
     const delivery = await this.prisma.delivery.findUnique({
       where: { id: deliveryId },
-      include: { order: { select: { id: true } } },
+      include: { order: { select: { id: true, status: true } } },
     });
 
     if (!delivery) throw new NotFoundException('Delivery not found');
@@ -266,6 +294,16 @@ export class DeliveriesService {
       await tx.order.update({
         where: { id: delivery.order.id },
         data: { status: OrderStatus.DELIVERED },
+      });
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: delivery.order.id,
+          fromStatus: delivery.order.status,
+          toStatus: OrderStatus.DELIVERED,
+          changedById: driverId,
+          reason: 'Driver completed delivery',
+        },
       });
 
       await tx.driverProfile.update({
@@ -295,7 +333,7 @@ export class DeliveriesService {
   async fail(deliveryId: string, reason: string, changedBy: string) {
     const delivery = await this.prisma.delivery.findUnique({
       where: { id: deliveryId },
-      include: { order: { select: { id: true } } },
+      include: { order: { select: { id: true, status: true } } },
     });
 
     if (!delivery) throw new NotFoundException('Delivery not found');
@@ -335,7 +373,7 @@ export class DeliveriesService {
   async cancel(deliveryId: string, reason?: string, cancelledBy?: string) {
     const delivery = await this.prisma.delivery.findUnique({
       where: { id: deliveryId },
-      include: { order: { select: { id: true } } },
+      include: { order: { select: { id: true, status: true } } },
     });
 
     if (!delivery) throw new NotFoundException('Delivery not found');
@@ -382,7 +420,7 @@ export class DeliveriesService {
   ) {
     const delivery = await this.prisma.delivery.findUnique({
       where: { id: deliveryId },
-      include: { order: { select: { id: true } } },
+      include: { order: { select: { id: true, status: true } } },
     });
 
     if (!delivery) throw new NotFoundException('Delivery not found');
@@ -401,10 +439,61 @@ export class DeliveriesService {
 
       await this.recordStatusHistory(deliveryId, delivery.status, toStatus);
 
-      if (toStatus === DeliveryStatus.IN_TRANSIT) {
+      if (toStatus === DeliveryStatus.ACCEPTED) {
+        await tx.order.update({
+          where: { id: delivery.order.id },
+          data: { status: OrderStatus.ACCEPTED },
+        });
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: delivery.order.id,
+            fromStatus: delivery.order.status,
+            toStatus: OrderStatus.ACCEPTED,
+            changedById: driverId,
+            reason: 'Driver accepted delivery',
+          },
+        });
+      } else if (toStatus === DeliveryStatus.PICKING_UP) {
+        await tx.order.update({
+          where: { id: delivery.order.id },
+          data: { status: OrderStatus.ARRIVED },
+        });
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: delivery.order.id,
+            fromStatus: delivery.order.status,
+            toStatus: OrderStatus.ARRIVED,
+            changedById: driverId,
+            reason: 'Driver arrived at seller store',
+          },
+        });
+      } else if (toStatus === DeliveryStatus.PICKED_UP) {
+        await tx.order.update({
+          where: { id: delivery.order.id },
+          data: { status: OrderStatus.PICKED_UP },
+        });
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: delivery.order.id,
+            fromStatus: delivery.order.status,
+            toStatus: OrderStatus.PICKED_UP,
+            changedById: driverId,
+            reason: 'Driver picked up order',
+          },
+        });
+      } else if (toStatus === DeliveryStatus.IN_TRANSIT) {
         await tx.order.update({
           where: { id: delivery.order.id },
           data: { status: OrderStatus.OUT_FOR_DELIVERY },
+        });
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: delivery.order.id,
+            fromStatus: delivery.order.status,
+            toStatus: OrderStatus.OUT_FOR_DELIVERY,
+            changedById: driverId,
+            reason: 'Driver en route to customer',
+          },
         });
       }
 
@@ -429,6 +518,23 @@ export class DeliveriesService {
             status: true,
             total: true,
             customer: { select: { id: true, name: true, phone: true } },
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+                sellerProfiles: {
+                  select: {
+                    storeName: true,
+                    pickupAddress: true,
+                    city: true,
+                    state: true,
+                    lat: true,
+                    lng: true,
+                  },
+                },
+              },
+            },
           },
         },
         driver: { select: { id: true, name: true, phone: true } },
@@ -480,7 +586,19 @@ export class DeliveriesService {
       this.prisma.delivery.findMany({
         where,
         include: {
-          order: { select: { id: true, orderNumber: true, status: true } },
+          order: {
+            select: {
+              id: true,
+              orderNumber: true,
+              status: true,
+              seller: {
+                select: {
+                  name: true,
+                  sellerProfiles: { select: { storeName: true } },
+                },
+              },
+            },
+          },
           driver: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'desc' },

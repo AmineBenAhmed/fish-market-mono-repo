@@ -79,7 +79,7 @@ export class AdminListingsController {
       toDate,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
-      sortBy: sortBy as 'createdAt' | 'price' | 'quantity' | undefined,
+      sortBy: sortBy as 'createdAt' | 'price' | undefined,
       sortOrder: sortOrder as 'asc' | 'desc' | undefined,
     });
   }

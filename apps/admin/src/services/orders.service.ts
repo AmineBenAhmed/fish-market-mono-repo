@@ -9,6 +9,7 @@ export const ordersService = {
     search?: string;
     startDate?: string;
     endDate?: string;
+    driverId?: string;
   }) {
     const result = await api.get('/admin/orders', { params });
     return unwrapPaginated<Order>(result);
@@ -29,5 +30,9 @@ export const ordersService = {
 
   async assignDriver(id: string, driverId: string, addressId?: string): Promise<void> {
     await api.post(`/admin/orders/${id}/assign-driver`, { driverId, addressId });
+  },
+
+  async unassignDriver(id: string): Promise<void> {
+    await api.post(`/admin/orders/${id}/unassign-driver`);
   },
 };

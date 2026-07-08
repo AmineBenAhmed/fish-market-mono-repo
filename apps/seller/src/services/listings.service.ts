@@ -8,7 +8,7 @@ export interface ListingsQuery {
   search?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'createdAt' | 'price' | 'quantity';
+  sortBy?: 'createdAt' | 'price';
   sortOrder?: 'asc' | 'desc';
 }
 
@@ -18,7 +18,6 @@ export interface CreateListingData {
   variantId?: string;
   date: string;
   price: number;
-  quantity: number;
   title?: string;
   description?: string;
   catchDate?: string;
@@ -36,7 +35,6 @@ export interface CreateListingData {
 
 export interface UpdateListingData {
   price?: number;
-  quantity?: number;
   status?: string;
   title?: string;
   description?: string;

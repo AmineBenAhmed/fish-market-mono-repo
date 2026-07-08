@@ -18,6 +18,7 @@ export class AdminOrdersController {
   @ApiOperation({ summary: 'View all orders (admin)' })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'driverId', required: false })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'startDate', required: false })
@@ -25,6 +26,7 @@ export class AdminOrdersController {
   async findAll(
     @Query('status') status?: string,
     @Query('search') search?: string,
+    @Query('driverId') driverId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('startDate') startDate?: string,
@@ -35,6 +37,7 @@ export class AdminOrdersController {
       search,
       startDate,
       endDate,
+      driverId,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
     });
@@ -51,6 +54,15 @@ export class AdminOrdersController {
     @Body() dto: AssignOrderDriverDto,
   ) {
     return this.adminOrdersService.assignDriver(id, dto, user.sub);
+  }
+
+  @Post(':id/unassign-driver')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Unassign driver from an order (admin only)' })
+  @ApiResponse({ status: 200, description: 'Driver unassigned' })
+  @ApiResponse({ status: 400, description: 'No driver assigned' })
+  async unassignDriver(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.adminOrdersService.unassignDriver(id, user.sub);
   }
 
   @Patch(':id/status')

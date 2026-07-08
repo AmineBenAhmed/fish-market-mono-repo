@@ -130,8 +130,6 @@ export function ListingDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <Field label="Price" value={`${listing.price} ${listing.currency}`} />
-            <Field label="Quantity" value={listing.quantity} />
-            <Field label="Bought Quantity" value={listing.boughtQuantity ?? 0} />
             <Field
               label="Bought Total"
               value={

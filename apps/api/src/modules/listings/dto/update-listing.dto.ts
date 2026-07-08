@@ -16,11 +16,6 @@ export class UpdateListingDto {
   @IsOptional()
   price?: number;
 
-  @IsNumber()
-  @Min(0)
-  @IsOptional()
-  quantity?: number;
-
   @IsEnum(ListingStatus)
   @IsOptional()
   status?: ListingStatus;

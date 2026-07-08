@@ -19,7 +19,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-500 border-b border-blue-800 shadow-md">
       <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-center relative">
-        <div className="flex items-center gap-2 absolute ltr:left-4 rtl:right-4">
+        <div className="flex items-center gap-2 absolute ltr:left-4 rtl:right-4 hidden">
           <Languages className="h-4 w-4 text-white/70" />
           {languages.map((lang) => (
             <button

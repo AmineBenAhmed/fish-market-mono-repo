@@ -168,11 +168,8 @@ export function Sidebar({ categories }: SidebarProps) {
                 >
                   <Fish className="h-4 w-4" />
                 </div>
-                <span className="flex-1 ltr:text-left rtl:text-right font-semibold">
-                  {t('sidebar.allCategories')}
-                </span>
                 <span className="text-xs text-gray-400 tabular-nums bg-gray-100 px-2 py-0.5 rounded-full font-medium">
-                  {categories.length}
+                  Nos produits de la mer ({categories.length})
                 </span>
               </button>
             </div>

@@ -31,8 +31,12 @@ const useAuthStore = create<AuthState>((set, get) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   login: async (token, user) => {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+    try {
+      await SecureStore.setItemAsync(TOKEN_KEY, token);
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.warn('Failed to persist auth:', e);
+    }
     set({ token, user, isLoading: false });
   },
 

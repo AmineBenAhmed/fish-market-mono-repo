@@ -50,14 +50,12 @@ export class ListingsService {
       throw new NotFoundException('Listing not found');
     }
 
-    const boughtQty = listing.orderItems.reduce((sum, item) => sum + item.quantity, 0);
     const boughtTotal = listing.orderItems.reduce((sum, item) => sum + Number(item.totalPrice), 0);
 
     const { orderItems, ...listingData } = listing;
 
     return {
       ...listingData,
-      boughtQuantity: boughtQty,
       boughtTotal,
     };
   }
@@ -68,7 +66,7 @@ export class ListingsService {
     toDate?: string;
     page: number;
     limit: number;
-    sortBy?: 'createdAt' | 'price' | 'quantity';
+    sortBy?: 'createdAt' | 'price';
     sortOrder?: 'asc' | 'desc';
   }) {
     const skip = (options.page - 1) * options.limit;
@@ -90,8 +88,6 @@ export class ListingsService {
     const orderBy: any = {};
     if (options.sortBy === 'price') {
       orderBy.price = options.sortOrder ?? 'desc';
-    } else if (options.sortBy === 'quantity') {
-      orderBy.quantity = options.sortOrder ?? 'desc';
     } else {
       orderBy.createdAt = options.sortOrder ?? 'desc';
     }
@@ -159,7 +155,6 @@ export class ListingsService {
         variantId: dto.variantId ?? null,
         date: listingDate,
         price: dto.price,
-        quantity: dto.quantity,
         title: dto.title,
         description: dto.description,
         catchDate: dto.catchDate ? new Date(dto.catchDate) : null,
@@ -198,7 +193,7 @@ export class ListingsService {
       search?: string;
       page: number;
       limit: number;
-      sortBy?: 'createdAt' | 'price' | 'quantity';
+      sortBy?: 'createdAt' | 'price';
       sortOrder?: 'asc' | 'desc';
     },
   ) {
@@ -240,8 +235,6 @@ export class ListingsService {
     const orderBy: any = {};
     if (options.sortBy === 'price') {
       orderBy.price = options.sortOrder ?? 'desc';
-    } else if (options.sortBy === 'quantity') {
-      orderBy.quantity = options.sortOrder ?? 'desc';
     } else {
       orderBy.createdAt = options.sortOrder ?? 'desc';
     }
@@ -359,7 +352,6 @@ export class ListingsService {
           variantId: listing.variantId,
           date: today,
           price: listing.price,
-          quantity: listing.quantity,
           title: listing.title,
           description: listing.description,
           origin: listing.origin,
@@ -393,14 +385,12 @@ export class ListingsService {
       throw new NotFoundException('Listing not found');
     }
 
-    const boughtQty = listing.orderItems.reduce((sum, item) => sum + item.quantity, 0);
     const boughtTotal = listing.orderItems.reduce((sum, item) => sum + Number(item.totalPrice), 0);
 
     const { orderItems, ...listingData } = listing;
 
     return {
       ...listingData,
-      boughtQuantity: boughtQty,
       boughtTotal,
     };
   }
@@ -410,10 +400,6 @@ export class ListingsService {
 
     if (listing.status === 'EXPIRED') {
       throw new BadRequestException('Cannot modify expired listing');
-    }
-
-    if (dto.quantity !== undefined && dto.quantity < 0) {
-      throw new BadRequestException('Quantity cannot be negative');
     }
 
     const coverImageId = dto.imageIds?.[0] ?? undefined;
@@ -426,7 +412,6 @@ export class ListingsService {
       where: { id: listingId },
       data: {
         ...(dto.price !== undefined && { price: dto.price }),
-        ...(dto.quantity !== undefined && { quantity: dto.quantity }),
         ...(dto.status !== undefined && { status: dto.status }),
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.description !== undefined && { description: dto.description }),
@@ -460,7 +445,7 @@ export class ListingsService {
 
     return this.prisma.sellerListing.update({
       where: { id: listingId },
-      data: { status: 'OUT_OF_STOCK', quantity: 0 },
+      data: { status: 'OUT_OF_STOCK' },
       include: this.listingInclude,
     });
   }
@@ -506,7 +491,6 @@ export class ListingsService {
         variantId: dto.variantId ?? null,
         date: listingDate,
         price: dto.price,
-        quantity: dto.quantity,
         title: dto.title,
         description: dto.description,
         catchDate: dto.catchDate ? new Date(dto.catchDate) : null,

@@ -2,6 +2,7 @@ import * as crypto from 'node:crypto';
 
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DriverStatus, Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { PrismaService } from '../prisma/prisma.service';
@@ -20,12 +21,14 @@ export class DriversService {
       if (!dto.name) {
         throw new BadRequestException('Either userId or name must be provided');
       }
+      const passwordHash = dto.password ? await bcrypt.hash(dto.password, 12) : crypto.randomUUID();
+
       const user = await this.prisma.user.create({
         data: {
           name: dto.name,
           phone: dto.phone,
           email: `${dto.name?.replace(/\s+/g, '.').toLowerCase()}.${crypto.randomUUID().slice(0, 6)}@driver.fishmarket.local`,
-          passwordHash: crypto.randomUUID(),
+          passwordHash,
           role: 'DRIVER',
           status: 'ACTIVE',
         },
@@ -49,6 +52,7 @@ export class DriversService {
         idCardPhoto: dto.idCardPhoto,
         phone2: dto.phone2,
         workingZone: dto.workingZone,
+        deliveryFee: dto.deliveryFee ?? 0,
       },
       include: {
         user: {
@@ -141,6 +145,7 @@ export class DriversService {
         ...(dto.licenseNumber !== undefined && { licenseNumber: dto.licenseNumber }),
         ...(dto.maxLoadKg !== undefined && { maxLoadKg: dto.maxLoadKg }),
         ...(dto.isAvailable !== undefined && { isAvailable: dto.isAvailable }),
+        ...(dto.deliveryFee !== undefined && { deliveryFee: dto.deliveryFee }),
       },
     });
   }
@@ -258,6 +263,10 @@ export class DriversService {
       oldValue.maxLoadKg = profile.maxLoadKg;
       data.maxLoadKg = dto.maxLoadKg;
     }
+    if (dto.deliveryFee !== undefined) {
+      oldValue.deliveryFee = profile.deliveryFee;
+      data.deliveryFee = dto.deliveryFee;
+    }
 
     const updated = await this.prisma.driverProfile.update({
       where: { id: profile.id },
@@ -348,5 +357,61 @@ export class DriversService {
     ]);
 
     return { activeCount, totalDeliveries, completedDeliveries };
+  }
+
+  async changePassword(userId: string, currentPassword: string | undefined, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.passwordHash) {
+      const valid = await bcrypt.compare(currentPassword ?? '', user.passwordHash);
+      if (!valid) {
+        throw new BadRequestException('Current password is incorrect');
+      }
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
+
+  async adminChangePassword(userId: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
+
+  async getEarnings(userId: string) {
+    const profile = await this.prisma.driverProfile.findUnique({
+      where: { userId },
+      select: { deliveryFee: true },
+    });
+
+    const completedDeliveries = await this.prisma.delivery.findMany({
+      where: { driverId: userId, status: 'DELIVERED' as any },
+      select: { id: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const deliveryFee = profile?.deliveryFee ?? 0;
+    const totalEarnings = completedDeliveries.length * deliveryFee;
+
+    return {
+      totalEarnings,
+      deliveryFee,
+      completedCount: completedDeliveries.length,
+      recentDeliveries: completedDeliveries.slice(0, 10),
+    };
   }
 }

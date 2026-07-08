@@ -19,6 +19,10 @@ export class QueryOrdersDto {
   endDate?: string;
 
   @IsOptional()
+  @IsString()
+  driverId?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @Min(1)
   page?: number = 1;

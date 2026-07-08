@@ -24,9 +24,9 @@ export function DeliveryDetailScreen() {
   if (!delivery) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Entrega não encontrada</Text>
+        <Text style={styles.errorText}>Livraison introuvable</Text>
         <TouchableOpacity onPress={() => nav.goBack()}>
-          <Text style={styles.backLink}>Voltar</Text>
+          <Text style={styles.backLink}>Retour</Text>
         </TouchableOpacity>
       </View>
     );
@@ -36,14 +36,14 @@ export function DeliveryDetailScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => nav.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Voltar</Text>
+          <Text style={styles.backText}>← Retour</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Detalhes</Text>
+        <Text style={styles.headerTitle}>Détails</Text>
         <DeliveryStatusBadge status={delivery.status as any} />
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Pedido</Text>
+        <Text style={styles.cardTitle}>Commande</Text>
         <Text style={styles.value}>
           #{delivery.order?.orderNumber || delivery.orderId.slice(-8)}
         </Text>
@@ -54,7 +54,7 @@ export function DeliveryDetailScreen() {
 
       {delivery.order?.customer && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Cliente</Text>
+          <Text style={styles.cardTitle}>Client</Text>
           <Text style={styles.value}>{delivery.order.customer.name}</Text>
           {delivery.order.customer.phone && (
             <Text style={styles.sub}>📞 {delivery.order.customer.phone}</Text>
@@ -64,7 +64,7 @@ export function DeliveryDetailScreen() {
 
       {delivery.address && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Endereço de Entrega</Text>
+          <Text style={styles.cardTitle}>Adresse de Livraison</Text>
           <Text style={styles.value}>
             {delivery.address.street}, {delivery.address.number}
           </Text>
@@ -72,14 +72,14 @@ export function DeliveryDetailScreen() {
             {delivery.address.neighborhood}, {delivery.address.city} - {delivery.address.state}
           </Text>
           {delivery.address.complement && (
-            <Text style={styles.sub}>Complemento: {delivery.address.complement}</Text>
+            <Text style={styles.sub}>Complément: {delivery.address.complement}</Text>
           )}
         </View>
       )}
 
       {delivery.order?.items && delivery.order.items.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Itens ({delivery.order.items.length})</Text>
+          <Text style={styles.cardTitle}>Articles ({delivery.order.items.length})</Text>
           {delivery.order.items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
               <Text style={styles.itemQty}>{item.quantity}x</Text>
@@ -96,7 +96,7 @@ export function DeliveryDetailScreen() {
       {/* Status Timeline */}
       {delivery.statusHistory && delivery.statusHistory.length > 0 && (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Linha do Tempo</Text>
+          <Text style={styles.cardTitle}>Chronologie</Text>
           {delivery.statusHistory.map((h: StatusHistoryEntry) => (
             <View key={h.id} style={styles.timelineRow}>
               <View style={styles.timelineDot} />

@@ -65,6 +65,9 @@ enum OrderStatus {
   CONFIRMED           // Paid, seller accepted
   PREPARING           // Seller packing the fish
   READY_FOR_PICKUP    // Packed, waiting for driver
+  ACCEPTED            // Driver accepted delivery
+  ARRIVED             // Driver arrived at seller store
+  PICKED_UP           // Driver picked up from seller
   OUT_FOR_DELIVERY    // Driver en route
   DELIVERED           // Customer received
   CANCELLED           // Cancelled (before delivery)
@@ -359,6 +362,7 @@ model DriverProfile {
   phone2           String?
   workingZone      String?
   maxLoadKg        Float?
+  deliveryFee      Float       @default(0)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -502,7 +506,6 @@ model SellerListing {
   variantId String?
   date      DateTime      @db.Date
   price     Decimal       @db.Decimal(10, 2)
-  quantity  Int           // units available for the day
   status    ListingStatus @default(PENDING)
   notes     String?
   title     String?

@@ -25,6 +25,9 @@ const orderStatuses = [
   'CONFIRMED',
   'PREPARING',
   'READY_FOR_PICKUP',
+  'ACCEPTED',
+  'ARRIVED',
+  'PICKED_UP',
   'OUT_FOR_DELIVERY',
   'DELIVERED',
   'CANCELLED',
@@ -32,19 +35,27 @@ const orderStatuses = [
 ];
 
 export function OrdersPage() {
+  const today = new Date().toISOString().slice(0, 10);
   const [status, setStatus] = useState('all');
   const [search, setSearch] = useState('');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const dateParams = startDate && endDate ? { startDate, endDate } : undefined;
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['orders', { status, search, page }],
+    queryKey: ['orders', { status, search, page, driverFilter, startDate, endDate }],
     queryFn: () =>
       ordersService.getOrders({
         status: status !== 'all' ? status : undefined,
         search: search || undefined,
         page,
+        driverId: driverFilter !== 'all' ? driverFilter : undefined,
+        ...dateParams,
       }),
   });
 
@@ -77,6 +88,17 @@ export function OrdersPage() {
     },
   });
 
+  const unassignDriverMutation = useMutation({
+    mutationFn: (orderId: string) => ordersService.unassignDriver(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success('Driver unassigned');
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to unassign driver');
+    },
+  });
+
   const orders: Order[] = data?.data ?? [];
 
   return (
@@ -86,15 +108,15 @@ export function OrdersPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">All Orders</CardTitle>
-          <div className="flex gap-4 pt-2">
+          <div className="flex items-center gap-2 pt-2">
             <Input
-              placeholder="Search orders..."
+              placeholder="Search..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="max-w-xs"
+              className="w-36"
             />
             <Select
               value={status}
@@ -103,7 +125,7 @@ export function OrdersPage() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-36">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -115,6 +137,60 @@ export function OrdersPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select
+              value={driverFilter}
+              onValueChange={(v) => {
+                setDriverFilter(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Driver" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Drivers</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {drivers.map((d: DriverProfile) => (
+                  <SelectItem key={d.id} value={d.userId}>
+                    {d.user?.name || d.name || d.userId}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input
+              type="date"
+              value={startDate}
+              max={endDate || today}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setPage(1);
+              }}
+              className="h-9 rounded-md border px-3 text-sm"
+            />
+            <span className="text-xs text-muted-foreground">—</span>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              max={today}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setPage(1);
+              }}
+              className="h-9 rounded-md border px-3 text-sm"
+            />
+            {(startDate || endDate) && (
+              <button
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setPage(1);
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -133,6 +209,18 @@ export function OrdersPage() {
                     <div className="font-medium">{o.customer?.name || o.customerId}</div>
                     {o.customer?.phone && (
                       <div className="text-xs text-muted-foreground">{o.customer.phone}</div>
+                    )}
+                    {o.delivery?.address && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {[
+                          o.delivery.address.street,
+                          o.delivery.address.number,
+                          o.delivery.address.neighborhood,
+                          o.delivery.address.city,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </div>
                     )}
                   </div>
                 ),
@@ -182,7 +270,7 @@ export function OrdersPage() {
                 key: 'driver',
                 header: 'Driver',
                 render: (o: Order) => (
-                  <div onClick={(e) => e.stopPropagation()}>
+                  <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
                     <Select
                       value={o.delivery?.driverId || ''}
                       onValueChange={(v) =>
@@ -200,6 +288,15 @@ export function OrdersPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {o.delivery?.driverId && (
+                      <button
+                        onClick={() => unassignDriverMutation.mutate(o.id)}
+                        className="text-xs text-destructive hover:underline ml-1 shrink-0"
+                        title="Unassign driver"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 ),
               },

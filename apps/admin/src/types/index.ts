@@ -61,6 +61,7 @@ export interface DriverProfile {
   idCardPhoto?: string;
   phone2?: string;
   workingZone?: string;
+  deliveryFee: number;
   user?: User;
   createdAt: string;
 }
@@ -234,7 +235,6 @@ export interface Listing {
   variantId?: string;
   date: string;
   price: number;
-  quantity: number;
   status: 'ACTIVE' | 'OUT_OF_STOCK' | 'EXPIRED';
   title?: string;
   description?: string;
@@ -260,7 +260,6 @@ export interface Listing {
     id: string;
     name: string;
   };
-  boughtQuantity?: number;
   boughtTotal?: number;
   createdAt: string;
   updatedAt: string;

@@ -79,12 +79,15 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    const user = dto.phone
+      ? await this.prisma.user.findFirst({
+          where: { phone: dto.phone },
+          orderBy: { createdAt: 'desc' },
+        })
+      : await this.prisma.user.findUnique({ where: { email: dto.email } });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     if (user.deletedAt) {
@@ -97,7 +100,7 @@ export class AuthService {
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
     await this.prisma.user.update({

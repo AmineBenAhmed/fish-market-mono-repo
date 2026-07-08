@@ -5,6 +5,7 @@ import { CurrentUser, Roles } from '../../common/decorators';
 import { JwtPayload } from '../../common/interfaces';
 import { AdminCreateDriverDto } from './dto/admin-create-driver.dto';
 import { AdminUpdateDriverDto } from './dto/admin-update-driver.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { DriversService } from './drivers.service';
 
 @ApiTags('Admin Drivers')
@@ -71,6 +72,14 @@ export class AdminDriversController {
     @Body() dto: AdminUpdateDriverDto,
   ) {
     return this.driversService.adminUpdateProfile(id, dto, user.sub);
+  }
+
+  @Patch(':id/password')
+  @Roles('ADMIN')
+  @ApiOperation({ summary: 'Reset driver password' })
+  async resetPassword(@Param('id') id: string, @Body() dto: ChangePasswordDto) {
+    await this.driversService.adminChangePassword(id, dto.newPassword);
+    return { message: 'Senha redefinida com sucesso' };
   }
 
   @Get(':id')

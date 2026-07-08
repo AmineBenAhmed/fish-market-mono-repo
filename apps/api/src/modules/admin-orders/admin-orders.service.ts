@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeliveryStatus, Prisma } from '@prisma/client';
+import { DeliveryStatus, OrderStatus, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryOrdersDto } from '../orders/dto/query-orders.dto';
@@ -41,13 +41,12 @@ export class AdminOrdersService {
     if (!driver) throw new NotFoundException('Driver not found');
     if (driver.status === 'OFFLINE') throw new BadRequestException('Driver is offline');
     if (!driver.isAvailable) throw new BadRequestException('Driver is not available');
-    if (driver.activeDeliveries >= driver.maxDeliveries) {
-      throw new BadRequestException('Driver has reached maximum active deliveries');
-    }
 
     let delivery = order.delivery;
 
     const result = await this.prisma.$transaction(async (tx) => {
+      const orderStatus = order.status as OrderStatus;
+
       if (!delivery) {
         let addressId = dto.addressId;
         if (!addressId) {
@@ -107,10 +106,18 @@ export class AdminOrdersService {
         data: { activeDeliveries: { increment: 1 } },
       });
 
+      if (orderStatus !== OrderStatus.READY_FOR_PICKUP) {
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: OrderStatus.READY_FOR_PICKUP },
+        });
+      }
+
       await tx.orderStatusHistory.create({
         data: {
           orderId,
-          toStatus: order.status,
+          fromStatus: orderStatus,
+          toStatus: OrderStatus.READY_FOR_PICKUP,
           changedById: adminId,
           reason: `Driver assigned: ${driver.user?.name || dto.driverId}`,
         },
@@ -118,6 +125,61 @@ export class AdminOrdersService {
 
       return tx.delivery.findUnique({
         where: { id: delivery!.id },
+        include: {
+          driver: { select: { id: true, name: true, phone: true } },
+        },
+      });
+    });
+
+    return result;
+  }
+
+  async unassignDriver(orderId: string, adminId: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { delivery: true },
+    });
+
+    if (!order) throw new NotFoundException('Order not found');
+    if (!order.delivery) throw new BadRequestException('No delivery found for this order');
+    if (!order.delivery.driverId) throw new BadRequestException('No driver assigned to this order');
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const oldDriverId = order.delivery!.driverId!;
+      const oldStatus = order.delivery!.status;
+
+      await tx.delivery.update({
+        where: { id: order.delivery!.id },
+        data: {
+          driverId: null,
+          status: DeliveryStatus.PENDING_ASSIGNMENT,
+        },
+      });
+
+      await tx.deliveryStatusHistory.create({
+        data: {
+          deliveryId: order.delivery!.id,
+          fromStatus: oldStatus as DeliveryStatus,
+          toStatus: DeliveryStatus.PENDING_ASSIGNMENT,
+        },
+      });
+
+      await tx.driverProfile.update({
+        where: { userId: oldDriverId },
+        data: { activeDeliveries: { decrement: 1 } },
+      });
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          toStatus: order.status as OrderStatus,
+          changedById: adminId,
+          reason: `Driver unassigned`,
+        },
+      });
+
+      return tx.delivery.findUnique({
+        where: { id: order.delivery!.id },
         include: {
           driver: { select: { id: true, name: true, phone: true } },
         },

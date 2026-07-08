@@ -33,7 +33,6 @@ export function HomePage() {
   const readyOrders = ordersData?.data?.filter((o) => o.status === 'READY_FOR_PICKUP') ?? [];
   const orders = ordersData?.data ?? [];
 
-  const totalRemaining = listings.reduce((sum, l) => sum + l.quantity, 0) ?? 0;
   const todayEarnings = orders
     .filter((o) => o.status === 'DELIVERED' || o.status === 'READY_FOR_PICKUP')
     .reduce((sum, o) => sum + Number(o.total), 0);
@@ -112,8 +111,7 @@ export function HomePage() {
                       {listing.title ?? listing.category?.name ?? 'Fish'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {listing.variant?.name ?? ''} · {listing.quantity}{' '}
-                      {listing.unit || listing.variant?.unit || ''}
+                      {listing.variant?.name ?? ''} · {listing.unit || listing.variant?.unit || ''}
                     </p>
                   </div>
                   <div className="text-right">

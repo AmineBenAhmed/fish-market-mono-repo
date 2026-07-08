@@ -9,7 +9,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { QueryOrdersDto } from './dto/query-orders.dto';
-import { InventoryReservationService } from './inventory-reservation.service';
 import { OrderCalculationService } from './order-calculation.service';
 import { OrderStatusService } from './order-status.service';
 
@@ -22,7 +21,6 @@ export interface OrderCreateResult {
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly inventoryReservation: InventoryReservationService,
     private readonly calculation: OrderCalculationService,
     private readonly orderStatus: OrderStatusService,
     private readonly eventEmitter: EventEmitter2,
@@ -69,11 +67,6 @@ export class OrdersService {
       if (item.listing.date < today) {
         throw new BadRequestException(
           `Listing for ${item.listing.title ?? item.listing.category.name} is expired`,
-        );
-      }
-      if (item.listing.quantity < item.quantity) {
-        throw new BadRequestException(
-          `Insufficient stock for ${item.listing.title ?? item.listing.category.name}`,
         );
       }
     }
@@ -164,8 +157,6 @@ export class OrdersService {
         });
 
         for (const cartItem of so.items) {
-          await this.inventoryReservation.reserve(tx, cartItem.listingId, cartItem.quantity);
-
           const variant = cartItem.listing.variant;
 
           const itemData = {
@@ -377,13 +368,6 @@ export class OrdersService {
 
     await this.prisma.$transaction(async (tx) => {
       for (const id of cancelTargets) {
-        const items = await tx.orderItem.findMany({ where: { orderId: id } });
-        for (const item of items) {
-          if (item.listingId) {
-            await this.inventoryReservation.release(tx, item.listingId, item.quantity);
-          }
-        }
-
         await tx.order.update({
           where: { id },
           data: { status: OrderStatus.CANCELLED, cancelReason: dto.reason, cancelledById: userId },
@@ -516,6 +500,9 @@ export class OrdersService {
       if (query.startDate) where.createdAt.gte = new Date(query.startDate);
       if (query.endDate) where.createdAt.lte = new Date(query.endDate);
     }
+    if (query.driverId) {
+      where.delivery = { driverId: query.driverId };
+    }
 
     const { page, limit, skip } = parsePagination(query.page, query.limit);
 
@@ -539,6 +526,7 @@ export class OrdersService {
           delivery: {
             include: {
               driver: { select: { id: true, name: true, phone: true } },
+              address: true,
             },
           },
         },

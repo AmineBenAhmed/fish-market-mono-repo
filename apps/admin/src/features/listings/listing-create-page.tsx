@@ -55,7 +55,6 @@ export function ListingCreatePage() {
   const [storeId, setStoreId] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('');
   const [condition, setCondition] = useState('FRESH');
   const [origin, setOrigin] = useState('');
   const [cleaningCost, setCleaningCost] = useState('');
@@ -83,7 +82,6 @@ export function ListingCreatePage() {
     if (!storeId) errs.store = 'Please select a store';
     if (!categoryId) errs.category = 'Please select a category';
     if (!price || Number(price) <= 0) errs.price = 'Price must be greater than 0';
-    if (!quantity || Number(quantity) <= 0) errs.quantity = 'Quantity must be greater than 0';
     if (images.length > 4) errs.images = 'Maximum 4 photos allowed';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -113,7 +111,6 @@ export function ListingCreatePage() {
       categoryId,
       date: new Date().toISOString(),
       price: Number(price),
-      quantity: Number(quantity),
       title: description?.split('\n')[0]?.slice(0, 200) || 'New Listing',
       description: description || undefined,
       condition,
@@ -236,35 +233,6 @@ export function ListingCreatePage() {
                   </div>
                 </div>
                 {errors.price && <p className="text-xs text-destructive">{errors.price}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Available Quantity <span className="text-destructive">*</span>
-                </label>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="1"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                    />
-                  </div>
-                  <div className="w-28">
-                    <Select defaultValue="Kg">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Kg">Kg</SelectItem>
-                        <SelectItem value="Piece">Piece</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                {errors.quantity && <p className="text-xs text-destructive">{errors.quantity}</p>}
               </div>
             </div>
           </CardContent>

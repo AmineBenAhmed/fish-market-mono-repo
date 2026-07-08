@@ -26,8 +26,13 @@ export class RegisterDto {
 }
 
 export class LoginDto {
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
   @IsString()
   password!: string;
