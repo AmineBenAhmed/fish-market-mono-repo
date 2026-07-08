@@ -28,6 +28,7 @@ import { GatewaysModule } from './modules/gateways/gateways.module';
 import { HealthModule } from './modules/health/health.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { ListingsModule } from './modules/listings/listings.module';
+import { LocationsModule } from './modules/locations/locations.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { ProductsModule } from './modules/products/products.module';
 import { NotificationModule } from './modules/notifications/notification.module';
@@ -69,6 +70,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
     CategoriesModule,
     ProductsModule,
     ListingsModule,
+    LocationsModule,
     MarketplaceModule,
     CartModule,
     OrdersModule,

@@ -138,7 +138,7 @@ const translations: Record<string, Record<Locale, string>> = {
   'cart.total': { en: 'Total', fr: 'Total', ar: 'المجموع' },
   'cart.proceedToCheckout': {
     en: 'Proceed to Checkout',
-    fr: 'Passer à la Caisse',
+    fr: 'Je confirme',
     ar: 'متابعة الدفع',
   },
 

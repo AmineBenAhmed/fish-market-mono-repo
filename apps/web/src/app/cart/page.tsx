@@ -6,7 +6,7 @@ import { useCart } from '@/hooks/use-cart';
 import { QuantityPicker } from '@/components/quantity-picker';
 import { CheckoutModal } from '@/components/checkout-modal';
 import { createOrder } from '@/lib/api';
-import { ShoppingCart, Trash2, ArrowLeft, Fish, Loader2 } from 'lucide-react';
+import { ShoppingCart, Trash2, ArrowLeft, Fish, Loader2, Check } from 'lucide-react';
 import { useLocale } from '@/lib/i18n/context';
 
 export default function CartPage() {
@@ -15,14 +15,27 @@ export default function CartPage() {
     setHydrated(true);
   }, []);
 
-  const { items, total, itemCount, updateQuantity, removeItem, clearCart } = useCart();
+  const { items, total, itemCount, updateQuantity, removeItem, toggleCleaning, clearCart } =
+    useCart();
   const { t } = useLocale();
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleCheckout = async (data: { name: string; phone: string; address: string }) => {
+  const handleCheckout = async (data: {
+    name: string;
+    phone: string;
+    address: string;
+    governorateId?: string;
+    areaId?: string;
+    zoneId?: string;
+    street?: string;
+    buildingNumber?: string;
+    apartment?: string;
+    floor?: string;
+    landmark?: string;
+  }) => {
     setSubmitting(true);
     setError(null);
     try {
@@ -30,6 +43,14 @@ export default function CartPage() {
         customerName: data.name,
         customerPhone: data.phone,
         customerAddress: data.address,
+        governorateId: data.governorateId,
+        areaId: data.areaId,
+        zoneId: data.zoneId,
+        street: data.street,
+        buildingNumber: data.buildingNumber,
+        apartment: data.apartment,
+        floor: data.floor,
+        landmark: data.landmark,
         items: items.map((i) => ({
           listingId: i.listingId,
           quantity: i.quantity,
@@ -120,11 +141,23 @@ export default function CartPage() {
               <p className="text-sm text-gray-400">
                 {item.currency} {item.price.toFixed(2)} / {item.unit}
               </p>
-              {item.cleaning && (
-                <p className="text-xs text-green-600 mt-0.5">
-                  {t('cart.cleaning')}: +{item.currency} {item.cleaningCost.toFixed(2)} /{' '}
-                  {item.unit}
-                </p>
+              {item.cleaningCost > 0 && (
+                <button
+                  onClick={() => toggleCleaning(item.listingId, item.cleaning)}
+                  className="flex items-center gap-1.5 mt-1"
+                >
+                  <div
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                      item.cleaning ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                    }`}
+                  >
+                    {item.cleaning && <Check className="h-2.5 w-2.5 text-white" />}
+                  </div>
+                  <span className={`text-xs ${item.cleaning ? 'text-green-600' : 'text-gray-400'}`}>
+                    {t('cart.cleaning')}: +{item.currency} {item.cleaningCost.toFixed(2)} /{' '}
+                    {item.unit}
+                  </span>
+                </button>
               )}
             </div>
             <div className="flex items-center gap-4">

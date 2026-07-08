@@ -1,0 +1,227 @@
+[
+  {
+    "id": "sousse",
+    "name": "سوسة",
+    "areas": [
+      {
+        "id": "sousse-medina",
+        "name": "سوسة المدينة",
+        "zones": [
+          { "id": "sousse-medina-old-city", "name": "المدينة العتيقة" },
+          { "id": "sousse-medina-bab-bahr", "name": "باب البحر" },
+          { "id": "sousse-medina-boujaafar", "name": "بوجعفر" },
+          { "id": "sousse-medina-khadhra", "name": "حي الخضراء" },
+          { "id": "sousse-medina-zouhour", "name": "حي الزهور" },
+          { "id": "sousse-medina-mahatta", "name": "حي المحطة" },
+          { "id": "sousse-medina-caledonia", "name": "كاليفورنيا" },
+          { "id": "sousse-medina-nour", "name": "حي النور" },
+          { "id": "sousse-medina-2-mars", "name": "حي 2 مارس" },
+          { "id": "sousse-medina-riadh", "name": "حي الرياض" },
+          { "id": "sousse-medina-aman", "name": "حي الأمان" },
+          { "id": "sousse-medina-boulevard", "name": "شارع الجمهورية" }
+        ]
+      },
+      {
+        "id": "sousse-jawhara",
+        "name": "سوسة جوهرة",
+        "zones": [
+          { "id": "sousse-jawhara-centre", "name": "جوهرة" },
+          { "id": "sousse-jawhara-kawthar", "name": "حي الكوثر" },
+          { "id": "sousse-jawhara-tadhamun", "name": "حي التضامن" },
+          { "id": "sousse-jawhara-najah", "name": "حي النجاح" },
+          { "id": "sousse-jawhara-moustakbal", "name": "حي المستقبل" },
+          { "id": "sousse-jawhara-rashad", "name": "حي الرشاد" },
+          { "id": "sousse-jawhara-bsatine", "name": "حي البساتين" },
+          { "id": "sousse-jawhara-ghadir", "name": "حي الغدير" },
+          { "id": "sousse-jawhara-ennour", "name": "حي النور" }
+        ]
+      },
+      {
+        "id": "sousse-riadh",
+        "name": "سوسة الرياض",
+        "zones": [
+          { "id": "sousse-riadh-centre", "name": "الرياض" },
+          { "id": "sousse-riadh-gharbi", "name": "حي الرياض الغربي" },
+          { "id": "sousse-riadh-charki", "name": "حي الرياض الشرقي" },
+          { "id": "sousse-riadh-taamir", "name": "حي التعمير" },
+          { "id": "sousse-riadh-menzah", "name": "حي المنزه" },
+          { "id": "sousse-riadh-waha", "name": "حي الواحة" },
+          { "id": "sousse-riadh-fath", "name": "حي الفتح" },
+          { "id": "sousse-riadh-ennour", "name": "حي النور" }
+        ]
+      },
+      {
+        "id": "sousse-sidi-abdelhamid",
+        "name": "سوسة سيدي عبد الحميد",
+        "zones": [
+          { "id": "sousse-sidi-abdelhamid-centre", "name": "سيدي عبد الحميد" },
+          { "id": "sousse-sidi-abdelhamid-nakhil", "name": "حي النخيل" },
+          { "id": "sousse-sidi-abdelhamid-hadi-chaker", "name": "حي الهادي شاكر" },
+          { "id": "sousse-sidi-abdelhamid-tadhamun", "name": "حي التضامن" },
+          { "id": "sousse-sidi-abdelhamid-7-novembre", "name": "حي 7 نوفمبر" },
+          { "id": "sousse-sidi-abdelhamid-zitouna", "name": "حي الزيتونة" },
+          { "id": "sousse-sidi-abdelhamid-firdaws", "name": "حي الفردوس" },
+          { "id": "sousse-sidi-abdelhamid-ennour", "name": "حي النور" }
+        ]
+      },
+      {
+        "id": "hammam-sousse",
+        "name": "حمام سوسة",
+        "zones": [
+          { "id": "hammam-sousse-centre", "name": "حمام سوسة" },
+          { "id": "hammam-sousse-habib", "name": "حي الحبيب" },
+          { "id": "hammam-sousse-jalaa", "name": "حي الجلاء" },
+          { "id": "hammam-sousse-nour", "name": "حي النور" },
+          { "id": "hammam-sousse-salam", "name": "حي السلام" },
+          { "id": "hammam-sousse-charq", "name": "حي الشرق" },
+          { "id": "hammam-sousse-sidi-bouali", "name": "سيدي بوعلي" },
+          { "id": "hammam-sousse-nadi", "name": "حي النادي" },
+          { "id": "hammam-sousse-boustan", "name": "حي البستان" },
+          { "id": "hammam-sousse-riadh", "name": "حي الرياض" },
+          { "id": "hammam-sousse-ettadhamen", "name": "حي التضامن" }
+        ]
+      },
+      {
+        "id": "akouda",
+        "name": "أكودة",
+        "zones": [
+          { "id": "akouda-centre", "name": "أكودة" },
+          { "id": "akouda-nasr", "name": "حي النصر" },
+          { "id": "akouda-ittihad", "name": "حي الإتحاد" },
+          { "id": "akouda-rabi3", "name": "حي الربيع" },
+          { "id": "akouda-saada", "name": "حي السعادة" },
+          { "id": "akouda-zouhour", "name": "حي الزهور" },
+          { "id": "akouda-beach", "name": "شاطئ أكودة" },
+          { "id": "akouda-ennour", "name": "حي النور" }
+        ]
+      },
+      {
+        "id": "kalaa-kebira",
+        "name": "القلعة الكبرى",
+        "zones": [
+          { "id": "kalaa-kebira-centre", "name": "القلعة الكبرى" },
+          { "id": "kalaa-kebira-joumhouriya", "name": "حي الجمهورية" },
+          { "id": "kalaa-kebira-chouhadaa", "name": "حي الشهداء" },
+          { "id": "kalaa-kebira-nour", "name": "حي النور" },
+          { "id": "kalaa-kebira-takadom", "name": "حي التقدم" },
+          { "id": "kalaa-kebira-riadh", "name": "حي الرياض" },
+          { "id": "kalaa-kebira-20-mars", "name": "حي 20 مارس" },
+          { "id": "kalaa-kebira-fath", "name": "حي الفتح" },
+          { "id": "kalaa-kebira-ennahdha", "name": "حي النهضة" },
+          { "id": "kalaa-kebira-el-amal", "name": "حي الأمل" }
+        ]
+      },
+      {
+        "id": "kalaa-sghira",
+        "name": "القلعة الصغرى",
+        "zones": [
+          { "id": "kalaa-sghira-centre", "name": "القلعة الصغرى" },
+          { "id": "kalaa-sghira-takadom", "name": "حي التقدم" },
+          { "id": "kalaa-sghira-amal", "name": "حي الأمل" },
+          { "id": "kalaa-sghira-nahdha", "name": "حي النهضة" },
+          { "id": "kalaa-sghira-mahatta", "name": "حي المحطة" },
+          { "id": "kalaa-sghira-14-janvier", "name": "حي 14 جانفي" },
+          { "id": "kalaa-sghira-ennour", "name": "حي النور" }
+        ]
+      },
+      {
+        "id": "msaken",
+        "name": "مساكن",
+        "zones": [
+          { "id": "msaken-centre", "name": "مساكن" },
+          { "id": "msaken-ouest", "name": "مساكن الغربية" },
+          { "id": "msaken-est", "name": "مساكن الشرقية" },
+          { "id": "msaken-ennour", "name": "حي النور" },
+          { "id": "msaken-salam", "name": "حي السلام" },
+          { "id": "msaken-zitouna", "name": "حي الزيتونة" },
+          { "id": "msaken-ittihad", "name": "حي الإتحاد" },
+          { "id": "msaken-nasr", "name": "حي النصر" },
+          { "id": "msaken-tadhamun", "name": "حي التضامن" },
+          { "id": "msaken-riadh", "name": "حي الرياض" },
+          { "id": "msaken-ennahdha", "name": "حي النهضة" }
+        ]
+      },
+      {
+        "id": "sidi-bouali",
+        "name": "سيدي بوعلي",
+        "zones": [
+          { "id": "sidi-bouali-centre", "name": "سيدي بوعلي" },
+          { "id": "sidi-bouali-ennour", "name": "حي النور" },
+          { "id": "sidi-bouali-salam", "name": "حي السلام" },
+          { "id": "sidi-bouali-zitouna", "name": "حي الزيتونة" },
+          { "id": "sidi-bouali-ittihad", "name": "حي الإتحاد" },
+          { "id": "sidi-bouali-riadh", "name": "حي الرياض" }
+        ]
+      },
+      {
+        "id": "sidi-el-hani",
+        "name": "سيدي الهاني",
+        "zones": [
+          { "id": "sidi-el-hani-centre", "name": "سيدي الهاني" },
+          { "id": "sidi-el-hani-ennour", "name": "حي النور" },
+          { "id": "sidi-el-hani-salam", "name": "حي السلام" },
+          { "id": "sidi-el-hani-zitouna", "name": "حي الزيتونة" }
+        ]
+      },
+      {
+        "id": "kondar",
+        "name": "كندار",
+        "zones": [
+          { "id": "kondar-centre", "name": "كندار" },
+          { "id": "kondar-ennour", "name": "حي النور" },
+          { "id": "kondar-salam", "name": "حي السلام" },
+          { "id": "kondar-zitouna", "name": "حي الزيتونة" }
+        ]
+      },
+      {
+        "id": "hergla",
+        "name": "هرقلة",
+        "zones": [
+          { "id": "hergla-centre", "name": "هرقلة" },
+          { "id": "hergla-beach", "name": "شاطئ هرقلة" },
+          { "id": "hergla-ennour", "name": "حي النور" },
+          { "id": "hergla-salam", "name": "حي السلام" },
+          { "id": "hergla-zitouna", "name": "حي الزيتونة" }
+        ]
+      },
+      {
+        "id": "enfidha",
+        "name": "النفيضة",
+        "zones": [
+          { "id": "enfidha-centre", "name": "النفيضة" },
+          { "id": "enfidha-ennour", "name": "حي النور" },
+          { "id": "enfidha-salam", "name": "حي السلام" },
+          { "id": "enfidha-zitouna", "name": "حي الزيتونة" },
+          { "id": "enfidha-nasr", "name": "حي النصر" },
+          { "id": "enfidha-zone-industrielle", "name": "المنطقة الصناعية" },
+          { "id": "enfidha-riadh", "name": "حي الرياض" },
+          { "id": "enfidha-ennahdha", "name": "حي النهضة" }
+        ]
+      },
+      {
+        "id": "bouficha",
+        "name": "بوفيشة",
+        "zones": [
+          { "id": "bouficha-centre", "name": "بوفيشة" },
+          { "id": "bouficha-ennour", "name": "حي النور" },
+          { "id": "bouficha-salam", "name": "حي السلام" },
+          { "id": "bouficha-zitouna", "name": "حي الزيتونة" },
+          { "id": "bouficha-riadh", "name": "حي الرياض" }
+        ]
+      },
+      {
+        "id": "zaouiet-ksiba-thrayat",
+        "name": "الزاوية القصيبة الثريات",
+        "zones": [
+          { "id": "zaouiet-ksiba-thrayat-centre", "name": "الزاوية القصيبة الثريات" },
+          { "id": "zaouiet-ksiba-thrayat-ksiba", "name": "القصيبة" },
+          { "id": "zaouiet-ksiba-thrayat-thrayat", "name": "الثريات" },
+          { "id": "zaouiet-ksiba-thrayat-zaouiet", "name": "الزاوية" },
+          { "id": "zaouiet-ksiba-thrayat-ennour", "name": "حي النور" },
+          { "id": "zaouiet-ksiba-thrayat-salam", "name": "حي السلام" },
+          { "id": "zaouiet-ksiba-thrayat-zitouna", "name": "حي الزيتونة" }
+        ]
+      }
+    ]
+  }
+]

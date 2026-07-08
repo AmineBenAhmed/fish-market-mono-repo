@@ -30,8 +30,41 @@ export class CreateOrderDto {
   @IsString()
   customerPhone!: string;
 
+  @IsOptional()
   @IsString()
-  customerAddress!: string;
+  customerAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  governorateId?: string;
+
+  @IsOptional()
+  @IsString()
+  areaId?: string;
+
+  @IsOptional()
+  @IsString()
+  zoneId?: string;
+
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  buildingNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  apartment?: string;
+
+  @IsOptional()
+  @IsString()
+  floor?: string;
+
+  @IsOptional()
+  @IsString()
+  landmark?: string;
 
   @IsArray()
   @ArrayMinSize(1)

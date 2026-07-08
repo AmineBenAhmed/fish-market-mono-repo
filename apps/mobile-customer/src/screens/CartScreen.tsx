@@ -24,14 +24,27 @@ export function CartScreen({ onNavigateHome }: CartScreenProps) {
     setHydrated(true);
   }, []);
 
-  const { items, total, itemCount, updateQuantity, removeItem, clearCart } = useCart();
+  const { items, total, itemCount, updateQuantity, removeItem, toggleCleaning, clearCart } =
+    useCart();
   const { t } = useLocale();
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleCheckout = async (data: { name: string; phone: string; address: string }) => {
+  const handleCheckout = async (data: {
+    name: string;
+    phone: string;
+    address: string;
+    governorateId?: string;
+    areaId?: string;
+    zoneId?: string;
+    street?: string;
+    buildingNumber?: string;
+    apartment?: string;
+    floor?: string;
+    landmark?: string;
+  }) => {
     setSubmitting(true);
     setError(null);
     try {
@@ -39,6 +52,14 @@ export function CartScreen({ onNavigateHome }: CartScreenProps) {
         customerName: data.name,
         customerPhone: data.phone,
         customerAddress: data.address,
+        governorateId: data.governorateId,
+        areaId: data.areaId,
+        zoneId: data.zoneId,
+        street: data.street,
+        buildingNumber: data.buildingNumber,
+        apartment: data.apartment,
+        floor: data.floor,
+        landmark: data.landmark,
         items: items.map((i) => ({
           listingId: i.listingId,
           quantity: i.quantity,
@@ -124,11 +145,29 @@ export function CartScreen({ onNavigateHome }: CartScreenProps) {
                 <Text style={styles.itemPrice}>
                   {item.currency} {item.price.toFixed(2)} / {item.unit}
                 </Text>
-                {item.cleaning && (
-                  <Text style={styles.itemCleaning}>
-                    {t('cart.cleaning')}: +{item.currency} {item.cleaningCost.toFixed(2)} /{' '}
-                    {item.unit}
-                  </Text>
+                {item.cleaningCost > 0 && (
+                  <TouchableOpacity
+                    onPress={() => toggleCleaning(item.listingId, item.cleaning)}
+                    style={styles.cleaningToggle}
+                  >
+                    <View
+                      style={[
+                        styles.cleaningCheckbox,
+                        item.cleaning && styles.cleaningCheckboxActive,
+                      ]}
+                    >
+                      {item.cleaning && <Ionicons name="checkmark" size={12} color="#fff" />}
+                    </View>
+                    <Text
+                      style={[
+                        styles.cleaningToggleText,
+                        item.cleaning && styles.cleaningToggleTextActive,
+                      ]}
+                    >
+                      {t('cart.cleaning')}: +{item.currency} {item.cleaningCost.toFixed(2)} /{' '}
+                      {item.unit}
+                    </Text>
+                  </TouchableOpacity>
                 )}
                 <View style={styles.itemActions}>
                   <Text style={styles.itemTotal}>
@@ -313,10 +352,31 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     marginTop: 2,
   },
-  itemCleaning: {
+  cleaningToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  cleaningCheckbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cleaningCheckboxActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  cleaningToggleText: {
     fontSize: 11,
+    color: '#9ca3af',
+  },
+  cleaningToggleTextActive: {
     color: '#16a34a',
-    marginTop: 2,
   },
   itemActions: {
     flexDirection: 'row',

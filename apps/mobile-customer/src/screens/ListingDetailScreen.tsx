@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  TextInput,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
@@ -61,6 +62,7 @@ export function ListingDetailScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [sameStoreListings, setSameStoreListings] = useState<Listing[]>([]);
@@ -110,10 +112,13 @@ export function ListingDetailScreen({
   const images = getImages(listing);
   const categoryName = listing.category?.name || t('listing.general');
 
+  const decrement = () => setQuantity((q) => Math.max(0.1, q - 1));
+  const increment = () => setQuantity((q) => q + 1);
+
   const handleAddToCart = () => {
     addItem({
       listingId: listing.id,
-      quantity: 1,
+      quantity,
       title: listing.title || listing.category?.name || t('listing.general'),
       price: Number(listing.effectivePrice ?? listing.price),
       cleaningCost: Number(listing.cleaningCost ?? 0),
@@ -130,8 +135,9 @@ export function ListingDetailScreen({
   };
 
   const subtotal =
-    Number(listing.effectivePrice ?? listing.price) +
-    (cleaning ? Number(listing.cleaningCost ?? 0) : 0);
+    (Number(listing.effectivePrice ?? listing.price) +
+      (cleaning ? Number(listing.cleaningCost ?? 0) : 0)) *
+    quantity;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -227,6 +233,27 @@ export function ListingDetailScreen({
         </View>
 
         <View style={styles.actionSection}>
+          <View style={styles.quantityRow}>
+            <Text style={styles.actionLabel}>{t('listing.quantity')}</Text>
+            <View style={styles.quantityControls}>
+              <TouchableOpacity onPress={decrement} style={styles.quantityButton}>
+                <Text style={styles.quantityButtonText}>−</Text>
+              </TouchableOpacity>
+              <TextInput
+                style={styles.quantityInput}
+                keyboardType="decimal-pad"
+                value={String(quantity)}
+                onChangeText={(text: string) => {
+                  const v = parseFloat(text);
+                  if (!isNaN(v) && v >= 0.1) setQuantity(v);
+                }}
+              />
+              <TouchableOpacity onPress={increment} style={styles.quantityButton}>
+                <Text style={styles.quantityButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {Number(listing.cleaningCost ?? 0) > 0 && (
             <TouchableOpacity onPress={() => setCleaning(!cleaning)} style={styles.cleaningRow}>
               <View style={[styles.checkbox, cleaning && styles.checkboxActive]}>
@@ -456,6 +483,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantityButtonText: {
+    fontSize: 18,
+    color: '#374151',
+    lineHeight: 20,
+  },
+  quantityInput: {
+    width: 64,
+    height: 36,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
+    paddingHorizontal: 4,
   },
   cleaningRow: {
     flexDirection: 'row',

@@ -94,13 +94,12 @@ export function FilterScreen({
           ))}
         </View>
 
-        <Text style={styles.sectionLabel}>{t('sidebar.allCategories')}</Text>
         <TouchableOpacity
           onPress={() => setLocalCategory(null)}
           style={[styles.categoryItem, !localCategory && styles.categoryItemActive]}
         >
           <Text style={[styles.categoryText, !localCategory && styles.categoryTextActive]}>
-            {t('sidebar.allCategories')}
+            Nos produits de la mer ({categories.length})
           </Text>
         </TouchableOpacity>
         {filtered.map((cat) => (

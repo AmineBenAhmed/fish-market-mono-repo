@@ -11,6 +11,7 @@ interface CartContextValue {
   addItem: (item: CartItem) => void;
   updateQuantity: (listingId: string, cleaning: boolean, quantity: number) => void;
   removeItem: (listingId: string, cleaning: boolean) => void;
+  toggleCleaning: (listingId: string, currentCleaning: boolean) => void;
   clearCart: () => void;
 }
 
@@ -86,11 +87,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((i) => i.listingId !== listingId || i.cleaning !== cleaning));
   }, []);
 
+  const toggleCleaning = useCallback((listingId: string, currentCleaning: boolean) => {
+    setItems((prev) => {
+      const item = prev.find((i) => i.listingId === listingId && i.cleaning === currentCleaning);
+      if (!item) return prev;
+      return [
+        ...prev.filter((i) => i.listingId !== listingId || i.cleaning !== currentCleaning),
+        { ...item, cleaning: !currentCleaning },
+      ];
+    });
+  }, []);
+
   const clearCart = useCallback(() => setItems([]), []);
 
   return (
     <CartContext.Provider
-      value={{ items, itemCount, total, ready, addItem, updateQuantity, removeItem, clearCart }}
+      value={{
+        items,
+        itemCount,
+        total,
+        ready,
+        addItem,
+        updateQuantity,
+        removeItem,
+        toggleCleaning,
+        clearCart,
+      }}
     >
       {children}
     </CartContext.Provider>
@@ -108,6 +130,7 @@ export function useCart(): CartContextValue {
       addItem() {},
       updateQuantity(_a, _b, _c) {},
       removeItem(_a, _b) {},
+      toggleCleaning() {},
       clearCart() {},
     };
   }

@@ -30,6 +30,17 @@ export type {
   DateRangeFilter,
 } from './types/common';
 
+export type { Governorate, Area, Zone, NormalizedAddress } from './types/location';
+
+export {
+  getGovernorates,
+  getGovernorateById,
+  getAreasByGovernorateId,
+  getAreaById,
+  getZonesByAreaId,
+  getZoneById,
+} from './data';
+
 export {
   COMMISSION_RATE,
   DEFAULT_DELIVERY_FEE,

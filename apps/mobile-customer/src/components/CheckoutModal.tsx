@@ -12,11 +12,27 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocale } from '@/i18n/context';
+import { AddressForm } from './AddressForm';
+import type { AddressFormValue } from './AddressForm';
+
+interface CheckoutData {
+  name: string;
+  phone: string;
+  address: string;
+  governorateId?: string;
+  areaId?: string;
+  zoneId?: string;
+  street?: string;
+  buildingNumber?: string;
+  apartment?: string;
+  floor?: string;
+  landmark?: string;
+}
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; phone: string; address: string }) => void;
+  onSubmit: (data: CheckoutData) => void;
   error: string | null;
   loading: boolean;
 }
@@ -25,7 +41,19 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
   const { t } = useLocale();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const [addressForm, setAddressForm] = useState<AddressFormValue>({
+    governorateId: 'sousse',
+    areaId: '',
+    zoneId: '',
+    street: '',
+    buildingNumber: '',
+    apartment: '',
+    floor: '',
+    landmark: '',
+    label: '',
+    lat: '',
+    lng: '',
+  });
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<'name' | 'phone' | 'address', string>>
   >({});
@@ -37,14 +65,29 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
     if (!name.trim()) errs.name = t('checkout.nameRequired');
     if (!phone.trim()) errs.phone = t('checkout.phoneRequired');
     else if (!/^[\d\s+\-()]{7,20}$/.test(phone.trim())) errs.phone = t('checkout.phoneInvalid');
-    if (!address.trim()) errs.address = t('checkout.addressRequired');
+    if (!addressForm.street.trim() || !addressForm.areaId || !addressForm.zoneId) {
+      errs.address = t('checkout.addressRequired');
+    }
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = () => {
     if (!validate()) return;
-    onSubmit({ name: name.trim(), phone: phone.trim(), address: address.trim() });
+
+    const parts: string[] = [];
+    if (addressForm.street) parts.push(addressForm.street);
+    if (addressForm.buildingNumber) parts.push(`بناية ${addressForm.buildingNumber}`);
+    if (addressForm.floor) parts.push(`طابق ${addressForm.floor}`);
+    if (addressForm.apartment) parts.push(`شقة ${addressForm.apartment}`);
+    if (addressForm.landmark) parts.push(`بجانب ${addressForm.landmark}`);
+
+    onSubmit({
+      name: name.trim(),
+      phone: phone.trim(),
+      address: parts.join('، ') || addressForm.street,
+      ...addressForm,
+    });
   };
 
   const handleClose = () => {
@@ -100,14 +143,7 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
 
             <View style={styles.field}>
               <Text style={styles.label}>{t('checkout.fullAddress')}</Text>
-              <TextInput
-                value={address}
-                onChangeText={setAddress}
-                placeholder={t('checkout.addressPlaceholder')}
-                multiline
-                numberOfLines={3}
-                style={[styles.input, styles.textArea, fieldErrors.address && styles.inputError]}
-              />
+              <AddressForm value={addressForm} onChange={setAddressForm} showLabel={false} />
               {fieldErrors.address ? (
                 <Text style={styles.fieldError}>{fieldErrors.address}</Text>
               ) : null}
@@ -192,10 +228,6 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#ef4444',
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
   },
   fieldError: {
     color: '#ef4444',

@@ -81,6 +81,14 @@ export async function createOrder(body: {
   customerName: string;
   customerPhone: string;
   customerAddress: string;
+  governorateId?: string;
+  areaId?: string;
+  zoneId?: string;
+  street?: string;
+  buildingNumber?: string;
+  apartment?: string;
+  floor?: string;
+  landmark?: string;
   items: Array<{ listingId: string; quantity: number; cleaning: boolean }>;
 }) {
   const res = await fetch(`${API_URL}/marketplace/orders`, {
@@ -89,4 +97,19 @@ export async function createOrder(body: {
     body: JSON.stringify(body),
   });
   return handleResponse<ApiResponse<any>>(res);
+}
+
+export async function fetchGovernorates() {
+  const res = await fetch(`${API_URL}/locations/governorates`);
+  return handleResponse<any>(res);
+}
+
+export async function fetchAreas(governorateId: string) {
+  const res = await fetch(`${API_URL}/locations/areas/${governorateId}`);
+  return handleResponse<any>(res);
+}
+
+export async function fetchZones(governorateId: string, areaId: string) {
+  const res = await fetch(`${API_URL}/locations/zones/${governorateId}/${areaId}`);
+  return handleResponse<any>(res);
 }

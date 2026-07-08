@@ -46,6 +46,7 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [sameStoreListings, setSameStoreListings] = useState<Listing[]>([]);
@@ -95,10 +96,13 @@ export default function ListingDetailPage() {
   const images = getImages(listing);
   const categoryName = listing.category?.name || t('listing.general');
 
+  const decrement = () => setQuantity((q) => Math.max(0.1, q - 1));
+  const increment = () => setQuantity((q) => q + 1);
+
   const handleAddToCart = () => {
     addItem({
       listingId: listing.id,
-      quantity: 1,
+      quantity,
       title: listing.title || listing.category?.name || t('listing.general'),
       price: Number(listing.effectivePrice ?? listing.price),
       cleaningCost: Number(listing.cleaningCost ?? 0),
@@ -217,6 +221,35 @@ export default function ListingDetailPage() {
           </div>
 
           <div className="border-t pt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">{t('listing.quantity')}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={decrement}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={quantity}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    if (!isNaN(v) && v >= 0.1) setQuantity(v);
+                  }}
+                  className="w-20 text-center text-sm font-medium border border-gray-200 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                />
+                <button
+                  onClick={increment}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             {Number(listing.cleaningCost ?? 0) > 0 && (
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div
@@ -244,8 +277,9 @@ export default function ListingDetailPage() {
               <span className="font-semibold">
                 {listing.currency}{' '}
                 {(
-                  Number(listing.effectivePrice ?? listing.price) +
-                  (cleaning ? Number(listing.cleaningCost ?? 0) : 0)
+                  (Number(listing.effectivePrice ?? listing.price) +
+                    (cleaning ? Number(listing.cleaningCost ?? 0) : 0)) *
+                  quantity
                 ).toFixed(2)}
               </span>
             </div>

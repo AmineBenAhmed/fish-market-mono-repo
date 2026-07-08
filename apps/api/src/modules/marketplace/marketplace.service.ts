@@ -7,6 +7,7 @@ import { OrderStatus, Prisma } from '@prisma/client';
 import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { getGovernorateById, getAreaById, getZoneById } from '@fishmarket/shared';
 
 interface FindTodayParams {
   city?: string;
@@ -245,7 +246,31 @@ export class MarketplaceService {
   }
 
   async createOrder(dto: CreateOrderDto) {
-    const { items, customerName, customerPhone, customerAddress } = dto;
+    const {
+      items,
+      customerName,
+      customerPhone,
+      customerAddress,
+      governorateId,
+      areaId,
+      zoneId,
+      street,
+      buildingNumber,
+      apartment,
+      floor,
+      landmark,
+    } = dto;
+
+    const addressLabel = await this.formatAddress({
+      governorateId,
+      areaId,
+      zoneId,
+      street: street || customerAddress,
+      buildingNumber,
+      apartment,
+      floor,
+      landmark,
+    });
 
     if (items.length === 0) {
       throw new BadRequestException('Order must have at least one item');
@@ -294,10 +319,10 @@ export class MarketplaceService {
       });
 
       if (existingAddress) {
-        if (existingAddress.street !== customerAddress) {
+        if (existingAddress.street !== addressLabel) {
           await this.prisma.userAddress.update({
             where: { id: existingAddress.id },
-            data: { street: customerAddress },
+            data: { street: addressLabel },
           });
         }
       } else {
@@ -305,7 +330,7 @@ export class MarketplaceService {
           data: {
             userId: guestUser.id,
             label: 'Adresse de livraison',
-            street: customerAddress,
+            street: addressLabel,
             number: '',
             neighborhood: '',
             city: '',
@@ -331,7 +356,7 @@ export class MarketplaceService {
         data: {
           userId: guestUser.id,
           label: 'Adresse de livraison',
-          street: customerAddress,
+          street: addressLabel,
           number: '',
           neighborhood: '',
           city: '',
@@ -540,5 +565,39 @@ export class MarketplaceService {
     }));
 
     return { seller: sellerProfile, listings };
+  }
+
+  private async formatAddress(params: {
+    governorateId?: string;
+    areaId?: string;
+    zoneId?: string;
+    street?: string;
+    buildingNumber?: string;
+    apartment?: string;
+    floor?: string;
+    landmark?: string;
+  }): Promise<string> {
+    const gov = params.governorateId ? getGovernorateById(params.governorateId) : null;
+    const area =
+      params.governorateId && params.areaId
+        ? getAreaById(params.governorateId, params.areaId)
+        : null;
+    const zone =
+      params.governorateId && params.areaId && params.zoneId
+        ? getZoneById(params.governorateId, params.areaId, params.zoneId)
+        : null;
+
+    const parts: string[] = [];
+
+    if (params.street) parts.push(params.street);
+    if (params.buildingNumber) parts.push(`بناية ${params.buildingNumber}`);
+    if (params.floor) parts.push(`طابق ${params.floor}`);
+    if (params.apartment) parts.push(`شقة ${params.apartment}`);
+    if (zone) parts.push(zone.name);
+    if (area) parts.push(area.name);
+    if (gov) parts.push(gov.name);
+    if (params.landmark) parts.push(`بجانب ${params.landmark}`);
+
+    return parts.join('، ') || params.street || '';
   }
 }
