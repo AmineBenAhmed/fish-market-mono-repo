@@ -227,20 +227,23 @@ export function ListingDetailScreen({
         </View>
 
         <View style={styles.actionSection}>
-          <TouchableOpacity onPress={() => setCleaning(!cleaning)} style={styles.cleaningRow}>
-            <View style={[styles.checkbox, cleaning && styles.checkboxActive]}>
-              {cleaning ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
-            </View>
-            <View style={styles.cleaningTextContainer}>
-              <Text style={styles.cleaningLabel}>{t('listing.cleanFish')}</Text>
-              <Text style={styles.cleaningCost}>
-                +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} / {listing.unit}
-              </Text>
-            </View>
-          </TouchableOpacity>
+          {Number(listing.cleaningCost ?? 0) > 0 && (
+            <TouchableOpacity onPress={() => setCleaning(!cleaning)} style={styles.cleaningRow}>
+              <View style={[styles.checkbox, cleaning && styles.checkboxActive]}>
+                {cleaning ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+              </View>
+              <View style={styles.cleaningTextContainer}>
+                <Text style={styles.cleaningLabel}>{t('listing.cleanFish')}</Text>
+                <Text style={styles.cleaningCost}>
+                  +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} /{' '}
+                  {listing.unit}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.subtotalRow}>
-            <Text style={styles.subtotalLabel}>{t('listing.subtotal')}</Text>
+            <Text style={styles.subtotalLabel}>{t('listing.total')}</Text>
             <Text style={styles.subtotalValue}>
               {listing.currency} {subtotal.toFixed(2)}
             </Text>

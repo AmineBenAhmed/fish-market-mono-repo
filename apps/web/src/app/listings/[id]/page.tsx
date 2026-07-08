@@ -217,28 +217,30 @@ export default function ListingDetailPage() {
           </div>
 
           <div className="border-t pt-6 space-y-4">
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <div
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                  cleaning
-                    ? 'bg-blue-600 border-blue-600'
-                    : 'border-gray-300 group-hover:border-gray-400'
-                }`}
-                onClick={() => setCleaning(!cleaning)}
-              >
-                {cleaning && <Check className="h-3.5 w-3.5 text-white" />}
-              </div>
-              <div className="flex-1">
-                <span className="text-sm font-medium">{t('listing.cleanFish')}</span>
-                <p className="text-xs text-gray-400">
-                  +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} /{' '}
-                  {listing.unit}
-                </p>
-              </div>
-            </label>
+            {Number(listing.cleaningCost ?? 0) > 0 && (
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                    cleaning
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'border-gray-300 group-hover:border-gray-400'
+                  }`}
+                  onClick={() => setCleaning(!cleaning)}
+                >
+                  {cleaning && <Check className="h-3.5 w-3.5 text-white" />}
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-medium">{t('listing.cleanFish')}</span>
+                  <p className="text-xs text-gray-400">
+                    +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} /{' '}
+                    {listing.unit}
+                  </p>
+                </div>
+              </label>
+            )}
 
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">{t('listing.subtotal')}</span>
+              <span className="text-gray-500">{t('listing.total')}</span>
               <span className="font-semibold">
                 {listing.currency}{' '}
                 {(

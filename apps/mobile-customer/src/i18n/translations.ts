@@ -92,6 +92,7 @@ const translations: Record<string, Record<Locale, string>> = {
   'listing.quantity': { en: 'Quantity', fr: 'Quantité', ar: 'الكمية' },
   'listing.cleanFish': { en: 'Clean fish', fr: 'Nettoyer le poisson', ar: 'تنظيف السمك' },
   'listing.subtotal': { en: 'Subtotal', fr: 'Sous-total', ar: 'المجموع الفرعي' },
+  'listing.total': { en: 'Total', fr: 'Total', ar: 'المجموع' },
   'listing.addedToCart': {
     en: 'Added to Cart!',
     fr: 'Ajouté au Panier!',

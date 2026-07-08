@@ -57,6 +57,7 @@ export function ListingCreatePage() {
   const [price, setPrice] = useState('');
   const [condition, setCondition] = useState('FRESH');
   const [origin, setOrigin] = useState('');
+  const [hasCleaning, setHasCleaning] = useState(false);
   const [cleaningCost, setCleaningCost] = useState('');
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -115,7 +116,7 @@ export function ListingCreatePage() {
       description: description || undefined,
       condition,
       origin: origin || undefined,
-      cleaningCost: cleaningCost ? Number(cleaningCost) : undefined,
+      cleaningCost: hasCleaning && cleaningCost ? Number(cleaningCost) : undefined,
       unit: 'Kg',
       currency: 'TND',
       cloudinaryUrls,
@@ -276,6 +277,21 @@ export function ListingCreatePage() {
             </div>
 
             <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasCleaning}
+                  onChange={(e) => {
+                    setHasCleaning(e.target.checked);
+                    if (!e.target.checked) setCleaningCost('');
+                  }}
+                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium">Clean fish</span>
+              </label>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-medium">Cleaning Cost (per unit)</label>
               <Input
                 type="number"
@@ -283,6 +299,7 @@ export function ListingCreatePage() {
                 min="0"
                 placeholder="0.00"
                 value={cleaningCost}
+                disabled={!hasCleaning}
                 onChange={(e) => setCleaningCost(e.target.value)}
               />
             </div>
