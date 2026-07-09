@@ -1,4 +1,5 @@
-import { Button, Input } from '@fishmarket/ui';
+import { Button, Input, AddressForm } from '@fishmarket/ui';
+import type { AddressFormValue } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ImageIcon, Loader2, Save, Store, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -52,7 +53,6 @@ export function StoreDetailPage() {
     storeDescription: '',
     deliveryRadius: 10,
     preparationTime: 30,
-    pickupAddress: '',
     businessName: '',
     businessDoc: '',
     taxId: '',
@@ -62,6 +62,19 @@ export function StoreDetailPage() {
     storeLogoUrl: '',
     commissionRate: 0,
   });
+  const [address, setAddress] = useState<AddressFormValue>({
+    governorateId: 'sousse',
+    areaId: '',
+    zoneId: '',
+    street: '',
+    buildingNumber: '',
+    apartment: '',
+    floor: '',
+    landmark: '',
+    label: '',
+    lat: '',
+    lng: '',
+  });
 
   useEffect(() => {
     if (store) {
@@ -70,7 +83,6 @@ export function StoreDetailPage() {
         storeDescription: store.storeDescription || '',
         deliveryRadius: store.deliveryRadius ?? 10,
         preparationTime: store.preparationTime ?? 30,
-        pickupAddress: store.pickupAddress || '',
         businessName: store.businessName || '',
         businessDoc: store.businessDoc || '',
         taxId: store.taxId || '',
@@ -79,6 +91,19 @@ export function StoreDetailPage() {
         registrationNumber: store.registrationNumber || '',
         storeLogoUrl: store.storeLogoUrl || '',
         commissionRate: store.commissionRate ?? 0,
+      });
+      setAddress({
+        governorateId: store.governorateId || 'sousse',
+        areaId: store.areaId || '',
+        zoneId: store.zoneId || '',
+        street: store.street || '',
+        buildingNumber: store.buildingNumber || '',
+        apartment: store.apartment || '',
+        floor: store.floor || '',
+        landmark: store.landmark || '',
+        label: '',
+        lat: store.lat ? String(store.lat) : '',
+        lng: store.lng ? String(store.lng) : '',
       });
     }
   }, [store]);
@@ -147,7 +172,16 @@ export function StoreDetailPage() {
       storeDescription: form.storeDescription || undefined,
       deliveryRadius: form.deliveryRadius,
       preparationTime: form.preparationTime,
-      pickupAddress: form.pickupAddress || undefined,
+      governorateId: address.governorateId,
+      areaId: address.areaId,
+      zoneId: address.zoneId,
+      street: address.street,
+      buildingNumber: address.buildingNumber || undefined,
+      apartment: address.apartment || undefined,
+      floor: address.floor || undefined,
+      landmark: address.landmark || undefined,
+      lat: address.lat ? Number(address.lat) : undefined,
+      lng: address.lng ? Number(address.lng) : undefined,
       businessName: form.businessName || undefined,
       businessDoc: form.businessDoc || undefined,
       taxId: form.taxId || undefined,
@@ -372,10 +406,12 @@ export function StoreDetailPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Pickup Address</label>
-                <Input
-                  value={form.pickupAddress}
-                  onChange={(e) => handleChange('pickupAddress', e.target.value)}
+                <label className="text-sm font-medium mb-1 block">Address</label>
+                <AddressForm
+                  value={address}
+                  onChange={setAddress}
+                  showLabel={false}
+                  showCoordinates
                 />
               </div>
               <div className="flex items-center gap-2 pt-2">
@@ -427,12 +463,13 @@ export function StoreDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">City</label>
-                <Input value={store.city || '-'} disabled className="bg-muted" />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">State</label>
-                <Input value={store.state || '-'} disabled className="bg-muted" />
+                <label className="text-sm font-medium mb-1 block">Address</label>
+                <p className="text-sm">
+                  {store.street || '—'}
+                  {store.buildingNumber ? `, ${store.buildingNumber}` : ''}
+                  {store.floor ? `, Floor ${store.floor}` : ''}
+                  {store.apartment ? `, Apt ${store.apartment}` : ''}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Coordinates</label>

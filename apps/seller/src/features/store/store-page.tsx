@@ -1,4 +1,5 @@
-import { Button, Input } from '@fishmarket/ui';
+import { Button, Input, AddressForm } from '@fishmarket/ui';
+import type { AddressFormValue } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { ArrowLeft, ImagePlus, MapPin, Plus, Store, X } from 'lucide-react';
@@ -259,16 +260,13 @@ function StoreDetail({ store, onBack }: { store: SellerProfile; onBack: () => vo
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground">Pickup Address</p>
-              <p className="font-medium">{store.pickupAddress || '—'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">City</p>
-              <p className="font-medium">{store.city || '—'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">State</p>
-              <p className="font-medium">{store.state || '—'}</p>
+              <p className="text-sm text-muted-foreground">Address</p>
+              <p className="font-medium">
+                {store.street || '—'}
+                {store.buildingNumber ? `, ${store.buildingNumber}` : ''}
+                {store.floor ? `, Floor ${store.floor}` : ''}
+                {store.apartment ? `, Apt ${store.apartment}` : ''}
+              </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Commission Rate</p>
@@ -341,14 +339,23 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
   const [form, setForm] = useState({
     storeName: '',
     storeDescription: '',
-    city: '',
-    state: '',
-    pickupAddress: '',
     businessName: '',
     businessDoc: '',
     taxId: '',
     preparationTime: '30',
     deliveryRadius: '10',
+  });
+
+  const [address, setAddress] = useState<AddressFormValue>({
+    governorateId: 'sousse',
+    areaId: '',
+    zoneId: '',
+    street: '',
+    buildingNumber: '',
+    apartment: '',
+    floor: '',
+    landmark: '',
+    label: '',
     lat: '',
     lng: '',
   });
@@ -362,13 +369,18 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
     mutationFn: (data: {
       storeName: string;
       storeDescription?: string;
-      city: string;
-      state: string;
+      governorateId: string;
+      areaId: string;
+      zoneId: string;
+      street: string;
+      buildingNumber?: string;
+      apartment?: string;
+      floor?: string;
+      landmark?: string;
       preparationTime?: number;
       deliveryRadius?: number;
       lat?: number;
       lng?: number;
-      pickupAddress?: string;
       businessName?: string;
       businessDoc?: string;
       taxId?: string;
@@ -400,7 +412,7 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    if (!form.storeName || !form.city || !form.state) return;
+    if (!form.storeName || !address.areaId || !address.zoneId || !address.street) return;
 
     let photoUrl: string | undefined;
 
@@ -421,13 +433,18 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
       await createMutation.mutateAsync({
         storeName: form.storeName,
         storeDescription: form.storeDescription || undefined,
-        city: form.city,
-        state: form.state,
+        governorateId: address.governorateId,
+        areaId: address.areaId,
+        zoneId: address.zoneId,
+        street: address.street,
+        buildingNumber: address.buildingNumber || undefined,
+        apartment: address.apartment || undefined,
+        floor: address.floor || undefined,
+        landmark: address.landmark || undefined,
         preparationTime: form.preparationTime ? Number(form.preparationTime) : undefined,
         deliveryRadius: form.deliveryRadius ? Number(form.deliveryRadius) : undefined,
-        lat: form.lat ? Number(form.lat) : undefined,
-        lng: form.lng ? Number(form.lng) : undefined,
-        pickupAddress: form.pickupAddress || undefined,
+        lat: address.lat ? Number(address.lat) : undefined,
+        lng: address.lng ? Number(address.lng) : undefined,
         businessName: form.businessName || undefined,
         businessDoc: form.businessDoc || undefined,
         taxId: form.taxId || undefined,
@@ -506,31 +523,16 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-base resize-none"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium mb-1 block">
-                  City <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  placeholder="Tunis"
-                  value={form.city}
-                  onChange={(e) => handleChange('city', e.target.value)}
-                  className="h-12 text-base"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">
-                  State <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  placeholder="Tunis"
-                  value={form.state}
-                  onChange={(e) => handleChange('state', e.target.value)}
-                  className="h-12 text-base"
-                  required
-                />
-              </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">
+                Address <span className="text-destructive">*</span>
+              </label>
+              <AddressForm
+                value={address}
+                onChange={setAddress}
+                showLabel={false}
+                showCoordinates={false}
+              />
             </div>
           </CardContent>
         </Card>
@@ -540,15 +542,6 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
             <CardTitle className="text-base">Contact & Business Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Pickup Address</label>
-              <Input
-                placeholder="123 Fisherman St"
-                value={form.pickupAddress}
-                onChange={(e) => handleChange('pickupAddress', e.target.value)}
-                className="h-12 text-base"
-              />
-            </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Registration Photo</label>
               <input
@@ -649,8 +642,8 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
                   type="number"
                   step="any"
                   placeholder="36.8065"
-                  value={form.lat}
-                  onChange={(e) => handleChange('lat', e.target.value)}
+                  value={address.lat}
+                  onChange={(e) => setAddress((prev) => ({ ...prev, lat: e.target.value }))}
                   className="h-12 text-base"
                 />
               </div>
@@ -660,8 +653,8 @@ function CreateStoreForm({ onBack, onSuccess }: { onBack: () => void; onSuccess:
                   type="number"
                   step="any"
                   placeholder="10.1815"
-                  value={form.lng}
-                  onChange={(e) => handleChange('lng', e.target.value)}
+                  value={address.lng}
+                  onChange={(e) => setAddress((prev) => ({ ...prev, lng: e.target.value }))}
                   className="h-12 text-base"
                 />
               </div>

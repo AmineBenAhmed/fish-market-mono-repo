@@ -5,6 +5,7 @@ import { DashboardShell } from './components/layout/shell';
 import { AnalyticsPage } from './features/analytics/analytics-page';
 import { CategoriesPage } from './features/categories/categories-page';
 import { DashboardPage } from './features/dashboard/dashboard-page';
+import { DeliveryPricingPage } from './features/delivery-pricing/delivery-pricing-page';
 import { LoginPage } from './features/auth/login-page';
 import { DeliveriesPage } from './features/deliveries/deliveries-page';
 import { DriverCreatePage } from './features/drivers/driver-create-page';
@@ -53,6 +54,7 @@ function App() {
           <Route path="listings/new" element={<ListingCreatePage />} />
           <Route path="listings/:id" element={<ListingDetailPage />} />
           <Route path="categories" element={<CategoriesPage />} />
+          <Route path="delivery-pricing" element={<DeliveryPricingPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
       </Routes>

@@ -1,4 +1,4 @@
-import locations from './locations.json';
+import locations from './locations';
 import type { Governorate } from '../types/location';
 
 export const getGovernorates = (): Governorate[] => locations as Governorate[];

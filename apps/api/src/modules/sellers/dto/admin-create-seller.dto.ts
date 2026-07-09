@@ -26,11 +26,35 @@ export class AdminCreateSellerDto {
 
   @IsString()
   @MinLength(1)
-  city!: string;
+  governorateId!: string;
 
   @IsString()
-  @MinLength(2)
-  state!: string;
+  @MinLength(1)
+  areaId!: string;
+
+  @IsString()
+  @MinLength(1)
+  zoneId!: string;
+
+  @IsString()
+  @MinLength(1)
+  street!: string;
+
+  @IsString()
+  @IsOptional()
+  buildingNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  apartment?: string;
+
+  @IsString()
+  @IsOptional()
+  floor?: string;
+
+  @IsString()
+  @IsOptional()
+  landmark?: string;
 
   @IsNumber()
   @IsOptional()
@@ -39,10 +63,6 @@ export class AdminCreateSellerDto {
   @IsNumber()
   @IsOptional()
   lng?: number;
-
-  @IsString()
-  @IsOptional()
-  pickupAddress?: string;
 
   @IsString()
   @IsOptional()

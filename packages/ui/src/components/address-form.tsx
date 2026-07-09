@@ -1,16 +1,20 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import type { NormalizedAddress } from '@fishmarket/shared';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
+const API_BASE = (() => {
+  if (typeof window === 'undefined') return 'http://localhost:4000';
+  const origin = window.location.origin;
+  if (origin.includes('localhost') || origin.includes('192.168')) {
+    return 'http://localhost:4000';
+  }
+  return origin.replace('/api/v1', '');
+})();
 
 interface LocationOption {
   id: string;
   name: string;
 }
 
-interface AddressFormValue {
+export interface AddressFormValue {
   governorateId: string;
   areaId: string;
   zoneId: string;
@@ -57,7 +61,7 @@ export function AddressForm({
   };
 
   useEffect(() => {
-    fetch(`${API_URL}/api/v1/locations/governorates`)
+    fetch(`${API_BASE}/api/v1/locations/governorates`)
       .then((r) => r.json())
       .then((res) => setGovernorates(res.data || res))
       .catch(() => {})
@@ -70,7 +74,7 @@ export function AddressForm({
       setZones([]);
       return;
     }
-    fetch(`${API_URL}/api/v1/locations/areas/${form.governorateId}`)
+    fetch(`${API_BASE}/api/v1/locations/areas/${form.governorateId}`)
       .then((r) => r.json())
       .then((res) => setAreas(res.data || res))
       .catch(() => setAreas([]));
@@ -81,7 +85,7 @@ export function AddressForm({
       setZones([]);
       return;
     }
-    fetch(`${API_URL}/api/v1/locations/zones/${form.governorateId}/${form.areaId}`)
+    fetch(`${API_BASE}/api/v1/locations/zones/${form.governorateId}/${form.areaId}`)
       .then((r) => r.json())
       .then((res) => setZones(res.data || res))
       .catch(() => setZones([]));
@@ -111,7 +115,7 @@ export function AddressForm({
           <select
             value={form.governorateId}
             onChange={(e) => update({ governorateId: e.target.value })}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingGov ? (
               <option>جاري التحميل...</option>
@@ -133,7 +137,7 @@ export function AddressForm({
             value={form.areaId}
             onChange={(e) => update({ areaId: e.target.value })}
             disabled={!form.governorateId}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="">اختر المعتمدية</option>
             {areas.map((a) => (
@@ -152,7 +156,7 @@ export function AddressForm({
             value={form.zoneId}
             onChange={(e) => update({ zoneId: e.target.value })}
             disabled={!form.areaId}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="">اختر المنطقة</option>
             {zones.map((z) => (
@@ -172,7 +176,7 @@ export function AddressForm({
             value={form.street}
             onChange={(e) => update({ street: e.target.value })}
             placeholder="اسم الشارع"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>
@@ -185,10 +189,9 @@ export function AddressForm({
             value={form.buildingNumber}
             onChange={(e) => update({ buildingNumber: e.target.value })}
             placeholder="رقم البناية"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
-
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">الطابق</label>
           <input
@@ -196,10 +199,9 @@ export function AddressForm({
             value={form.floor}
             onChange={(e) => update({ floor: e.target.value })}
             placeholder="رقم الطابق"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
-
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">الشقة</label>
           <input
@@ -207,7 +209,7 @@ export function AddressForm({
             value={form.apartment}
             onChange={(e) => update({ apartment: e.target.value })}
             placeholder="رقم الشقة"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
       </div>
@@ -220,7 +222,7 @@ export function AddressForm({
             value={form.landmark}
             onChange={(e) => update({ landmark: e.target.value })}
             placeholder="أقرب معلم (اختياري)"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
@@ -230,7 +232,7 @@ export function AddressForm({
             <select
               value={form.label}
               onChange={(e) => update({ label: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="">اختر التصنيف</option>
               <option value="home">المنزل</option>
@@ -253,7 +255,7 @@ export function AddressForm({
               value={form.lat}
               onChange={(e) => update({ lat: e.target.value })}
               placeholder="Latitude"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
           <div className="space-y-2">
@@ -263,7 +265,7 @@ export function AddressForm({
               value={form.lng}
               onChange={(e) => update({ lng: e.target.value })}
               placeholder="Longitude"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
         </div>
@@ -271,5 +273,3 @@ export function AddressForm({
     </div>
   );
 }
-
-export type { AddressFormValue };

@@ -1,4 +1,5 @@
-import { Button, Input } from '@fishmarket/ui';
+import { Button, Input, AddressForm } from '@fishmarket/ui';
+import type { AddressFormValue } from '@fishmarket/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ImageIcon, Loader2, Plus, Search, User, X } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -26,16 +27,26 @@ export function StoreCreatePage() {
     commissionRate: '0',
     deliveryRadius: 10,
     preparationTime: 30,
-    city: '',
-    state: '',
     lat: '',
     lng: '',
-    pickupAddress: '',
     businessName: '',
     businessDoc: '',
     taxId: '',
     photo: '',
     storeLogoUrl: '',
+  });
+  const [address, setAddress] = useState<AddressFormValue>({
+    governorateId: 'sousse',
+    areaId: '',
+    zoneId: '',
+    street: '',
+    buildingNumber: '',
+    apartment: '',
+    floor: '',
+    landmark: '',
+    label: '',
+    lat: '',
+    lng: '',
   });
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -86,20 +97,26 @@ export function StoreCreatePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lookedUpUser || !form.storeName || !form.city || !form.state) return;
+    if (!lookedUpUser || !form.storeName || !address.areaId || !address.zoneId || !address.street)
+      return;
 
     createMutation.mutate({
       userId: lookedUpUser.id,
       storeName: form.storeName,
       storeDescription: form.storeDescription || undefined,
-      commissionRate: form.commissionRate ? Number(form.commissionRate) / 100 : 0,
-      deliveryRadius: form.deliveryRadius ? Number(form.deliveryRadius) : undefined,
-      preparationTime: form.preparationTime ? Number(form.preparationTime) : undefined,
-      city: form.city,
-      state: form.state,
+      commissionRate: form.commissionRate ? Number(form.commissionRate) : undefined,
+      deliveryRadius: form.deliveryRadius,
+      preparationTime: form.preparationTime,
+      governorateId: address.governorateId,
+      areaId: address.areaId,
+      zoneId: address.zoneId,
+      street: address.street,
+      buildingNumber: address.buildingNumber || undefined,
+      apartment: address.apartment || undefined,
+      floor: address.floor || undefined,
+      landmark: address.landmark || undefined,
       lat: form.lat ? Number(form.lat) : undefined,
       lng: form.lng ? Number(form.lng) : undefined,
-      pickupAddress: form.pickupAddress || undefined,
       businessName: form.businessName || undefined,
       businessDoc: form.businessDoc || undefined,
       taxId: form.taxId || undefined,
@@ -182,24 +199,13 @@ export function StoreCreatePage() {
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">
-                  City <span className="text-destructive">*</span>
+                  Address <span className="text-destructive">*</span>
                 </label>
-                <Input
-                  placeholder="Tunis"
-                  value={form.city}
-                  onChange={(e) => handleChange('city', e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">
-                  State <span className="text-destructive">*</span>
-                </label>
-                <Input
-                  placeholder="Tunis"
-                  value={form.state}
-                  onChange={(e) => handleChange('state', e.target.value)}
-                  required
+                <AddressForm
+                  value={address}
+                  onChange={setAddress}
+                  showLabel={false}
+                  showCoordinates={false}
                 />
               </div>
             </CardContent>
@@ -336,14 +342,6 @@ export function StoreCreatePage() {
                   placeholder="0"
                   value={form.commissionRate}
                   onChange={(e) => handleChange('commissionRate', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Pickup Address</label>
-                <Input
-                  placeholder="123 Main St"
-                  value={form.pickupAddress}
-                  onChange={(e) => handleChange('pickupAddress', e.target.value)}
                 />
               </div>
             </CardContent>

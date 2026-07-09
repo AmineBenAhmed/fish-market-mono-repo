@@ -21,6 +21,14 @@ export interface SellerProfile {
   isActive: boolean;
   city: string;
   state: string;
+  governorateId: string;
+  areaId: string;
+  zoneId: string;
+  street: string;
+  buildingNumber?: string;
+  apartment?: string;
+  floor?: string;
+  landmark?: string;
   lat?: number;
   lng?: number;
   deliveryZoneId?: string;
@@ -33,7 +41,6 @@ export interface SellerProfile {
   photo?: string;
   registrationNumber?: string;
   storeLogoUrl?: string;
-  pickupAddress?: string;
   user?: User;
   createdAt: string;
   updatedAt: string;

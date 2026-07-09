@@ -20,13 +20,18 @@ export const sellerService = {
   async apply(data: {
     storeName: string;
     storeDescription?: string;
-    city: string;
-    state: string;
+    governorateId: string;
+    areaId: string;
+    zoneId: string;
+    street: string;
+    buildingNumber?: string;
+    apartment?: string;
+    floor?: string;
+    landmark?: string;
     preparationTime?: number;
     deliveryRadius?: number;
     lat?: number;
     lng?: number;
-    pickupAddress?: string;
     businessName?: string;
     businessDoc?: string;
     taxId?: string;

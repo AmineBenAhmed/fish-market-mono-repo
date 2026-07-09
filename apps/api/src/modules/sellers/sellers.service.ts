@@ -7,6 +7,7 @@ import { AdminCreateSellerDto } from './dto/admin-create-seller.dto';
 import { AdminUpdateSellerDto } from './dto/admin-update-seller.dto';
 import { ApplySellerDto } from './dto/apply-seller.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
+import { getGovernorateById, getAreaById, getZoneById } from '../locations/locations.data';
 
 @Injectable()
 export class SellersService {
@@ -87,11 +88,18 @@ export class SellersService {
         commissionRate: dto.commissionRate ?? 0,
         deliveryRadius: dto.deliveryRadius ?? 10,
         preparationTime: dto.preparationTime ?? 30,
-        city: dto.city,
-        state: dto.state,
+        city: getAreaById(dto.governorateId, dto.areaId)?.name ?? dto.areaId,
+        state: getGovernorateById(dto.governorateId)?.name ?? dto.governorateId,
+        governorateId: dto.governorateId,
+        areaId: dto.areaId,
+        zoneId: dto.zoneId,
+        street: dto.street,
+        buildingNumber: dto.buildingNumber,
+        apartment: dto.apartment,
+        floor: dto.floor,
+        landmark: dto.landmark,
         lat: dto.lat,
         lng: dto.lng,
-        pickupAddress: dto.pickupAddress,
         businessName: dto.businessName,
         businessDoc: dto.businessDoc,
         taxId: dto.taxId,
@@ -122,7 +130,23 @@ export class SellersService {
     if (dto.commissionRate !== undefined) data.commissionRate = dto.commissionRate;
     if (dto.deliveryRadius !== undefined) data.deliveryRadius = dto.deliveryRadius;
     if (dto.preparationTime !== undefined) data.preparationTime = dto.preparationTime;
-    if (dto.pickupAddress !== undefined) data.pickupAddress = dto.pickupAddress;
+    if (dto.governorateId !== undefined) {
+      data.governorateId = dto.governorateId;
+      data.state = getGovernorateById(dto.governorateId)?.name ?? dto.governorateId;
+    }
+    if (dto.areaId !== undefined) {
+      data.areaId = dto.areaId;
+      const govId = dto.governorateId || (profile as any).governorateId || 'sousse';
+      data.city = getAreaById(govId, dto.areaId)?.name ?? dto.areaId;
+    }
+    if (dto.zoneId !== undefined) data.zoneId = dto.zoneId;
+    if (dto.street !== undefined) data.street = dto.street;
+    if (dto.buildingNumber !== undefined) data.buildingNumber = dto.buildingNumber;
+    if (dto.apartment !== undefined) data.apartment = dto.apartment;
+    if (dto.floor !== undefined) data.floor = dto.floor;
+    if (dto.landmark !== undefined) data.landmark = dto.landmark;
+    if (dto.lat !== undefined) data.lat = dto.lat;
+    if (dto.lng !== undefined) data.lng = dto.lng;
     if (dto.businessName !== undefined) data.businessName = dto.businessName;
     if (dto.businessDoc !== undefined) data.businessDoc = dto.businessDoc;
     if (dto.taxId !== undefined) data.taxId = dto.taxId;
@@ -156,13 +180,20 @@ export class SellersService {
         userId,
         storeName: dto.storeName,
         storeDescription: dto.storeDescription,
-        city: dto.city,
-        state: dto.state,
+        governorateId: dto.governorateId,
+        areaId: dto.areaId,
+        zoneId: dto.zoneId,
+        street: dto.street,
+        buildingNumber: dto.buildingNumber,
+        apartment: dto.apartment,
+        floor: dto.floor,
+        landmark: dto.landmark,
+        city: getAreaById(dto.governorateId, dto.areaId)?.name ?? dto.areaId,
+        state: getGovernorateById(dto.governorateId)?.name ?? dto.governorateId,
         preparationTime: dto.preparationTime,
         deliveryRadius: dto.deliveryRadius,
         lat: dto.lat,
         lng: dto.lng,
-        pickupAddress: dto.pickupAddress,
         businessName: dto.businessName,
         businessDoc: dto.businessDoc,
         taxId: dto.taxId,
@@ -212,16 +243,27 @@ export class SellersService {
         ...(dto.storeDescription !== undefined && { storeDescription: dto.storeDescription }),
         ...(dto.deliveryRadius !== undefined && { deliveryRadius: dto.deliveryRadius }),
         ...(dto.preparationTime !== undefined && { preparationTime: dto.preparationTime }),
-        ...(dto.city !== undefined && { city: dto.city }),
-        ...(dto.state !== undefined && { state: dto.state }),
+        ...(dto.governorateId !== undefined && {
+          governorateId: dto.governorateId,
+          state: getGovernorateById(dto.governorateId)?.name ?? dto.governorateId,
+        }),
+        ...(dto.areaId !== undefined && {
+          areaId: dto.areaId,
+          city:
+            getAreaById(dto.governorateId || profile.governorateId, dto.areaId)?.name ?? dto.areaId,
+        }),
+        ...(dto.zoneId !== undefined && { zoneId: dto.zoneId }),
+        ...(dto.street !== undefined && { street: dto.street }),
+        ...(dto.buildingNumber !== undefined && { buildingNumber: dto.buildingNumber }),
+        ...(dto.apartment !== undefined && { apartment: dto.apartment }),
+        ...(dto.floor !== undefined && { floor: dto.floor }),
+        ...(dto.landmark !== undefined && { landmark: dto.landmark }),
         ...(dto.lat !== undefined && { lat: dto.lat }),
         ...(dto.lng !== undefined && { lng: dto.lng }),
-        ...(dto.pickupAddress !== undefined && { pickupAddress: dto.pickupAddress }),
         ...(dto.businessName !== undefined && { businessName: dto.businessName }),
         ...(dto.businessDoc !== undefined && { businessDoc: dto.businessDoc }),
         ...(dto.taxId !== undefined && { taxId: dto.taxId }),
         ...(dto.photo !== undefined && { photo: dto.photo }),
-        ...(dto.registrationNumber !== undefined && { registrationNumber: dto.registrationNumber }),
       },
     });
   }

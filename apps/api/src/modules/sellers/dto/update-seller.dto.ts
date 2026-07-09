@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateSellerDto {
   @IsString()
@@ -10,23 +10,49 @@ export class UpdateSellerDto {
   @IsOptional()
   storeDescription?: string;
 
-  @IsNumber()
+  @IsString()
+  @MinLength(1)
   @IsOptional()
-  deliveryRadius?: number;
-
-  @IsNumber()
-  @IsOptional()
-  preparationTime?: number;
+  governorateId?: string;
 
   @IsString()
   @MinLength(1)
   @IsOptional()
-  city?: string;
+  areaId?: string;
 
   @IsString()
-  @MinLength(2)
+  @MinLength(1)
   @IsOptional()
-  state?: string;
+  zoneId?: string;
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  street?: string;
+
+  @IsString()
+  @IsOptional()
+  buildingNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  apartment?: string;
+
+  @IsString()
+  @IsOptional()
+  floor?: string;
+
+  @IsString()
+  @IsOptional()
+  landmark?: string;
+
+  @IsInt()
+  @IsOptional()
+  preparationTime?: number;
+
+  @IsInt()
+  @IsOptional()
+  deliveryRadius?: number;
 
   @IsNumber()
   @IsOptional()
@@ -35,10 +61,6 @@ export class UpdateSellerDto {
   @IsNumber()
   @IsOptional()
   lng?: number;
-
-  @IsString()
-  @IsOptional()
-  pickupAddress?: string;
 
   @IsString()
   @IsOptional()
@@ -55,8 +77,4 @@ export class UpdateSellerDto {
   @IsString()
   @IsOptional()
   photo?: string;
-
-  @IsString()
-  @IsOptional()
-  registrationNumber?: string;
 }

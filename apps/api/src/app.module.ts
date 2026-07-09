@@ -20,6 +20,7 @@ import { CommissionModule } from './modules/commission/commission.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { DeliveryFeeModule } from './modules/delivery-fee/delivery-fee.module';
+import { DeliveryPricingModule } from './modules/delivery-pricing/delivery-pricing.module';
 import { DeliveryZoneModule } from './modules/delivery-zones/delivery-zone.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { EventsModule } from './modules/events/events.module';
@@ -84,6 +85,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
     WalletModule,
     CommissionModule,
     DeliveryFeeModule,
+    DeliveryPricingModule,
     DeliveryZoneModule,
     BillingModule,
     DeliveriesModule,

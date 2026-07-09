@@ -16,20 +16,18 @@ export function SettingsPage() {
 
   const [storeName, setStoreName] = useState('');
   const [description, setDescription] = useState('');
-  const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
 
   useEffect(() => {
     if (profile) {
       setStoreName(profile.storeName || '');
       setDescription(profile.storeDescription || '');
-      setCity(profile.city || '');
     }
   }, [profile]);
 
   const updateMutation = useMutation({
     mutationFn: () =>
-      sellerService.updateProfile({ storeName, storeDescription: description, city } as any),
+      sellerService.updateProfile({ storeName, storeDescription: description } as any),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['seller', 'profile'] }),
   });
 
@@ -77,15 +75,6 @@ export function SettingsPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-base resize-none"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">City</label>
-              <Input
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="h-12 text-base"
               />
             </div>
 

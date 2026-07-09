@@ -326,9 +326,16 @@ model SellerProfile {
   isActive           Boolean                 @default(false)
   city               String
   state              String
+  governorateId      String
+  areaId             String
+  zoneId             String
+  street             String
+  buildingNumber     String?
+  apartment          String?
+  floor              String?
+  landmark           String?
   lat                Float?
   lng                Float?
-  pickupAddress      String?
   deliveryZoneId     String?
   createdAt          DateTime                @default(now())
   updatedAt          DateTime                @updatedAt
@@ -426,7 +433,7 @@ model UserAddress {
 model FishCategory {
   id          String    @id @default(cuid())
   name        String
-  slug        String    @unique
+  slug      String   @unique
   description String?
   imageFileId String?   @unique
   imageUrl    String?
@@ -768,11 +775,85 @@ model DeliveryZone {
   updatedAt DateTime @updatedAt
 
   // Relations
-  drivers DriverProfile[] @relation("DriverZones")
-  sellers SellerProfile[] @relation("SellerZones")
+  drivers     DriverProfile[]   @relation("DriverZones")
+  sellers     SellerProfile[]   @relation("SellerZones")
 
   @@index([city])
   @@index([isActive])
+}
+
+/// Per‑area‑pair delivery pricing. Defines the cost to deliver from one area to another.
+/// Area IDs reference the slug field of the Area model.
+model DeliveryPricing {
+  id         String   @id @default(cuid())
+  fromAreaId String
+  toAreaId   String
+  price      Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([fromAreaId, toAreaId])
+  @@index([fromAreaId])
+  @@index([toAreaId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOCATIONS DOMAIN — Governorates, Areas, Zones
+// ═══════════════════════════════════════════════════════════════
+
+/// Top-level administrative division (e.g., Governorate of Sousse).
+model Governorate {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  lat       Float?
+  lng       Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  areas Area[]
+  zones Zone[]
+
+  @@index([slug])
+  @@index([name])
+}
+
+/// Second-level division within a governorate (e.g., Sousse Medina).
+model Area {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  governorateId String
+  name          String
+  lat           Float?
+  lng           Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  governorate Governorate @relation(fields: [governorateId], references: [id])
+  zones       Zone[]
+
+  @@index([slug])
+  @@index([governorateId])
+}
+
+/// Third-level / neighbourhood-level division (e.g., Old City).
+model Zone {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  governorateId String
+  areaId        String
+  name          String
+  lat           Float?
+  lng           Float?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  governorate Governorate @relation(fields: [governorateId], references: [id])
+  area        Area        @relation(fields: [areaId], references: [id])
+
+  @@index([slug])
+  @@index([governorateId])
+  @@index([areaId])
 }
 
 // ═══════════════════════════════════════════════════════════════

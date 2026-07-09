@@ -1,26 +1,8 @@
 export type { User, UserRole, UserStatus, Address, GeoLocation, SellerProfile } from './types/user';
 
-export type {
-  Product,
-  ProductCategory,
-  ProductStatus,
-  ProductVariant,
-  Inventory,
-  InventoryUnit,
-  Preservation,
-} from './types/product';
+export type { InventoryUnit, Preservation } from './types/product';
 
-export type {
-  Order,
-  OrderItem,
-  OrderStatus,
-  OrderStatusTransition,
-  PaymentInfo,
-  PaymentMethod,
-  PaymentStatus,
-  DeliveryInfo,
-  DeliveryStatus,
-} from './types/order';
+export type { Order, OrderItem, OrderStatus } from './types/order';
 
 export type {
   ApiResponse,
@@ -31,15 +13,6 @@ export type {
 } from './types/common';
 
 export type { Governorate, Area, Zone, NormalizedAddress } from './types/location';
-
-export {
-  getGovernorates,
-  getGovernorateById,
-  getAreasByGovernorateId,
-  getAreaById,
-  getZonesByAreaId,
-  getZoneById,
-} from './data';
 
 export {
   COMMISSION_RATE,

@@ -73,9 +73,18 @@ export interface SellerProfile {
   isActive: boolean;
   city: string;
   state: string;
+  governorateId: string;
+  areaId: string;
+  zoneId: string;
+  street: string;
+  buildingNumber?: string;
+  apartment?: string;
+  floor?: string;
+  landmark?: string;
   lat?: number;
   lng?: number;
-  pickupAddress?: string;
+  registrationNumber?: string;
+  storeLogoUrl?: string;
 }
 
 export interface DriverProfile {

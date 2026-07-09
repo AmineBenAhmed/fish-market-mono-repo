@@ -7,7 +7,7 @@ import { OrderStatus, Prisma } from '@prisma/client';
 import { createPaginationMeta, parsePagination } from '../../common/utils';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { getGovernorateById, getAreaById, getZoneById } from '@fishmarket/shared';
+import { getGovernorateById, getAreaById, getZoneById } from '../locations/locations.data';
 
 interface FindTodayParams {
   city?: string;

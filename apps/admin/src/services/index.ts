@@ -4,6 +4,7 @@ export { authService } from './auth.service';
 export { categoriesService } from './categories.service';
 export { cloudinaryService } from './cloudinary.service';
 export { dashboardService } from './dashboard.service';
+export { deliveryPricingService } from './delivery-pricing.service';
 export { filesService } from './files.service';
 export { deliveriesService } from './deliveries.service';
 export { driversService } from './drivers.service';

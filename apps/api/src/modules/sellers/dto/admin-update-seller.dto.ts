@@ -25,8 +25,48 @@ export class AdminUpdateSellerDto {
   commissionRate?: number;
 
   @IsString()
+  @MinLength(1)
   @IsOptional()
-  pickupAddress?: string;
+  governorateId?: string;
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  areaId?: string;
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  zoneId?: string;
+
+  @IsString()
+  @MinLength(1)
+  @IsOptional()
+  street?: string;
+
+  @IsString()
+  @IsOptional()
+  buildingNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  apartment?: string;
+
+  @IsString()
+  @IsOptional()
+  floor?: string;
+
+  @IsString()
+  @IsOptional()
+  landmark?: string;
+
+  @IsNumber()
+  @IsOptional()
+  lat?: number;
+
+  @IsNumber()
+  @IsOptional()
+  lng?: number;
 
   @IsString()
   @IsOptional()

@@ -34,9 +34,16 @@ describe('SellersService', () => {
     isActive: true,
     city: 'São Paulo',
     state: 'SP',
+    governorateId: 'sousse',
+    areaId: 'centre-ville',
+    zoneId: 'zone-1',
+    street: '123 Main St',
+    buildingNumber: null,
+    apartment: null,
+    floor: null,
+    landmark: null,
     lat: null,
     lng: null,
-    pickupAddress: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -53,8 +60,10 @@ describe('SellersService', () => {
   describe('apply', () => {
     const applyDto = {
       storeName: 'My Fish Store',
-      city: 'São Paulo',
-      state: 'SP',
+      governorateId: 'sousse',
+      areaId: 'centre-ville',
+      zoneId: 'zone-1',
+      street: '123 Main St',
     };
 
     it('should create seller profile on first application', async () => {

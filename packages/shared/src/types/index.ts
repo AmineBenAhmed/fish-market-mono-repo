@@ -35,18 +35,7 @@ export type {
   SellerListing,
 } from './product';
 
-export type {
-  Cart,
-  CartItem,
-  Order,
-  OrderItem,
-  OrderStatus,
-  PaymentInfo,
-  PaymentMethod,
-  PaymentStatus,
-  DeliveryInfo,
-  DeliveryStatus,
-} from './order';
+export type { Cart, CartItem, Order, OrderItem, OrderStatus } from './order';
 
 export type {
   ApiResponse,
