@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:4000';
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://178.162.242.127:4000';
 
 interface OrderCreatedPayload {
   orderId: string;
