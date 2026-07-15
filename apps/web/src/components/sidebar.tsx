@@ -20,15 +20,13 @@ import {
 } from 'lucide-react';
 import type { FishCategory } from '@/lib/types';
 import { useLocale } from '@/stores/locale';
+import { useCategories } from '@/hooks/use-categories';
 import { fetchGovernorates, fetchAreas } from '@/lib/api';
 
 const categoryIcons = [Fish, Waves, Egg, Shell, Ship, Droplets, Anchor];
 
-interface SidebarProps {
-  categories: FishCategory[];
-}
-
-export function Sidebar({ categories }: SidebarProps) {
+export function Sidebar() {
+  const categories = useCategories();
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get('category');
