@@ -11,7 +11,14 @@ export interface CreateDriverPayload {
   status?: 'ONLINE' | 'OFFLINE';
   idCardNumber?: string;
   idCardPhoto?: string;
-  workingZone?: string;
+  governorateId?: string;
+  areaId?: string;
+  zoneId?: string;
+  street?: string;
+  buildingNumber?: string;
+  apartment?: string;
+  floor?: string;
+  landmark?: string;
   deliveryFee?: number;
   password?: string;
 }

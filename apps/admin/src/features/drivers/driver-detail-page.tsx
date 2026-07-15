@@ -1,4 +1,5 @@
-import { Button, Input } from '@fishmarket/ui';
+import { Button, Input, AddressForm } from '@fishmarket/ui';
+import type { AddressFormValue } from '@fishmarket/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, History, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -72,10 +73,23 @@ export function DriverDetailPage() {
     isAvailable: true,
     idCardNumber: '',
     idCardPhoto: '',
-    workingZone: '',
     vehiclePlate: '',
     licenseNumber: '',
     deliveryFee: '',
+  });
+
+  const [address, setAddress] = useState<AddressFormValue>({
+    governorateId: 'sousse',
+    areaId: '',
+    zoneId: '',
+    street: '',
+    buildingNumber: '',
+    apartment: '',
+    floor: '',
+    landmark: '',
+    label: '',
+    lat: '',
+    lng: '',
   });
 
   useEffect(() => {
@@ -91,10 +105,28 @@ export function DriverDetailPage() {
         isAvailable: driver.isAvailable,
         idCardNumber: driver.idCardNumber || '',
         idCardPhoto: driver.idCardPhoto || '',
-        workingZone: driver.workingZone || '',
         vehiclePlate: driver.vehiclePlate || '',
         licenseNumber: driver.licenseNumber || '',
         deliveryFee: driver.deliveryFee?.toString() || '',
+      });
+      const addr = driver.address;
+      const parts = addr?.addressLine?.split(', ') || [];
+      setAddress({
+        governorateId: addr?.governorateId || 'sousse',
+        areaId: addr?.areaId || '',
+        zoneId: addr?.zoneId || '',
+        street:
+          parts.find(
+            (p) => !p.startsWith('Floor ') && !p.startsWith('Room ') && !p.startsWith('Building '),
+          ) || '',
+        floor: parts.find((p) => p.startsWith('Floor '))?.replace('Floor ', '') || '',
+        apartment: parts.find((p) => p.startsWith('Room '))?.replace('Room ', '') || '',
+        buildingNumber:
+          parts.find((p) => p.startsWith('Building '))?.replace('Building ', '') || '',
+        landmark: addr?.nearestReference || '',
+        label: '',
+        lat: '',
+        lng: '',
       });
     }
   }, [driver]);
@@ -131,8 +163,16 @@ export function DriverDetailPage() {
       data.idCardNumber = form.idCardNumber || undefined;
     if (form.idCardPhoto !== (driver?.idCardPhoto || ''))
       data.idCardPhoto = form.idCardPhoto || undefined;
-    if (form.workingZone !== (driver?.workingZone || ''))
-      data.workingZone = form.workingZone || undefined;
+    if (address.areaId) {
+      data.governorateId = address.governorateId;
+      data.areaId = address.areaId;
+      data.zoneId = address.zoneId;
+      data.street = address.street || undefined;
+      data.buildingNumber = address.buildingNumber || undefined;
+      data.apartment = address.apartment || undefined;
+      data.floor = address.floor || undefined;
+      data.landmark = address.landmark || undefined;
+    }
     if (form.vehiclePlate !== (driver?.vehiclePlate || ''))
       data.vehiclePlate = form.vehiclePlate || undefined;
     if (form.licenseNumber !== (driver?.licenseNumber || ''))
@@ -216,10 +256,11 @@ export function DriverDetailPage() {
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Working Zone</label>
-                <Input
-                  value={form.workingZone}
-                  onChange={(e) => handleChange('workingZone', e.target.value)}
-                  placeholder="e.g. Downtown, North District"
+                <AddressForm
+                  value={address}
+                  onChange={setAddress}
+                  showLabel={false}
+                  showCoordinates={false}
                 />
               </div>
             </CardContent>

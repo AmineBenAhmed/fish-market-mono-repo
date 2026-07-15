@@ -35,7 +35,7 @@ export function ListingCard({ listing }: Props) {
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={listing.title || categoryName}
+            alt={listing.title && listing.title !== 'New Listing' ? listing.title : categoryName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
@@ -56,7 +56,9 @@ export function ListingCard({ listing }: Props) {
           )}
           <span className="text-sm text-gray-500 truncate">{listing.seller.storeName}</span>
         </div>
-        <h3 className="font-semibold text-gray-900 truncate">{listing.title || categoryName}</h3>
+        <h3 className="font-semibold text-gray-900 truncate">
+          {listing.title && listing.title !== 'New Listing' ? listing.title : categoryName}
+        </h3>
         {listing.description && (
           <p className="text-sm text-gray-500 line-clamp-2">{listing.description}</p>
         )}

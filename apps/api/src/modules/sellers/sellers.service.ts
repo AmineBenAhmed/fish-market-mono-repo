@@ -7,7 +7,7 @@ import { AdminCreateSellerDto } from './dto/admin-create-seller.dto';
 import { AdminUpdateSellerDto } from './dto/admin-update-seller.dto';
 import { ApplySellerDto } from './dto/apply-seller.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
-import { getGovernorateById, getAreaById, getZoneById } from '../locations/locations.data';
+import { getGovernorateById, getAreaById } from '../locations/locations.data';
 
 @Injectable()
 export class SellersService {
@@ -35,6 +35,9 @@ export class SellersService {
         include: {
           user: {
             select: { id: true, email: true, name: true, phone: true, role: true, status: true },
+          },
+          address: {
+            include: { governorate: true, area: true, zone: true },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -64,6 +67,9 @@ export class SellersService {
             status: true,
           },
         },
+        address: {
+          include: { governorate: true, area: true, zone: true },
+        },
       },
     });
 
@@ -80,6 +86,28 @@ export class SellersService {
       data: { role: 'SELLER' },
     });
 
+    const parts: string[] = [];
+    if (dto.street) parts.push(dto.street);
+    if (dto.floor) parts.push(`Floor ${dto.floor}`);
+    if (dto.apartment) parts.push(`Room ${dto.apartment}`);
+    if (dto.buildingNumber) parts.push(`Building ${dto.buildingNumber}`);
+    const addressLine = parts.join(', ');
+
+    const address = await this.prisma.address.create({
+      data: {
+        governorateId: dto.governorateId,
+        areaId: dto.areaId,
+        zoneId: dto.zoneId,
+        addressLine,
+        nearestReference: dto.landmark || null,
+      },
+    });
+
+    const [area, governorate] = await Promise.all([
+      this.prisma.area.findUnique({ where: { id: dto.areaId } }),
+      this.prisma.governorate.findUnique({ where: { id: dto.governorateId } }),
+    ]);
+
     const profile = await this.prisma.sellerProfile.create({
       data: {
         userId: dto.userId,
@@ -88,16 +116,9 @@ export class SellersService {
         commissionRate: dto.commissionRate ?? 0,
         deliveryRadius: dto.deliveryRadius ?? 10,
         preparationTime: dto.preparationTime ?? 30,
-        city: getAreaById(dto.governorateId, dto.areaId)?.name ?? dto.areaId,
-        state: getGovernorateById(dto.governorateId)?.name ?? dto.governorateId,
-        governorateId: dto.governorateId,
-        areaId: dto.areaId,
-        zoneId: dto.zoneId,
-        street: dto.street,
-        buildingNumber: dto.buildingNumber,
-        apartment: dto.apartment,
-        floor: dto.floor,
-        landmark: dto.landmark,
+        city: area?.name ?? dto.areaId,
+        state: governorate?.name ?? dto.governorateId,
+        addressId: address.id,
         lat: dto.lat,
         lng: dto.lng,
         businessName: dto.businessName,
@@ -117,6 +138,7 @@ export class SellersService {
   async adminUpdate(id: string, dto: AdminUpdateSellerDto) {
     const profile = await this.prisma.sellerProfile.findUnique({
       where: { id },
+      include: { address: true },
     });
 
     if (!profile) {
@@ -130,21 +152,66 @@ export class SellersService {
     if (dto.commissionRate !== undefined) data.commissionRate = dto.commissionRate;
     if (dto.deliveryRadius !== undefined) data.deliveryRadius = dto.deliveryRadius;
     if (dto.preparationTime !== undefined) data.preparationTime = dto.preparationTime;
-    if (dto.governorateId !== undefined) {
-      data.governorateId = dto.governorateId;
-      data.state = getGovernorateById(dto.governorateId)?.name ?? dto.governorateId;
+
+    const hasAddressChanges =
+      dto.governorateId !== undefined ||
+      dto.areaId !== undefined ||
+      dto.zoneId !== undefined ||
+      dto.street !== undefined ||
+      dto.buildingNumber !== undefined ||
+      dto.floor !== undefined ||
+      dto.apartment !== undefined ||
+      dto.landmark !== undefined;
+
+    if (hasAddressChanges) {
+      const existing = profile.address;
+      const govId = dto.governorateId ?? existing?.governorateId ?? '';
+      const areaId = dto.areaId ?? existing?.areaId ?? '';
+      const zoneId = dto.zoneId ?? existing?.zoneId ?? '';
+
+      const existingParts = existing?.addressLine?.split(', ') || [];
+      const existingStreet =
+        existingParts.find(
+          (p) => !p.startsWith('Floor ') && !p.startsWith('Room ') && !p.startsWith('Building '),
+        ) || '';
+      const existingFloor =
+        existingParts.find((p) => p.startsWith('Floor '))?.replace('Floor ', '') || '';
+      const existingRoom =
+        existingParts.find((p) => p.startsWith('Room '))?.replace('Room ', '') || '';
+      const existingBuilding =
+        existingParts.find((p) => p.startsWith('Building '))?.replace('Building ', '') || '';
+
+      const newParts: string[] = [];
+      const newStreet = dto.street ?? existingStreet;
+      if (newStreet) newParts.push(newStreet);
+      const newFloor = dto.floor ?? existingFloor;
+      if (newFloor) newParts.push(`Floor ${newFloor}`);
+      const newRoom = dto.apartment ?? existingRoom;
+      if (newRoom) newParts.push(`Room ${newRoom}`);
+      const newBuilding = dto.buildingNumber ?? existingBuilding;
+      if (newBuilding) newParts.push(`Building ${newBuilding}`);
+      const addressLine = newParts.join(', ');
+
+      const newAddress = await this.prisma.address.create({
+        data: {
+          governorateId: govId,
+          areaId,
+          zoneId,
+          addressLine,
+          nearestReference: dto.landmark ?? existing?.nearestReference ?? null,
+        },
+      });
+
+      data.addressId = newAddress.id;
+
+      const [area, governorate] = await Promise.all([
+        this.prisma.area.findUnique({ where: { id: areaId } }),
+        this.prisma.governorate.findUnique({ where: { id: govId } }),
+      ]);
+      data.city = area?.name ?? areaId;
+      data.state = governorate?.name ?? govId;
     }
-    if (dto.areaId !== undefined) {
-      data.areaId = dto.areaId;
-      const govId = dto.governorateId || (profile as any).governorateId || 'sousse';
-      data.city = getAreaById(govId, dto.areaId)?.name ?? dto.areaId;
-    }
-    if (dto.zoneId !== undefined) data.zoneId = dto.zoneId;
-    if (dto.street !== undefined) data.street = dto.street;
-    if (dto.buildingNumber !== undefined) data.buildingNumber = dto.buildingNumber;
-    if (dto.apartment !== undefined) data.apartment = dto.apartment;
-    if (dto.floor !== undefined) data.floor = dto.floor;
-    if (dto.landmark !== undefined) data.landmark = dto.landmark;
+
     if (dto.lat !== undefined) data.lat = dto.lat;
     if (dto.lng !== undefined) data.lng = dto.lng;
     if (dto.businessName !== undefined) data.businessName = dto.businessName;
@@ -175,21 +242,36 @@ export class SellersService {
       data: { role: 'SELLER' },
     });
 
+    const parts: string[] = [];
+    if (dto.street) parts.push(dto.street);
+    if (dto.floor) parts.push(`Floor ${dto.floor}`);
+    if (dto.apartment) parts.push(`Room ${dto.apartment}`);
+    if (dto.buildingNumber) parts.push(`Building ${dto.buildingNumber}`);
+    const addressLine = parts.join(', ');
+
+    const address = await this.prisma.address.create({
+      data: {
+        governorateId: dto.governorateId,
+        areaId: dto.areaId,
+        zoneId: dto.zoneId,
+        addressLine,
+        nearestReference: dto.landmark || null,
+      },
+    });
+
+    const [area, governorate] = await Promise.all([
+      this.prisma.area.findUnique({ where: { id: dto.areaId } }),
+      this.prisma.governorate.findUnique({ where: { id: dto.governorateId } }),
+    ]);
+
     const profile = await this.prisma.sellerProfile.create({
       data: {
         userId,
         storeName: dto.storeName,
         storeDescription: dto.storeDescription,
-        governorateId: dto.governorateId,
-        areaId: dto.areaId,
-        zoneId: dto.zoneId,
-        street: dto.street,
-        buildingNumber: dto.buildingNumber,
-        apartment: dto.apartment,
-        floor: dto.floor,
-        landmark: dto.landmark,
-        city: getAreaById(dto.governorateId, dto.areaId)?.name ?? dto.areaId,
-        state: getGovernorateById(dto.governorateId)?.name ?? dto.governorateId,
+        addressId: address.id,
+        city: area?.name ?? dto.areaId,
+        state: governorate?.name ?? dto.governorateId,
         preparationTime: dto.preparationTime,
         deliveryRadius: dto.deliveryRadius,
         lat: dto.lat,
@@ -229,6 +311,7 @@ export class SellersService {
   async updateProfile(userId: string, dto: UpdateSellerDto) {
     const profile = await this.prisma.sellerProfile.findFirst({
       where: { userId },
+      include: { address: true },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -236,35 +319,82 @@ export class SellersService {
       throw new NotFoundException('Seller profile not found');
     }
 
+    const data: Record<string, unknown> = {};
+
+    if (dto.storeName !== undefined) data.storeName = dto.storeName;
+    if (dto.storeDescription !== undefined) data.storeDescription = dto.storeDescription;
+    if (dto.deliveryRadius !== undefined) data.deliveryRadius = dto.deliveryRadius;
+    if (dto.preparationTime !== undefined) data.preparationTime = dto.preparationTime;
+
+    const hasAddressChanges =
+      dto.governorateId !== undefined ||
+      dto.areaId !== undefined ||
+      dto.zoneId !== undefined ||
+      dto.street !== undefined ||
+      dto.buildingNumber !== undefined ||
+      dto.floor !== undefined ||
+      dto.apartment !== undefined ||
+      dto.landmark !== undefined;
+
+    if (hasAddressChanges) {
+      const existing = profile.address;
+      const govId = dto.governorateId ?? existing?.governorateId ?? '';
+      const areaId = dto.areaId ?? existing?.areaId ?? '';
+      const zoneId = dto.zoneId ?? existing?.zoneId ?? '';
+
+      const existingParts = existing?.addressLine?.split(', ') || [];
+      const existingStreet =
+        existingParts.find(
+          (p) => !p.startsWith('Floor ') && !p.startsWith('Room ') && !p.startsWith('Building '),
+        ) || '';
+      const existingFloor =
+        existingParts.find((p) => p.startsWith('Floor '))?.replace('Floor ', '') || '';
+      const existingRoom =
+        existingParts.find((p) => p.startsWith('Room '))?.replace('Room ', '') || '';
+      const existingBuilding =
+        existingParts.find((p) => p.startsWith('Building '))?.replace('Building ', '') || '';
+
+      const newParts: string[] = [];
+      const newStreet = dto.street ?? existingStreet;
+      if (newStreet) newParts.push(newStreet);
+      const newFloor = dto.floor ?? existingFloor;
+      if (newFloor) newParts.push(`Floor ${newFloor}`);
+      const newRoom = dto.apartment ?? existingRoom;
+      if (newRoom) newParts.push(`Room ${newRoom}`);
+      const newBuilding = dto.buildingNumber ?? existingBuilding;
+      if (newBuilding) newParts.push(`Building ${newBuilding}`);
+      const addressLine = newParts.join(', ');
+
+      const newAddress = await this.prisma.address.create({
+        data: {
+          governorateId: govId,
+          areaId,
+          zoneId,
+          addressLine,
+          nearestReference: dto.landmark ?? existing?.nearestReference ?? null,
+        },
+      });
+
+      data.addressId = newAddress.id;
+
+      const [area, governorate] = await Promise.all([
+        this.prisma.area.findUnique({ where: { id: areaId } }),
+        this.prisma.governorate.findUnique({ where: { id: govId } }),
+      ]);
+      data.city = area?.name ?? areaId;
+      data.state = governorate?.name ?? govId;
+    }
+
+    if (dto.lat !== undefined) data.lat = dto.lat;
+    if (dto.lng !== undefined) data.lng = dto.lng;
+    if (dto.businessName !== undefined) data.businessName = dto.businessName;
+    if (dto.businessDoc !== undefined) data.businessDoc = dto.businessDoc;
+    if (dto.taxId !== undefined) data.taxId = dto.taxId;
+    if (dto.photo !== undefined) data.photo = dto.photo;
+
     return this.prisma.sellerProfile.update({
       where: { id: profile.id },
-      data: {
-        ...(dto.storeName !== undefined && { storeName: dto.storeName }),
-        ...(dto.storeDescription !== undefined && { storeDescription: dto.storeDescription }),
-        ...(dto.deliveryRadius !== undefined && { deliveryRadius: dto.deliveryRadius }),
-        ...(dto.preparationTime !== undefined && { preparationTime: dto.preparationTime }),
-        ...(dto.governorateId !== undefined && {
-          governorateId: dto.governorateId,
-          state: getGovernorateById(dto.governorateId)?.name ?? dto.governorateId,
-        }),
-        ...(dto.areaId !== undefined && {
-          areaId: dto.areaId,
-          city:
-            getAreaById(dto.governorateId || profile.governorateId, dto.areaId)?.name ?? dto.areaId,
-        }),
-        ...(dto.zoneId !== undefined && { zoneId: dto.zoneId }),
-        ...(dto.street !== undefined && { street: dto.street }),
-        ...(dto.buildingNumber !== undefined && { buildingNumber: dto.buildingNumber }),
-        ...(dto.apartment !== undefined && { apartment: dto.apartment }),
-        ...(dto.floor !== undefined && { floor: dto.floor }),
-        ...(dto.landmark !== undefined && { landmark: dto.landmark }),
-        ...(dto.lat !== undefined && { lat: dto.lat }),
-        ...(dto.lng !== undefined && { lng: dto.lng }),
-        ...(dto.businessName !== undefined && { businessName: dto.businessName }),
-        ...(dto.businessDoc !== undefined && { businessDoc: dto.businessDoc }),
-        ...(dto.taxId !== undefined && { taxId: dto.taxId }),
-        ...(dto.photo !== undefined && { photo: dto.photo }),
-      },
+      data,
     });
   }
 

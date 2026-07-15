@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Fish,
-  LayoutGrid,
   ChevronRight,
   Search,
   Waves,
@@ -17,9 +16,11 @@ import {
   Anchor,
   Snowflake,
   Droplet,
+  MapPin,
 } from 'lucide-react';
 import type { FishCategory } from '@/lib/types';
 import { useLocale } from '@/lib/i18n/context';
+import { fetchGovernorates, fetchAreas } from '@/lib/api';
 
 const categoryIcons = [Fish, Waves, Egg, Shell, Ship, Droplets, Anchor];
 
@@ -32,8 +33,42 @@ export function Sidebar({ categories }: SidebarProps) {
   const searchParams = useSearchParams();
   const selectedCategory = searchParams.get('category');
   const selectedConditions = (searchParams.get('condition') || '').split(',').filter(Boolean);
+  const selectedGovernorateId = searchParams.get('governorateId');
+  const selectedAreaId = searchParams.get('areaId');
   const [search, setSearch] = useState('');
   const { t } = useLocale();
+
+  const [governorates, setGovernorates] = useState<any[]>([]);
+  const [areas, setAreas] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchGovernorates()
+      .then((res) => {
+        const list = res.data || res;
+        setGovernorates(list);
+        if (!selectedGovernorateId) {
+          const sousse = list.find(
+            (g: any) => g.slug === 'sousse' || g.name.toLowerCase() === 'sousse',
+          );
+          if (sousse) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set('governorateId', sousse.id);
+            router.replace(`/?${params.toString()}`);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (selectedGovernorateId) {
+      fetchAreas(selectedGovernorateId)
+        .then((res) => setAreas(res.data || res))
+        .catch(() => setAreas([]));
+    } else {
+      setAreas([]);
+    }
+  }, [selectedGovernorateId]);
 
   const conditionLabels = [
     { value: 'FRESH', label: t('sidebar.fresh'), icon: Droplet, iconClass: 'text-blue-400' },
@@ -52,6 +87,25 @@ export function Sidebar({ categories }: SidebarProps) {
       params.set('category', id);
     } else {
       params.delete('category');
+    }
+    const qs = params.toString();
+    router.push(qs ? `/?${qs}` : '/');
+  }
+
+  function handleGovernorateChange(id: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('governorateId', id);
+    params.delete('areaId');
+    const qs = params.toString();
+    router.push(qs ? `/?${qs}` : '/');
+  }
+
+  function handleAreaChange(id: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set('areaId', id);
+    } else {
+      params.delete('areaId');
     }
     const qs = params.toString();
     router.push(qs ? `/?${qs}` : '/');
@@ -120,6 +174,41 @@ export function Sidebar({ categories }: SidebarProps) {
               {t('sidebar.clear')}
             </button>
           )}
+        </div>
+
+        {/* ── Location Filter ── */}
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-gray-100/80 shadow-sm p-4 space-y-3">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5" />
+            Filtrer les poissoneries par zone
+          </p>
+          <select
+            value={selectedGovernorateId || ''}
+            onChange={(e) => handleGovernorateChange(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="" disabled>
+              {t('sidebar.selectGovernorate') || 'Governorate'}
+            </option>
+            {governorates.map((g: any) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedAreaId || ''}
+            onChange={(e) => handleAreaChange(e.target.value || null)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            disabled={!selectedGovernorateId}
+          >
+            <option value=""> </option>
+            {areas.map((a: any) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* ── Condition Filter ── */}

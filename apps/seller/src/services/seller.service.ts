@@ -23,7 +23,7 @@ export const sellerService = {
     governorateId: string;
     areaId: string;
     zoneId: string;
-    street: string;
+    street?: string;
     buildingNumber?: string;
     apartment?: string;
     floor?: string;

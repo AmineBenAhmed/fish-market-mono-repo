@@ -16,14 +16,18 @@ export interface SellerProfile {
   isActive: boolean;
   city: string;
   state: string;
-  governorateId: string;
-  areaId: string;
-  zoneId: string;
-  street: string;
-  buildingNumber?: string;
-  apartment?: string;
-  floor?: string;
-  landmark?: string;
+  addressId: string;
+  address?: {
+    id: string;
+    governorateId: string;
+    areaId: string;
+    zoneId: string;
+    addressLine: string;
+    nearestReference?: string;
+    label?: string;
+    lat?: number;
+    lng?: number;
+  };
   lat?: number;
   lng?: number;
   deliveryZoneId?: string;

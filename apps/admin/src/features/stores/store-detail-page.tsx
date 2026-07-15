@@ -5,6 +5,7 @@ import { ArrowLeft, ImageIcon, Loader2, Save, Store, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import { toast } from 'sonner';
 import { PageHeader } from '../../components/shared/page-header';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -92,15 +93,21 @@ export function StoreDetailPage() {
         storeLogoUrl: store.storeLogoUrl || '',
         commissionRate: store.commissionRate ?? 0,
       });
+      const addr = store.address;
+      const parts = addr?.addressLine?.split(', ') || [];
       setAddress({
-        governorateId: store.governorateId || 'sousse',
-        areaId: store.areaId || '',
-        zoneId: store.zoneId || '',
-        street: store.street || '',
-        buildingNumber: store.buildingNumber || '',
-        apartment: store.apartment || '',
-        floor: store.floor || '',
-        landmark: store.landmark || '',
+        governorateId: addr?.governorateId || 'sousse',
+        areaId: addr?.areaId || '',
+        zoneId: addr?.zoneId || '',
+        street:
+          parts.find(
+            (p) => !p.startsWith('Floor ') && !p.startsWith('Room ') && !p.startsWith('Building '),
+          ) || '',
+        floor: parts.find((p) => p.startsWith('Floor '))?.replace('Floor ', '') || '',
+        apartment: parts.find((p) => p.startsWith('Room '))?.replace('Room ', '') || '',
+        buildingNumber:
+          parts.find((p) => p.startsWith('Building '))?.replace('Building ', '') || '',
+        landmark: addr?.nearestReference || '',
         label: '',
         lat: store.lat ? String(store.lat) : '',
         lng: store.lng ? String(store.lng) : '',
@@ -114,6 +121,14 @@ export function StoreDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['store', id] });
       queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Store updated successfully');
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+        (err as Error).message ||
+        'Failed to update store';
+      toast.error(msg);
     },
   });
 
@@ -465,10 +480,8 @@ export function StoreDetailPage() {
               <div>
                 <label className="text-sm font-medium mb-1 block">Address</label>
                 <p className="text-sm">
-                  {store.street || '—'}
-                  {store.buildingNumber ? `, ${store.buildingNumber}` : ''}
-                  {store.floor ? `, Floor ${store.floor}` : ''}
-                  {store.apartment ? `, Apt ${store.apartment}` : ''}
+                  {store.address?.addressLine || '—'}
+                  {store.address?.nearestReference ? ` (${store.address.nearestReference})` : ''}
                 </p>
               </div>
               <div>

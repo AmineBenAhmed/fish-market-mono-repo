@@ -276,13 +276,14 @@ export class OrdersService {
             sellerProfiles: {
               select: {
                 storeName: true,
-                street: true,
-                buildingNumber: true,
-                apartment: true,
-                floor: true,
-                landmark: true,
                 city: true,
                 state: true,
+                address: {
+                  select: {
+                    addressLine: true,
+                    nearestReference: true,
+                  },
+                },
               },
               take: 1,
             },
@@ -527,13 +528,14 @@ export class OrdersService {
               sellerProfiles: {
                 select: {
                   storeName: true,
-                  street: true,
-                  buildingNumber: true,
-                  apartment: true,
-                  floor: true,
-                  landmark: true,
                   city: true,
                   state: true,
+                  address: {
+                    select: {
+                      addressLine: true,
+                      nearestReference: true,
+                    },
+                  },
                 },
                 take: 1,
               },

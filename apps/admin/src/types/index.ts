@@ -11,6 +11,26 @@ export interface User {
   updatedAt: string;
 }
 
+export interface NearestLocation {
+  id: string;
+  name: string;
+}
+
+export interface StoreAddress {
+  id: string;
+  governorateId: string;
+  areaId: string;
+  zoneId: string;
+  addressLine: string;
+  nearestReference?: string;
+  label?: string;
+  lat?: number;
+  lng?: number;
+  governorate?: NearestLocation;
+  area?: NearestLocation;
+  zone?: NearestLocation;
+}
+
 export interface SellerProfile {
   id: string;
   userId: string;
@@ -21,14 +41,8 @@ export interface SellerProfile {
   isActive: boolean;
   city: string;
   state: string;
-  governorateId: string;
-  areaId: string;
-  zoneId: string;
-  street: string;
-  buildingNumber?: string;
-  apartment?: string;
-  floor?: string;
-  landmark?: string;
+  addressId: string;
+  address?: StoreAddress;
   lat?: number;
   lng?: number;
   deliveryZoneId?: string;
@@ -67,7 +81,8 @@ export interface DriverProfile {
   idCardNumber?: string;
   idCardPhoto?: string;
   phone2?: string;
-  workingZone?: string;
+  addressId?: string;
+  address?: StoreAddress;
   deliveryFee: number;
   user?: User;
   createdAt: string;

@@ -17,6 +17,8 @@ export function RootNavigator() {
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterCondition, setFilterCondition] = useState<string | null>(null);
+  const [filterGovernorateId, setFilterGovernorateId] = useState<string | null>(null);
+  const [filterAreaId, setFilterAreaId] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
   const [categories, setCategories] = useState<FishCategory[]>([]);
   const { itemCount } = useCart();
@@ -35,10 +37,20 @@ export function RootNavigator() {
     setCurrentScreen('cart');
   }, []);
 
-  const handleFilterChange = useCallback((category: string | null, condition: string | null) => {
-    setFilterCategory(category);
-    setFilterCondition(condition);
-  }, []);
+  const handleFilterChange = useCallback(
+    (
+      category: string | null,
+      condition: string | null,
+      governorateId?: string | null,
+      areaId?: string | null,
+    ) => {
+      setFilterCategory(category);
+      setFilterCondition(condition);
+      if (governorateId !== undefined) setFilterGovernorateId(governorateId);
+      if (areaId !== undefined) setFilterAreaId(areaId);
+    },
+    [],
+  );
 
   const handleOpenFilter = useCallback(async () => {
     try {
@@ -48,10 +60,20 @@ export function RootNavigator() {
     setShowFilter(true);
   }, []);
 
-  const handleApplyFilter = useCallback((category: string | null, condition: string | null) => {
-    setFilterCategory(category);
-    setFilterCondition(condition);
-  }, []);
+  const handleApplyFilter = useCallback(
+    (
+      category: string | null,
+      condition: string | null,
+      governorateId?: string | null,
+      areaId?: string | null,
+    ) => {
+      setFilterCategory(category);
+      setFilterCondition(condition);
+      setFilterGovernorateId(governorateId ?? null);
+      setFilterAreaId(areaId ?? null);
+    },
+    [],
+  );
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -66,7 +88,14 @@ export function RootNavigator() {
           <HomeScreen
             onNavigateToListing={navigateToListing}
             onFilterChange={handleFilterChange}
-            route={{ params: { category: filterCategory, condition: filterCondition } }}
+            route={{
+              params: {
+                category: filterCategory,
+                condition: filterCondition,
+                governorateId: filterGovernorateId,
+                areaId: filterAreaId,
+              },
+            }}
           />
         );
       case 'cart':
@@ -76,7 +105,14 @@ export function RootNavigator() {
           <HomeScreen
             onNavigateToListing={navigateToListing}
             onFilterChange={handleFilterChange}
-            route={{ params: { category: filterCategory, condition: filterCondition } }}
+            route={{
+              params: {
+                category: filterCategory,
+                condition: filterCondition,
+                governorateId: filterGovernorateId,
+                areaId: filterAreaId,
+              },
+            }}
           />
         );
     }
@@ -86,16 +122,22 @@ export function RootNavigator() {
     <View style={styles.container}>
       <Header onCartPress={navigateToCart} />
       <View style={styles.screenContainer}>{renderScreen()}</View>
-      {currentScreen === 'home' && !filterCategory && !filterCondition && (
-        <TouchableOpacity onPress={handleOpenFilter} style={styles.filterFAB}>
-          <Ionicons name="options-outline" size={22} color="#fff" />
-        </TouchableOpacity>
-      )}
+      {currentScreen === 'home' &&
+        !filterCategory &&
+        !filterCondition &&
+        !filterGovernorateId &&
+        !filterAreaId && (
+          <TouchableOpacity onPress={handleOpenFilter} style={styles.filterFAB}>
+            <Ionicons name="options-outline" size={22} color="#fff" />
+          </TouchableOpacity>
+        )}
       <Modal visible={showFilter} animationType="slide" presentationStyle="pageSheet">
         <FilterScreen
           categories={categories}
           selectedCategory={filterCategory}
           selectedCondition={filterCondition}
+          selectedGovernorateId={filterGovernorateId}
+          selectedAreaId={filterAreaId}
           onApply={handleApplyFilter}
           onClose={() => setShowFilter(false)}
         />

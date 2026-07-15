@@ -1,4 +1,5 @@
-import { Button, Input } from '@fishmarket/ui';
+import { Button, Input, AddressForm } from '@fishmarket/ui';
+import type { AddressFormValue } from '@fishmarket/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ImageIcon, Loader2, X } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -38,9 +39,22 @@ export function DriverCreatePage() {
     status: 'OFFLINE',
     idCardNumber: '',
     idCardPhoto: '',
-    workingZone: '',
     deliveryFee: '',
     password: '',
+  });
+
+  const [address, setAddress] = useState<AddressFormValue>({
+    governorateId: 'sousse',
+    areaId: '',
+    zoneId: '',
+    street: '',
+    buildingNumber: '',
+    apartment: '',
+    floor: '',
+    landmark: '',
+    label: '',
+    lat: '',
+    lng: '',
   });
 
   const [uploading, setUploading] = useState(false);
@@ -88,7 +102,14 @@ export function DriverCreatePage() {
       status: form.status as 'ONLINE' | 'OFFLINE',
       idCardNumber: form.idCardNumber || undefined,
       idCardPhoto: form.idCardPhoto || undefined,
-      workingZone: form.workingZone || undefined,
+      governorateId: address.governorateId || undefined,
+      areaId: address.areaId || undefined,
+      zoneId: address.zoneId || undefined,
+      street: address.street || undefined,
+      buildingNumber: address.buildingNumber || undefined,
+      apartment: address.apartment || undefined,
+      floor: address.floor || undefined,
+      landmark: address.landmark || undefined,
       deliveryFee: form.deliveryFee ? parseFloat(form.deliveryFee) : undefined,
       password: form.password || undefined,
     });
@@ -240,10 +261,11 @@ export function DriverCreatePage() {
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Preferred Working Zone</label>
-                <Input
-                  value={form.workingZone}
-                  onChange={(e) => handleChange('workingZone', e.target.value)}
-                  placeholder="e.g. Downtown, North District"
+                <AddressForm
+                  value={address}
+                  onChange={setAddress}
+                  showLabel={false}
+                  showCoordinates={false}
                 />
               </div>
               <div>

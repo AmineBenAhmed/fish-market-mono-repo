@@ -326,14 +326,7 @@ model SellerProfile {
   isActive           Boolean                 @default(false)
   city               String
   state              String
-  governorateId      String
-  areaId             String
-  zoneId             String
-  street             String
-  buildingNumber     String?
-  apartment          String?
-  floor              String?
-  landmark           String?
+  addressId          String
   lat                Float?
   lng                Float?
   deliveryZoneId     String?
@@ -342,6 +335,7 @@ model SellerProfile {
 
   // Relations
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address         Address         @relation(fields: [addressId], references: [id])
   storeLogo       File?           @relation("StoreLogo", fields: [storeLogoFileId], references: [id], onDelete: SetNull)
   listings        SellerListing[]
   zone            DeliveryZone?   @relation("SellerZones", fields: [deliveryZoneId], references: [id])
@@ -367,7 +361,7 @@ model DriverProfile {
   idCardNumber     String?
   idCardPhoto      String?
   phone2           String?
-  workingZone      String?
+  addressId        String?
   maxLoadKg        Float?
   deliveryFee      Float       @default(0)
   createdAt        DateTime      @default(now())
@@ -376,7 +370,9 @@ model DriverProfile {
   // Relations
   user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   zone     DeliveryZone? @relation("DriverZones", fields: [deliveryZoneId], references: [id])
+  address  Address?      @relation(fields: [addressId], references: [id])
   @@index([city, state])
+  @@index([addressId])
 }
 
 /// User addresses. Geocoded for delivery radius calculation.
@@ -811,8 +807,9 @@ model Governorate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  areas Area[]
-  zones Zone[]
+  areas     Area[]
+  zones     Zone[]
+  addresses Address[]
 
   @@index([slug])
   @@index([name])
@@ -831,6 +828,7 @@ model Area {
 
   governorate Governorate @relation(fields: [governorateId], references: [id])
   zones       Zone[]
+  addresses   Address[]
 
   @@index([slug])
   @@index([governorateId])
@@ -850,10 +848,40 @@ model Zone {
 
   governorate Governorate @relation(fields: [governorateId], references: [id])
   area        Area        @relation(fields: [areaId], references: [id])
+  addresses   Address[]
 
   @@index([slug])
   @@index([governorateId])
   @@index([areaId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ADDRESS DOMAIN — Generic address for stores, orders, etc.
+// ═══════════════════════════════════════════════════════════════
+
+/// Reusable address record attachable to any entity.
+model Address {
+  id               String   @id @default(cuid())
+  governorateId    String
+  areaId           String
+  zoneId           String
+  addressLine      String      // Comma-separated street, buildingNumber, floor, apartment
+  nearestReference String?     // landmark
+  label            String?
+  lat              Float?
+  lng              Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  governorate Governorate    @relation(fields: [governorateId], references: [id])
+  area        Area           @relation(fields: [areaId], references: [id])
+  zone        Zone           @relation(fields: [zoneId], references: [id])
+  profiles    SellerProfile[]
+  driverProfiles DriverProfile[]
+
+  @@index([governorateId])
+  @@index([areaId])
+  @@index([zoneId])
 }
 
 // ═══════════════════════════════════════════════════════════════

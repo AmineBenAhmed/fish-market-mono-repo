@@ -22,8 +22,8 @@ export class ApplySellerDto {
   zoneId!: string;
 
   @IsString()
-  @MinLength(1)
-  street!: string;
+  @IsOptional()
+  street?: string;
 
   @IsString()
   @IsOptional()

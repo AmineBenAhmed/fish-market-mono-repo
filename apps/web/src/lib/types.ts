@@ -91,6 +91,7 @@ export interface CartItem {
   currency: string;
   imageUrl: string | null;
   storeName: string;
+  sellerId: string;
   productName: string;
   variantName: string;
 }

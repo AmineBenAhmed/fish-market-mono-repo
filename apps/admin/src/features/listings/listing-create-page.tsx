@@ -112,7 +112,7 @@ export function ListingCreatePage() {
       categoryId,
       date: new Date().toISOString(),
       price: Number(price),
-      title: description?.split('\n')[0]?.slice(0, 200) || 'New Listing',
+      title: description?.split('\n')[0]?.slice(0, 200) || 'Listing',
       description: description || undefined,
       condition,
       origin: origin || undefined,

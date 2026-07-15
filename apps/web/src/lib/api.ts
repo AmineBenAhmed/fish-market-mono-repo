@@ -10,6 +10,16 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json();
 }
 
+export async function calculateDeliveryFees(customerAreaId: string, sellerIds: string[]) {
+  const res = await fetch(`${API_URL}/delivery-pricing/calculate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customerAreaId, sellerIds }),
+  });
+  console.log('response======>', res);
+  return handleResponse<{ data: { fees: Record<string, number> } }>(res);
+}
+
 export async function fetchCategories() {
   const res = await fetch(`${API_URL}/categories`);
   return handleResponse<ApiResponse<FishCategory[]>>(res);
@@ -37,9 +47,21 @@ export async function fetchListings(params: {
   return handleResponse<MarketplaceResponse<any>>(res);
 }
 
+export async function fetchGovernorates() {
+  const res = await fetch(`${API_URL}/locations/governorates`);
+  return handleResponse<any>(res);
+}
+
+export async function fetchAreas(governorateId: string) {
+  const res = await fetch(`${API_URL}/locations/areas/${governorateId}`);
+  return handleResponse<any>(res);
+}
+
 export async function fetchTodayListings(params: {
   page?: number;
   limit?: number;
+  governorateId?: string;
+  areaId?: string;
   categoryId?: string;
   search?: string;
   condition?: string;
@@ -51,6 +73,8 @@ export async function fetchTodayListings(params: {
   const searchParams = new URLSearchParams();
   if (params.page) searchParams.set('page', String(params.page));
   if (params.limit) searchParams.set('limit', String(params.limit));
+  if (params.governorateId) searchParams.set('governorateId', params.governorateId);
+  if (params.areaId) searchParams.set('areaId', params.areaId);
   if (params.categoryId) searchParams.set('categoryId', params.categoryId);
   if (params.search) searchParams.set('search', params.search);
   if (params.condition) searchParams.set('condition', params.condition);

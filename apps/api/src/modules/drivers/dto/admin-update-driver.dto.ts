@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
 
 import { DriverStatus } from '@prisma/client';
 
@@ -45,7 +45,46 @@ export class AdminUpdateDriverDto {
 
   @IsString()
   @IsOptional()
-  workingZone?: string;
+  @MinLength(1)
+  governorateId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MinLength(1)
+  areaId?: string;
+
+  @IsString()
+  @IsOptional()
+  @MinLength(1)
+  zoneId?: string;
+
+  @IsString()
+  @IsOptional()
+  street?: string;
+
+  @IsString()
+  @IsOptional()
+  buildingNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  apartment?: string;
+
+  @IsString()
+  @IsOptional()
+  floor?: string;
+
+  @IsString()
+  @IsOptional()
+  landmark?: string;
+
+  @IsNumber()
+  @IsOptional()
+  lat?: number;
+
+  @IsNumber()
+  @IsOptional()
+  lng?: number;
 
   @IsString()
   @IsOptional()

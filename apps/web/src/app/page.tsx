@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchCategories, fetchTodayListings } from '@/lib/api';
 import { CategoryCard } from '@/components/category-card';
@@ -15,6 +15,8 @@ export default function HomePage() {
   const { t } = useLocale();
   const selectedCategory = searchParams.get('category');
   const selectedCondition = searchParams.get('condition');
+  const selectedGovernorateId = searchParams.get('governorateId');
+  const selectedAreaId = searchParams.get('areaId');
   const [categories, setCategories] = useState<FishCategory[]>([]);
   const [visibleCount, setVisibleCount] = useState(12);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -24,6 +26,14 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const LIMIT = 12;
 
+  const listedCategoryIds = useMemo(() => {
+    return new Set(listings.map((l) => l.category?.id).filter(Boolean));
+  }, [listings]);
+
+  const availableCategories = selectedGovernorateId
+    ? categories.filter((c) => !loading && listedCategoryIds.has(c.id))
+    : categories;
+
   useEffect(() => {
     fetchCategories()
       .then((res) => setCategories(res.data || []))
@@ -32,20 +42,24 @@ export default function HomePage() {
 
   useEffect(() => {
     setVisibleCount(12);
-  }, [selectedCategory, selectedCondition]);
+  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId]);
 
   const loadListings = useCallback(
-    async (p: number, categoryId: string | null, condition: string | null) => {
+    async (
+      p: number,
+      categoryId: string | null,
+      condition: string | null,
+      governorateId?: string | null,
+      areaId?: string | null,
+    ) => {
       setLoading(true);
       setError(null);
       try {
         const params: any = { page: p, limit: LIMIT };
-        if (categoryId) {
-          params.categoryId = categoryId;
-        }
-        if (condition) {
-          params.condition = condition;
-        }
+        if (governorateId) params.governorateId = governorateId;
+        if (areaId) params.areaId = areaId;
+        if (categoryId) params.categoryId = categoryId;
+        if (condition) params.condition = condition;
         const res = await fetchTodayListings(params);
         const payload = res.data.data;
         if (p === 1) {
@@ -66,8 +80,8 @@ export default function HomePage() {
 
   useEffect(() => {
     setPage(1);
-    loadListings(1, selectedCategory, selectedCondition);
-  }, [selectedCategory, selectedCondition, loadListings]);
+    loadListings(1, selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId);
+  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId, loadListings]);
 
   function handleSelectCategory(id: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -99,20 +113,19 @@ export default function HomePage() {
         </div>
       </div>
 
-      {!selectedCategory && !selectedCondition ? (
+      {!selectedCategory && !selectedCondition && !selectedAreaId ? (
         <>
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">{t('home.allCategories')}</h1>
-            <p className="text-gray-500 mt-1">
-              {categories.length} {t('home.categories')}
-            </p>
+            <h1 className="text-2xl font-bold text-black">
+              <p className="text-gray-500 mt-1">Nos Poissons ({availableCategories.length})</p>
+            </h1>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.slice(0, visibleCount).map((cat) => (
+            {availableCategories.slice(0, visibleCount).map((cat) => (
               <CategoryCard key={cat.id} category={cat} onClick={handleSelectCategory} />
             ))}
           </div>
-          {visibleCount < categories.length && (
+          {visibleCount < availableCategories.length && (
             <div className="flex justify-center py-8">
               <button
                 onClick={() => setVisibleCount((prev) => prev + 12)}
@@ -127,10 +140,12 @@ export default function HomePage() {
         <>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              {showingCategory?.name ||
-                (selectedCondition ? t('home.filteredListings') : t('home.listings'))}
+              {showingCategory?.name || (
+                <p>
+                  <strong>Nos poissoneries</strong> ({listings.length})
+                </p>
+              )}
             </h1>
-            <p className="text-gray-500 mt-1">Nos poissoneries ({listings.length})</p>
           </div>
 
           {error && <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6">{error}</div>}
@@ -160,7 +175,15 @@ export default function HomePage() {
           {hasMore && !loading && listings.length > 0 && (
             <div className="flex justify-center py-8">
               <button
-                onClick={() => loadListings(page + 1, selectedCategory, selectedCondition)}
+                onClick={() =>
+                  loadListings(
+                    page + 1,
+                    selectedCategory,
+                    selectedCondition,
+                    selectedGovernorateId,
+                    selectedAreaId,
+                  )
+                }
                 className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
               >
                 {t('home.more')}

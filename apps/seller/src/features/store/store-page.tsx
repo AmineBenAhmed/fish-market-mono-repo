@@ -261,12 +261,7 @@ function StoreDetail({ store, onBack }: { store: SellerProfile; onBack: () => vo
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">Address</p>
-              <p className="font-medium">
-                {store.street || '—'}
-                {store.buildingNumber ? `, ${store.buildingNumber}` : ''}
-                {store.floor ? `, Floor ${store.floor}` : ''}
-                {store.apartment ? `, Apt ${store.apartment}` : ''}
-              </p>
+              <p className="font-medium">{store.address?.addressLine || '—'}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Commission Rate</p>

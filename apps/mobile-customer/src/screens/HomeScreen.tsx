@@ -18,7 +18,12 @@ import { useLocale } from '@/i18n/context';
 
 interface HomeScreenProps {
   onNavigateToListing: (id: string) => void;
-  onFilterChange: (category: string | null, condition: string | null) => void;
+  onFilterChange: (
+    category: string | null,
+    condition: string | null,
+    governorateId?: string | null,
+    areaId?: string | null,
+  ) => void;
   route?: any;
 }
 
@@ -26,6 +31,8 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
   const { t } = useLocale();
   const selectedCategory = route?.params?.category ?? null;
   const selectedCondition = route?.params?.condition ?? null;
+  const selectedGovernorateId = route?.params?.governorateId ?? null;
+  const selectedAreaId = route?.params?.areaId ?? null;
   const [categories, setCategories] = useState<FishCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
@@ -49,14 +56,22 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
 
   useEffect(() => {
     setVisibleCount(12);
-  }, [selectedCategory, selectedCondition]);
+  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId]);
 
   const loadListings = useCallback(
-    async (p: number, categoryId: string | null, condition: string | null) => {
+    async (
+      p: number,
+      categoryId: string | null,
+      condition: string | null,
+      governorateId?: string | null,
+      areaId?: string | null,
+    ) => {
       setLoading(true);
       setError(null);
       try {
         const params: any = { page: p, limit: LIMIT };
+        if (governorateId) params.governorateId = governorateId;
+        if (areaId) params.areaId = areaId;
         if (categoryId) params.categoryId = categoryId;
         if (condition) params.condition = condition;
         const res = await fetchListings(params);
@@ -78,8 +93,8 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
   );
 
   useEffect(() => {
-    loadListings(1, selectedCategory, selectedCondition);
-  }, [selectedCategory, selectedCondition, loadListings]);
+    loadListings(1, selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId);
+  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId, loadListings]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -87,17 +102,17 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
       fetchCategories()
         .then((res) => setCategories(res.data || []))
         .catch(() => {}),
-      loadListings(1, selectedCategory, selectedCondition),
+      loadListings(1, selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId),
     ]);
     setRefreshing(false);
-  }, [selectedCategory, selectedCondition, loadListings]);
+  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId, loadListings]);
 
   const showingCategory = selectedCategory
     ? categories.find((c) => c.id === selectedCategory)
     : null;
 
   const handleSelectCategory = (id: string) => {
-    onFilterChange(id, selectedCondition);
+    onFilterChange(id, selectedCondition, selectedGovernorateId, selectedAreaId);
   };
 
   const filteredListings = listings;
@@ -129,7 +144,7 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
         </View>
       ) : null}
 
-      {!selectedCategory && !selectedCondition ? (
+      {!selectedCategory && !selectedCondition && !selectedAreaId ? (
         <>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('home.allCategories')}</Text>
@@ -177,7 +192,7 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
                   (selectedCondition ? t('home.filteredListings') : t('home.listings'))}
               </Text>
               <TouchableOpacity
-                onPress={() => onFilterChange(null, null)}
+                onPress={() => onFilterChange(null, null, null, null)}
                 style={styles.clearFilterButton}
               >
                 <Ionicons name="close-circle-outline" size={18} color="#6b7280" />
@@ -215,7 +230,15 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
 
           {hasMore && !loading && filteredListings.length > 0 ? (
             <TouchableOpacity
-              onPress={() => loadListings(page + 1, selectedCategory, selectedCondition)}
+              onPress={() =>
+                loadListings(
+                  page + 1,
+                  selectedCategory,
+                  selectedCondition,
+                  selectedGovernorateId,
+                  selectedAreaId,
+                )
+              }
               style={styles.moreButton}
             >
               <Text style={styles.moreButtonText}>{t('home.more')}</Text>

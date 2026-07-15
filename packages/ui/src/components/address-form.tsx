@@ -63,7 +63,17 @@ export function AddressForm({
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/locations/governorates`)
       .then((r) => r.json())
-      .then((res) => setGovernorates(res.data || res))
+      .then((res) => {
+        const govs: LocationOption[] = res.data || res;
+        setGovernorates(govs);
+        const slug = form.governorateId;
+        if (govs.length > 0 && slug) {
+          const match = govs.find((g) => (g as any).slug === slug);
+          if (match && match.id !== slug) {
+            update({ governorateId: match.id });
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setLoadingGov(false));
   }, []);
@@ -110,7 +120,7 @@ export function AddressForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            الولاية <span className="text-red-500">*</span>
+            Governorate <span className="text-red-500">*</span>
           </label>
           <select
             value={form.governorateId}
@@ -118,7 +128,7 @@ export function AddressForm({
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingGov ? (
-              <option>جاري التحميل...</option>
+              <option>Loading...</option>
             ) : (
               governorates.map((g) => (
                 <option key={g.id} value={g.id}>
@@ -131,7 +141,7 @@ export function AddressForm({
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            المعتمدية <span className="text-red-500">*</span>
+            Area <span className="text-red-500">*</span>
           </label>
           <select
             value={form.areaId}
@@ -139,7 +149,7 @@ export function AddressForm({
             disabled={!form.governorateId}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">اختر المعتمدية</option>
+            <option value="">Select area</option>
             {areas.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -150,7 +160,7 @@ export function AddressForm({
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            المنطقة <span className="text-red-500">*</span>
+            Zone <span className="text-red-500">*</span>
           </label>
           <select
             value={form.zoneId}
@@ -158,7 +168,7 @@ export function AddressForm({
             disabled={!form.areaId}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <option value="">اختر المنطقة</option>
+            <option value="">Select zone</option>
             {zones.map((z) => (
               <option key={z.id} value={z.id}>
                 {z.name}
@@ -168,14 +178,12 @@ export function AddressForm({
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            الشارع <span className="text-red-500">*</span>
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Street</label>
           <input
             type="text"
             value={form.street}
             onChange={(e) => update({ street: e.target.value })}
-            placeholder="اسم الشارع"
+            placeholder="Street name"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
@@ -183,32 +191,32 @@ export function AddressForm({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">رقم البناية</label>
+          <label className="block text-sm font-medium text-gray-700">Building name or number</label>
           <input
             type="text"
             value={form.buildingNumber}
             onChange={(e) => update({ buildingNumber: e.target.value })}
-            placeholder="رقم البناية"
+            placeholder="Building name or number"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">الطابق</label>
+          <label className="block text-sm font-medium text-gray-700">Floor</label>
           <input
             type="text"
             value={form.floor}
             onChange={(e) => update({ floor: e.target.value })}
-            placeholder="رقم الطابق"
+            placeholder="Floor number"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">الشقة</label>
+          <label className="block text-sm font-medium text-gray-700">Room / Apartment</label>
           <input
             type="text"
             value={form.apartment}
             onChange={(e) => update({ apartment: e.target.value })}
-            placeholder="رقم الشقة"
+            placeholder="Room or apartment number"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
@@ -216,29 +224,29 @@ export function AddressForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">أقرب معلم</label>
+          <label className="block text-sm font-medium text-gray-700">Nearest reference</label>
           <input
             type="text"
             value={form.landmark}
             onChange={(e) => update({ landmark: e.target.value })}
-            placeholder="أقرب معلم (اختياري)"
+            placeholder="Nearest landmark (optional)"
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
 
         {showLabel && (
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">تصنيف العنوان</label>
+            <label className="block text-sm font-medium text-gray-700">Label</label>
             <select
               value={form.label}
               onChange={(e) => update({ label: e.target.value })}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <option value="">اختر التصنيف</option>
-              <option value="home">المنزل</option>
-              <option value="work">العمل</option>
-              <option value="family">العائلة</option>
-              <option value="other">أخرى</option>
+              <option value="">Select label</option>
+              <option value="home">Home</option>
+              <option value="work">Work</option>
+              <option value="family">Family</option>
+              <option value="other">Other</option>
             </select>
           </div>
         )}
@@ -249,7 +257,7 @@ export function AddressForm({
       {showCoordinates && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">خط العرض</label>
+            <label className="block text-sm font-medium text-gray-700">Latitude</label>
             <input
               type="text"
               value={form.lat}
@@ -259,7 +267,7 @@ export function AddressForm({
             />
           </div>
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">خط الطول</label>
+            <label className="block text-sm font-medium text-gray-700">Longitude</label>
             <input
               type="text"
               value={form.lng}

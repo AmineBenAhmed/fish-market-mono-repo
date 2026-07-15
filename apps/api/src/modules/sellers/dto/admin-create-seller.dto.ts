@@ -37,8 +37,8 @@ export class AdminCreateSellerDto {
   zoneId!: string;
 
   @IsString()
-  @MinLength(1)
-  street!: string;
+  @IsOptional()
+  street?: string;
 
   @IsString()
   @IsOptional()

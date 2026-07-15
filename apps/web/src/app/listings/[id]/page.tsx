@@ -103,7 +103,10 @@ export default function ListingDetailPage() {
     addItem({
       listingId: listing.id,
       quantity,
-      title: listing.title || listing.category?.name || t('listing.general'),
+      title:
+        listing.title && listing.title !== 'New Listing'
+          ? listing.title
+          : listing.category?.name || t('listing.general'),
       price: Number(listing.effectivePrice ?? listing.price),
       cleaningCost: Number(listing.cleaningCost ?? 0),
       cleaning,
@@ -111,7 +114,11 @@ export default function ListingDetailPage() {
       currency: listing.currency,
       imageUrl: images[0] || null,
       storeName: listing.seller.storeName,
-      productName: listing.title || listing.category?.name || 'Fish',
+      sellerId: listing.seller.id,
+      productName:
+        listing.title && listing.title !== 'New Listing'
+          ? listing.title
+          : listing.category?.name || 'Fish',
       variantName: listing.variant?.name || '',
     });
     setAdded(true);
@@ -134,7 +141,9 @@ export default function ListingDetailPage() {
             {images.length > 0 ? (
               <img
                 src={images[selectedImage]}
-                alt={listing.title || categoryName}
+                alt={
+                  listing.title && listing.title !== 'New Listing' ? listing.title : categoryName
+                }
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -166,7 +175,7 @@ export default function ListingDetailPage() {
               {categoryName}
             </span>
             <h1 className="text-2xl font-bold text-gray-900 mt-3">
-              {listing.title || categoryName}
+              {listing.title && listing.title !== 'New Listing' ? listing.title : categoryName}
             </h1>
             {listing.description && <p className="text-gray-600 mt-2">{listing.description}</p>}
           </div>
@@ -311,7 +320,10 @@ export default function ListingDetailPage() {
                 addItem({
                   listingId: l.id,
                   quantity: 1,
-                  title: l.title || l.category?.name || t('listing.general'),
+                  title:
+                    l.title && l.title !== 'New Listing'
+                      ? l.title
+                      : l.category?.name || t('listing.general'),
                   price: Number(l.price),
                   cleaningCost: Number(l.cleaningCost ?? 0),
                   cleaning: false,
@@ -319,7 +331,9 @@ export default function ListingDetailPage() {
                   currency: l.currency,
                   imageUrl: img[0] || null,
                   storeName: l.seller.storeName,
-                  productName: l.title || l.category?.name || 'Fish',
+                  sellerId: l.seller.id,
+                  productName:
+                    l.title && l.title !== 'New Listing' ? l.title : l.category?.name || 'Fish',
                   variantName: l.variant?.name || '',
                 });
                 setSameStoreAdded((prev) => ({ ...prev, [l.id]: true }));
@@ -338,7 +352,9 @@ export default function ListingDetailPage() {
                       {l.imageUrls?.length ? (
                         <img
                           src={l.imageUrls[0]}
-                          alt={l.title || l.category?.name || ''}
+                          alt={
+                            l.title && l.title !== 'New Listing' ? l.title : l.category?.name || ''
+                          }
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (
@@ -354,7 +370,9 @@ export default function ListingDetailPage() {
                   <div className="p-3 space-y-2">
                     <Link href={`/listings/${l.id}`}>
                       <h3 className="font-semibold text-gray-900 text-sm truncate">
-                        {l.title || l.category?.name || 'Fish'}
+                        {l.title && l.title !== 'New Listing'
+                          ? l.title
+                          : l.category?.name || 'Fish'}
                       </h3>
                       <span className="text-sm font-bold text-blue-600">
                         {l.currency} {Number(l.price).toFixed(2)}

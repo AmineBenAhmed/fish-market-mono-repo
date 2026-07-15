@@ -526,15 +526,16 @@ export class DeliveriesService {
                 sellerProfiles: {
                   select: {
                     storeName: true,
-                    street: true,
-                    buildingNumber: true,
-                    apartment: true,
-                    floor: true,
-                    landmark: true,
                     city: true,
                     state: true,
                     lat: true,
                     lng: true,
+                    address: {
+                      select: {
+                        addressLine: true,
+                        nearestReference: true,
+                      },
+                    },
                   },
                 },
               },

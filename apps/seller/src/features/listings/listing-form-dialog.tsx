@@ -186,7 +186,7 @@ export function ListingFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[70vw] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editListing ? 'Edit Listing' : 'New Listing'}</DialogTitle>
+          <DialogTitle>{editListing ? 'Edit Listing' : 'Add Listing'}</DialogTitle>
           <DialogDescription>
             {editListing ? 'Update your fish listing' : 'Add your fish inventory for buyers'}
           </DialogDescription>

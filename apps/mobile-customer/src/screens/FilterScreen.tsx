@@ -1,14 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocale } from '@/i18n/context';
+import { fetchGovernorates, fetchAreas } from '@/services/api';
 import type { FishCategory } from '@/types';
 
 interface FilterScreenProps {
   categories: FishCategory[];
   selectedCategory: string | null;
   selectedCondition: string | null;
-  onApply: (category: string | null, condition: string | null) => void;
+  selectedGovernorateId?: string | null;
+  selectedAreaId?: string | null;
+  onApply: (
+    category: string | null,
+    condition: string | null,
+    governorateId?: string | null,
+    areaId?: string | null,
+  ) => void;
   onClose: () => void;
 }
 
@@ -16,6 +24,8 @@ export function FilterScreen({
   categories,
   selectedCategory,
   selectedCondition,
+  selectedGovernorateId,
+  selectedAreaId,
   onApply,
   onClose,
 }: FilterScreenProps) {
@@ -24,7 +34,39 @@ export function FilterScreen({
   const [localConditions, setLocalConditions] = useState<string[]>(
     (selectedCondition || '').split(',').filter(Boolean),
   );
+  const [localGovernorateId, setLocalGovernorateId] = useState<string | null>(
+    selectedGovernorateId || null,
+  );
+  const [localAreaId, setLocalAreaId] = useState<string | null>(selectedAreaId || null);
   const [search, setSearch] = useState('');
+
+  const [governorates, setGovernorates] = useState<any[]>([]);
+  const [areas, setAreas] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchGovernorates()
+      .then((res) => {
+        const list = res.data || res;
+        setGovernorates(list);
+        if (!localGovernorateId) {
+          const sousse = list.find(
+            (g: any) => g.slug === 'sousse' || g.name.toLowerCase() === 'sousse',
+          );
+          if (sousse) setLocalGovernorateId(sousse.id);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (localGovernorateId) {
+      fetchAreas(localGovernorateId)
+        .then((res) => setAreas(res.data || res))
+        .catch(() => setAreas([]));
+    } else {
+      setAreas([]);
+    }
+  }, [localGovernorateId]);
 
   const conditions = [
     { value: 'FRESH', label: t('sidebar.fresh') },
@@ -41,7 +83,7 @@ export function FilterScreen({
   };
 
   const handleApply = () => {
-    onApply(localCategory, localConditions.join(',') || null);
+    onApply(localCategory, localConditions.join(',') || null, localGovernorateId, localAreaId);
     onClose();
   };
 
@@ -70,6 +112,55 @@ export function FilterScreen({
             </TouchableOpacity>
           ) : null}
         </View>
+
+        <Text style={styles.sectionLabel}>Location</Text>
+        <View style={styles.conditionList}>
+          {governorates.map((g: any) => (
+            <TouchableOpacity
+              key={g.id}
+              onPress={() => {
+                setLocalGovernorateId(g.id === localGovernorateId ? null : g.id);
+                setLocalAreaId(null);
+              }}
+              style={[
+                styles.conditionItem,
+                localGovernorateId === g.id && styles.conditionItemActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.conditionText,
+                  localGovernorateId === g.id && styles.conditionTextActive,
+                ]}
+              >
+                {g.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {localGovernorateId && areas.length > 0 ? (
+          <>
+            <Text style={[styles.sectionLabel, { marginTop: 8 }]}>Area</Text>
+            <View style={styles.conditionList}>
+              {areas.map((a: any) => (
+                <TouchableOpacity
+                  key={a.id}
+                  onPress={() => setLocalAreaId(a.id === localAreaId ? null : a.id)}
+                  style={[styles.conditionItem, localAreaId === a.id && styles.conditionItemActive]}
+                >
+                  <Text
+                    style={[
+                      styles.conditionText,
+                      localAreaId === a.id && styles.conditionTextActive,
+                    ]}
+                  >
+                    {a.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.sectionLabel}>{t('sidebar.preservation')}</Text>
         <View style={styles.conditionList}>

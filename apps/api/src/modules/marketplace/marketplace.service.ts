@@ -11,6 +11,8 @@ import { getGovernorateById, getAreaById, getZoneById } from '../locations/locat
 
 interface FindTodayParams {
   city?: string;
+  governorateId?: string;
+  areaId?: string;
   categoryId?: string;
   search?: string;
   condition?: string;
@@ -38,9 +40,17 @@ export class MarketplaceService {
       status: 'ACTIVE',
     };
 
-    if (params.city) {
+    if (params.city || params.governorateId) {
       where.seller = {
-        city: { contains: params.city, mode: 'insensitive' },
+        ...(params.city ? { city: { contains: params.city, mode: 'insensitive' } } : {}),
+        ...(params.governorateId
+          ? {
+              address: {
+                governorateId: params.governorateId,
+                ...(params.areaId ? { areaId: params.areaId } : {}),
+              },
+            }
+          : {}),
       };
     }
 
@@ -140,6 +150,8 @@ export class MarketplaceService {
   }
 
   async findAllListings(params: {
+    governorateId?: string;
+    areaId?: string;
     categoryId?: string;
     search?: string;
     minPrice?: number;
@@ -150,6 +162,15 @@ export class MarketplaceService {
     const where: Prisma.SellerListingWhereInput = {
       status: 'ACTIVE',
     };
+
+    if (params.governorateId) {
+      where.seller = {
+        address: {
+          governorateId: params.governorateId,
+          ...(params.areaId ? { areaId: params.areaId } : {}),
+        },
+      };
+    }
 
     if (params.categoryId) {
       where.categoryId = params.categoryId;

@@ -18,6 +18,8 @@ export async function fetchCategories() {
 export async function fetchListings(params: {
   page?: number;
   limit?: number;
+  governorateId?: string;
+  areaId?: string;
   categoryId?: string;
   search?: string;
   condition?: string;
@@ -29,6 +31,8 @@ export async function fetchListings(params: {
   const searchParams = new URLSearchParams();
   if (params.page) searchParams.set('page', String(params.page));
   if (params.limit) searchParams.set('limit', String(params.limit));
+  if (params.governorateId) searchParams.set('governorateId', params.governorateId);
+  if (params.areaId) searchParams.set('areaId', params.areaId);
   if (params.categoryId) searchParams.set('categoryId', params.categoryId);
   if (params.search) searchParams.set('search', params.search);
   if (params.condition) searchParams.set('condition', params.condition);

@@ -128,7 +128,7 @@ export function ListingsPage() {
         categoryId: data.categoryId,
         date: new Date().toISOString(),
         price: data.price,
-        title: data.description?.split('\n')[0]?.slice(0, 200) || 'New Listing',
+        title: data.description?.split('\n')[0]?.slice(0, 200) || 'Listing',
         description: data.description,
         origin: data.origin,
         condition: data.condition,

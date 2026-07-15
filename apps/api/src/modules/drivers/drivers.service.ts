@@ -41,6 +41,30 @@ export class DriversService {
       throw new BadRequestException('User already has a driver profile');
     }
 
+    let addressId: string | undefined;
+
+    if (dto.governorateId && dto.areaId && dto.zoneId) {
+      const parts: string[] = [];
+      if (dto.street) parts.push(dto.street);
+      if (dto.floor) parts.push(`Floor ${dto.floor}`);
+      if (dto.apartment) parts.push(`Room ${dto.apartment}`);
+      if (dto.buildingNumber) parts.push(`Building ${dto.buildingNumber}`);
+      const addressLine = parts.join(', ');
+
+      const address = await this.prisma.address.create({
+        data: {
+          governorateId: dto.governorateId,
+          areaId: dto.areaId,
+          zoneId: dto.zoneId,
+          addressLine,
+          nearestReference: dto.landmark || null,
+          lat: dto.lat,
+          lng: dto.lng,
+        },
+      });
+      addressId = address.id;
+    }
+
     const profile = await this.prisma.driverProfile.create({
       data: {
         userId,
@@ -51,7 +75,7 @@ export class DriversService {
         idCardNumber: dto.idCardNumber,
         idCardPhoto: dto.idCardPhoto,
         phone2: dto.phone2,
-        workingZone: dto.workingZone,
+        addressId,
         deliveryFee: dto.deliveryFee ?? 0,
       },
       include: {
@@ -59,6 +83,7 @@ export class DriversService {
           select: { id: true, name: true, email: true, phone: true, role: true, status: true },
         },
         zone: { select: { id: true, name: true } },
+        address: true,
       },
     });
 
@@ -98,6 +123,7 @@ export class DriversService {
             select: { id: true, name: true, email: true, phone: true, role: true, status: true },
           },
           zone: { select: { id: true, name: true } },
+          address: true,
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -115,7 +141,7 @@ export class DriversService {
   async getProfile(id: string) {
     const profile = await this.prisma.driverProfile.findFirst({
       where: { OR: [{ id }, { userId: id }] },
-      include: { zone: true },
+      include: { zone: true, address: true },
     });
 
     if (!profile) {
@@ -203,6 +229,7 @@ export class DriversService {
   async adminUpdateProfile(id: string, dto: AdminUpdateDriverDto, adminId: string) {
     const profile = await this.prisma.driverProfile.findFirst({
       where: { OR: [{ id }, { userId: id }] },
+      include: { address: true },
     });
 
     if (!profile) throw new NotFoundException('Driver profile not found');
@@ -243,10 +270,6 @@ export class DriversService {
       oldValue.phone2 = profile.phone2;
       data.phone2 = dto.phone2;
     }
-    if (dto.workingZone !== undefined) {
-      oldValue.workingZone = profile.workingZone;
-      data.workingZone = dto.workingZone;
-    }
     if (dto.deliveryZoneId !== undefined) {
       oldValue.deliveryZoneId = profile.deliveryZoneId;
       data.deliveryZoneId = dto.deliveryZoneId;
@@ -263,6 +286,59 @@ export class DriversService {
       oldValue.maxLoadKg = profile.maxLoadKg;
       data.maxLoadKg = dto.maxLoadKg;
     }
+
+    const hasAddressChanges =
+      dto.governorateId !== undefined ||
+      dto.areaId !== undefined ||
+      dto.zoneId !== undefined ||
+      dto.street !== undefined ||
+      dto.buildingNumber !== undefined ||
+      dto.floor !== undefined ||
+      dto.apartment !== undefined ||
+      dto.landmark !== undefined;
+
+    if (hasAddressChanges) {
+      const existing = profile.address;
+      const govId = dto.governorateId ?? existing?.governorateId ?? '';
+      const areaId = dto.areaId ?? existing?.areaId ?? '';
+      const zoneId = dto.zoneId ?? existing?.zoneId ?? '';
+
+      const existingParts = existing?.addressLine?.split(', ') || [];
+      const existingStreet =
+        existingParts.find(
+          (p) => !p.startsWith('Floor ') && !p.startsWith('Room ') && !p.startsWith('Building '),
+        ) || '';
+      const existingFloor =
+        existingParts.find((p) => p.startsWith('Floor '))?.replace('Floor ', '') || '';
+      const existingRoom =
+        existingParts.find((p) => p.startsWith('Room '))?.replace('Room ', '') || '';
+      const existingBuilding =
+        existingParts.find((p) => p.startsWith('Building '))?.replace('Building ', '') || '';
+
+      const newParts: string[] = [];
+      const newStreet = dto.street ?? existingStreet;
+      if (newStreet) newParts.push(newStreet);
+      const newFloor = dto.floor ?? existingFloor;
+      if (newFloor) newParts.push(`Floor ${newFloor}`);
+      const newRoom = dto.apartment ?? existingRoom;
+      if (newRoom) newParts.push(`Room ${newRoom}`);
+      const newBuilding = dto.buildingNumber ?? existingBuilding;
+      if (newBuilding) newParts.push(`Building ${newBuilding}`);
+      const addressLine = newParts.join(', ');
+
+      const address = await this.prisma.address.create({
+        data: {
+          governorateId: govId,
+          areaId,
+          zoneId,
+          addressLine,
+          nearestReference: dto.landmark ?? existing?.nearestReference ?? null,
+        },
+      });
+
+      data.addressId = address.id;
+    }
+
     if (dto.deliveryFee !== undefined) {
       oldValue.deliveryFee = profile.deliveryFee;
       data.deliveryFee = dto.deliveryFee;
@@ -276,6 +352,7 @@ export class DriversService {
           select: { id: true, name: true, email: true, phone: true, role: true, status: true },
         },
         zone: { select: { id: true, name: true } },
+        address: true,
       },
     });
 

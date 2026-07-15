@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, ImageIcon, Loader2, Plus, Search, User, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { PageHeader } from '../../components/shared/page-header';
 import { MapPicker } from '../../components/shared/map-picker';
@@ -72,7 +73,15 @@ export function StoreCreatePage() {
     mutationFn: (data: Parameters<typeof sellersService.create>[0]) => sellersService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Store created successfully');
       navigate('/stores');
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
+        (err as Error).message ||
+        'Failed to create store';
+      toast.error(msg);
     },
   });
 
@@ -97,8 +106,22 @@ export function StoreCreatePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!lookedUpUser || !form.storeName || !address.areaId || !address.zoneId || !address.street)
+    if (!lookedUpUser) {
+      toast.error('Please search and select a user first');
       return;
+    }
+    if (!form.storeName) {
+      toast.error('Store name is required');
+      return;
+    }
+    if (!address.areaId) {
+      toast.error('Please select an area');
+      return;
+    }
+    if (!address.zoneId) {
+      toast.error('Please select a zone');
+      return;
+    }
 
     createMutation.mutate({
       userId: lookedUpUser.id,

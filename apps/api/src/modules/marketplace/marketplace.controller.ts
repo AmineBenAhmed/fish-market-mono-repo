@@ -14,6 +14,8 @@ export class MarketplaceController {
   @Get('today')
   @ApiOperation({ summary: 'Browse all available fish for today' })
   @ApiQuery({ name: 'city', required: false, type: String })
+  @ApiQuery({ name: 'governorateId', required: false, type: String })
+  @ApiQuery({ name: 'areaId', required: false, type: String })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'condition', required: false, type: String })
@@ -26,6 +28,8 @@ export class MarketplaceController {
   @ApiResponse({ status: 200, description: "Today's available fish" })
   async findToday(
     @Query('city') city?: string,
+    @Query('governorateId') governorateId?: string,
+    @Query('areaId') areaId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('search') search?: string,
     @Query('condition') condition?: string,
@@ -38,6 +42,8 @@ export class MarketplaceController {
   ) {
     return this.marketplaceService.findToday({
       city,
+      governorateId,
+      areaId,
       categoryId,
       search,
       condition,
@@ -53,9 +59,16 @@ export class MarketplaceController {
   @Get('category/:id')
   @ApiOperation({ summary: 'Browse fish by category for today' })
   @ApiQuery({ name: 'city', required: false, type: String })
+  @ApiQuery({ name: 'governorateId', required: false, type: String })
+  @ApiQuery({ name: 'areaId', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Category listings' })
-  async findByCategory(@Param('id') categoryId: string, @Query('city') city?: string) {
-    return this.marketplaceService.findToday({ categoryId, city });
+  async findByCategory(
+    @Param('id') categoryId: string,
+    @Query('city') city?: string,
+    @Query('governorateId') governorateId?: string,
+    @Query('areaId') areaId?: string,
+  ) {
+    return this.marketplaceService.findToday({ categoryId, city, governorateId, areaId });
   }
 
   @Get('search')
@@ -68,6 +81,8 @@ export class MarketplaceController {
 
   @Get('listings')
   @ApiOperation({ summary: 'Browse all listings with pagination (no date filter)' })
+  @ApiQuery({ name: 'governorateId', required: false, type: String })
+  @ApiQuery({ name: 'areaId', required: false, type: String })
   @ApiQuery({ name: 'categoryId', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'minPrice', required: false, type: Number })
@@ -76,6 +91,8 @@ export class MarketplaceController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Paginated listings' })
   async findAllListings(
+    @Query('governorateId') governorateId?: string,
+    @Query('areaId') areaId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('search') search?: string,
     @Query('minPrice') minPrice?: string,
@@ -84,6 +101,8 @@ export class MarketplaceController {
     @Query('limit') limit?: string,
   ) {
     return this.marketplaceService.findAllListings({
+      governorateId,
+      areaId,
       categoryId,
       search,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
