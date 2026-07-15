@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchListing, fetchSellerListings } from '@/lib/api';
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/stores/cart';
 import type { Listing } from '@/lib/types';
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 import {
   Loader2,
   ArrowLeft,

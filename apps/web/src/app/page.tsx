@@ -7,7 +7,7 @@ import { CategoryCard } from '@/components/category-card';
 import { StoreCard } from '@/components/store-card';
 import type { FishCategory, Listing } from '@/lib/types';
 import { Loader2, Store } from 'lucide-react';
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 
 export default function HomePage() {
   const searchParams = useSearchParams();

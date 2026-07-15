@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/stores/cart';
 import { QuantityPicker } from '@/components/quantity-picker';
 import { AddressForm } from '@/components/address-form';
 import { createOrder, calculateDeliveryFees } from '@/lib/api';
@@ -17,7 +17,7 @@ import {
   Phone,
   MapPin,
 } from 'lucide-react';
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 import type { AddressFormValue } from '@/components/address-form';
 
 const STORAGE_KEY = 'fishmarket_customer';

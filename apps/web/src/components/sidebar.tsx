@@ -19,7 +19,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import type { FishCategory } from '@/lib/types';
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 import { fetchGovernorates, fetchAreas } from '@/lib/api';
 
 const categoryIcons = [Fish, Waves, Egg, Shell, Ship, Droplets, Anchor];

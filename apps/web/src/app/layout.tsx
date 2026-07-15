@@ -1,8 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { CartProvider } from '@/hooks/use-cart';
-import { LocaleProvider } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 import { Header } from '@/components/header';
 import { Sidebar } from '@/components/sidebar';
 import { useCategories } from '@/hooks/use-categories';
@@ -20,6 +19,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const { dir } = useLocale();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen text-gray-900">
@@ -27,14 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <img src="/assets/background.jpg" alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-white/70" />
         </div>
-        <LocaleProvider>
-          <CartProvider>
-            <Header />
-            <Suspense fallback={<div className="max-w-[1440px] mx-auto px-6 py-8">{children}</div>}>
-              <LayoutContent>{children}</LayoutContent>
-            </Suspense>
-          </CartProvider>
-        </LocaleProvider>
+        <div dir={dir}>
+          <Header />
+          <Suspense fallback={<div className="max-w-[1440px] mx-auto px-6 py-8">{children}</div>}>
+            <LayoutContent>{children}</LayoutContent>
+          </Suspense>
+        </div>
       </body>
     </html>
   );

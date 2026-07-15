@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { ShoppingCart, Languages } from 'lucide-react';
-import { useCart } from '@/hooks/use-cart';
-import { useLocale } from '@/lib/i18n/context';
+import { useCart } from '@/stores/cart';
+import { useLocale } from '@/stores/locale';
 import type { Locale } from '@/lib/i18n/translations';
 
 const languages: { key: Locale; label: string }[] = [

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { MapPin, Fish, Store } from 'lucide-react';
 import type { Listing } from '@/lib/types';
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 
 interface Props {
   listing: Listing;

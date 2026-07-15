@@ -18,7 +18,8 @@
     "react-dom": "^19.0.0",
     "lucide-react": "^0.468.0",
     "clsx": "^2.1.0",
-    "zod": "^3.24.0"
+    "zod": "^3.24.0",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@fishmarket/config-tsconfig": "workspace:*",

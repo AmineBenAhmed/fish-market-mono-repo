@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 
 export default function NotFound() {
   const { t } = useLocale();

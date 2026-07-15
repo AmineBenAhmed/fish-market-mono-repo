@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 import { AddressForm } from './address-form';
 import type { AddressFormValue } from './address-form';
 

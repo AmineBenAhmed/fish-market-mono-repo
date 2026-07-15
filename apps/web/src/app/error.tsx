@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocale } from '@/lib/i18n/context';
+import { useLocale } from '@/stores/locale';
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   const { t } = useLocale();
