@@ -1,6 +1,6 @@
 import type { ApiResponse, FishCategory, Listing, MarketplaceResponse } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://178.162.242.127:4000/api/v1';
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
