@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 
 const API_BASE = (() => {
-  if (typeof window === 'undefined') return 'http://localhost:4000';
+  if (typeof window === 'undefined') return 'http://178.162.242.127:4000';
   const origin = window.location.origin;
-  if (origin.includes('localhost') || origin.includes('192.168')) {
-    return 'http://localhost:4000';
+  if (origin.includes('localhost') || origin.includes('192.168') || origin.includes('178.162')) {
+    return 'http://178.162.242.127:4000';
   }
   return origin.replace('/api/v1', '');
 })();
