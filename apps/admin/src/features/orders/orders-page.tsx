@@ -230,7 +230,7 @@ export function OrdersPage() {
                 header: 'Store',
                 render: (o: Order) => (
                   <span className="text-sm">
-                    {o.seller?.sellerProfiles?.[0]?.storeName || o.seller?.name || '-'}
+                    {o.sellerProfile?.storeName || o.seller?.name || '-'}
                   </span>
                 ),
               },

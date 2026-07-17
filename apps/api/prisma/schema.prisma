@@ -338,6 +338,7 @@ model SellerProfile {
   address         Address         @relation(fields: [addressId], references: [id])
   storeLogo       File?           @relation("StoreLogo", fields: [storeLogoFileId], references: [id], onDelete: SetNull)
   listings        SellerListing[]
+  orders          Order[]
   zone            DeliveryZone?   @relation("SellerZones", fields: [deliveryZoneId], references: [id])
 }
 
@@ -605,6 +606,7 @@ model Order {
   orderNumber     String      @unique // human-readable: "FM-20240101-XXXX"
   customerId      String
   sellerId        String?     // null for parent orders in multi-seller splits
+  sellerProfileId String?     // specific seller profile this order belongs to (disambiguates multi-profile sellers)
   status          OrderStatus @default(DRAFT)
   subtotal        Decimal     @db.Decimal(10, 2)
   deliveryFee     Decimal     @db.Decimal(10, 2)
@@ -618,11 +620,12 @@ model Order {
   updatedAt       DateTime    @updatedAt
 
   // Relations
-  parentOrder  Order?              @relation("OrderHierarchy", fields: [parentOrderId], references: [id])
-  childOrders  Order[]             @relation("OrderHierarchy")
-  customer     User                @relation("CustomerOrders", fields: [customerId], references: [id])
-  seller       User?               @relation("SellerOrders", fields: [sellerId], references: [id])
-  cancelledBy  User?               @relation("CancelledBy", fields: [cancelledById], references: [id])
+  parentOrder   Order?              @relation("OrderHierarchy", fields: [parentOrderId], references: [id])
+  childOrders   Order[]             @relation("OrderHierarchy")
+  customer      User                @relation("CustomerOrders", fields: [customerId], references: [id])
+  seller        User?               @relation("SellerOrders", fields: [sellerId], references: [id])
+  sellerProfile SellerProfile?      @relation(fields: [sellerProfileId], references: [id])
+  cancelledBy   User?               @relation("CancelledBy", fields: [cancelledById], references: [id])
   items        OrderItem[]
   statusHistory OrderStatusHistory[]
   payment      Payment?
@@ -633,6 +636,7 @@ model Order {
 
   @@index([customerId, status])
   @@index([sellerId, status])
+  @@index([sellerProfileId])
   @@index([parentOrderId])
   @@index([status, createdAt])
   @@index([orderNumber])

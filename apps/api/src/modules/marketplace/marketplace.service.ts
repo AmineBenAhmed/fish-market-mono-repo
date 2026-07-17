@@ -5,6 +5,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { OrderStatus, Prisma } from '@prisma/client';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
+import { DeliveryPricingService } from '../delivery-pricing/delivery-pricing.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { getGovernorateById, getAreaById, getZoneById } from '../locations/locations.data';
@@ -29,6 +30,7 @@ export class MarketplaceService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly deliveryPricing: DeliveryPricingService,
   ) {}
 
   async findToday(params: FindTodayParams = {}) {
@@ -123,7 +125,7 @@ export class MarketplaceService {
 
     const data = listings.map((l) => ({
       ...l,
-      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate ?? 0)),
+      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate || 0.12)),
     }));
 
     return {
@@ -224,7 +226,7 @@ export class MarketplaceService {
 
     const data = listings.map((l) => ({
       ...l,
-      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate ?? 0)),
+      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate || 0.12)),
     }));
 
     return {
@@ -262,7 +264,7 @@ export class MarketplaceService {
 
     return {
       ...listing,
-      effectivePrice: Number(listing.price) * (1 + (listing.seller.commissionRate ?? 0)),
+      effectivePrice: Number(listing.price) * (1 + (listing.seller.commissionRate || 0.12)),
     };
   }
 
@@ -390,84 +392,75 @@ export class MarketplaceService {
     const groupedBySeller = new Map<string, typeof items>();
     for (const item of items) {
       const listing = listingMap.get(item.listingId)!;
-      const sellerId = listing.seller.user.id;
-      if (!groupedBySeller.has(sellerId)) {
-        groupedBySeller.set(sellerId, []);
+      const sellerProfileId = listing.seller.id;
+      if (!groupedBySeller.has(sellerProfileId)) {
+        groupedBySeller.set(sellerProfileId, []);
       }
-      groupedBySeller.get(sellerId)!.push(item);
+      groupedBySeller.get(sellerProfileId)!.push(item);
     }
 
-    const orderNumber = this.generateOrderNumber();
+    const customerAreaId = dto.areaId;
 
-    const { parentOrder, childOrders } = await this.prisma.$transaction(async (tx) => {
-      const sellerOrders: {
-        data: Prisma.OrderCreateInput;
-        items: typeof items;
-      }[] = [];
+    const sellerProfileIds = Array.from(groupedBySeller.keys());
+    const profiles = await this.prisma.sellerProfile.findMany({
+      where: { id: { in: sellerProfileIds } },
+      select: {
+        id: true,
+        userId: true,
+        commissionRate: true,
+        address: { select: { areaId: true } },
+      },
+    });
+    const commissionMap = new Map(profiles.map((p) => [p.id, p.commissionRate]));
+    const profileUserMap = new Map(profiles.map((p) => [p.id, p.userId]));
 
-      const sellerIds = Array.from(groupedBySeller.keys());
-      const profiles = await tx.sellerProfile.findMany({
-        where: { userId: { in: sellerIds } },
-        select: { userId: true, commissionRate: true },
-      });
-      const commissionMap = new Map(profiles.map((p) => [p.userId, p.commissionRate]));
+    const deliveryFeeMap = new Map<string, number>();
+    for (const profile of profiles) {
+      const storeAreaId = profile.address?.areaId;
+      if (customerAreaId && storeAreaId) {
+        deliveryFeeMap.set(
+          profile.id,
+          await this.deliveryPricing.calculate(customerAreaId, storeAreaId),
+        );
+      } else {
+        deliveryFeeMap.set(profile.id, 0);
+      }
+    }
 
-      for (const [sellerId, sellerItems] of groupedBySeller) {
+    const createdOrders = await this.prisma.$transaction(async (tx) => {
+      const createdOrders: any[] = [];
+
+      for (const [sellerProfileId, sellerItems] of groupedBySeller) {
         const subtotal = sellerItems.reduce((sum, i) => {
           const listing = listingMap.get(i.listingId)!;
           const unitPrice =
             Number(listing.price) + (i.cleaning ? Number(listing.cleaningCost ?? 0) : 0);
           return sum + unitPrice * i.quantity;
         }, 0);
-        const commissionRate = commissionMap.get(sellerId) ?? 0.12;
+        const commissionRate = commissionMap.get(sellerProfileId) || 0.12;
         const commission = subtotal * commissionRate;
-        const total = subtotal + commission;
+        const deliveryFee = deliveryFeeMap.get(sellerProfileId) ?? 0;
+        const total = subtotal + deliveryFee + commission;
 
-        sellerOrders.push({
+        const orderNumber = this.generateOrderNumber();
+        const sellerUserId = profileUserMap.get(sellerProfileId)!;
+
+        const created = await tx.order.create({
           data: {
-            orderNumber: `${orderNumber}-S${sellerOrders.length + 1}`,
+            orderNumber,
             customer: { connect: { id: guestUser.id } },
-            seller: { connect: { id: sellerId } },
+            seller: { connect: { id: sellerUserId } },
+            sellerProfile: { connect: { id: sellerProfileId } },
             status: OrderStatus.DRAFT,
             subtotal,
-            deliveryFee: 0,
+            deliveryFee,
             commission,
             discount: 0,
             total,
           },
-          items: sellerItems,
-        });
-      }
-
-      let parentOrder: any = null;
-
-      if (sellerOrders.length > 1) {
-        const parentTotal = sellerOrders.reduce((sum, so) => sum + (so.data.total as number), 0);
-
-        parentOrder = await tx.order.create({
-          data: {
-            orderNumber,
-            customer: { connect: { id: guestUser.id } },
-            status: OrderStatus.DRAFT,
-            subtotal: parentTotal,
-            deliveryFee: 0,
-            commission: 0,
-            discount: 0,
-            total: parentTotal,
-          },
         });
 
-        for (const so of sellerOrders) {
-          so.data.parentOrder = { connect: { id: parentOrder.id } };
-        }
-      }
-
-      const createdOrders: any[] = [];
-
-      for (const so of sellerOrders) {
-        const created = await tx.order.create({ data: so.data });
-
-        for (const cartItem of so.items) {
+        for (const cartItem of sellerItems) {
           const listing = listingMap.get(cartItem.listingId)!;
           const cleaningCost = cartItem.cleaning ? Number(listing.cleaningCost ?? 0) : 0;
           const effectiveUnitPrice = Number(listing.price) + cleaningCost;
@@ -501,10 +494,10 @@ export class MarketplaceService {
         createdOrders.push(created);
       }
 
-      return { parentOrder, childOrders: createdOrders };
+      return createdOrders;
     });
 
-    for (const order of childOrders) {
+    for (const order of createdOrders) {
       this.eventEmitter.emit('order.created', {
         orderId: order.id,
         orderNumber: order.orderNumber,
@@ -514,19 +507,9 @@ export class MarketplaceService {
       });
     }
 
-    if (parentOrder) {
-      this.eventEmitter.emit('order.created', {
-        orderId: parentOrder.id,
-        orderNumber: parentOrder.orderNumber,
-        customerId: guestUser.id,
-        sellerId: null,
-        total: Number(parentOrder.total),
-      });
-    }
-
     return {
       message: 'Order created successfully',
-      orderNumber,
+      orderNumber: createdOrders[0]?.orderNumber ?? '',
       customerName,
     };
   }
@@ -583,7 +566,7 @@ export class MarketplaceService {
 
     const listings = rawListings.map((l) => ({
       ...l,
-      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate ?? 0)),
+      effectivePrice: Number(l.price) * (1 + (l.seller.commissionRate || 0.12)),
     }));
 
     return { seller: sellerProfile, listings };

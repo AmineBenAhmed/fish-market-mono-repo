@@ -131,6 +131,7 @@ export class ListingsService {
     }
 
     const listingDate = new Date(dto.date);
+    listingDate.setUTCHours(0, 0, 0, 0);
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
@@ -467,6 +468,7 @@ export class ListingsService {
     }
 
     const listingDate = new Date(dto.date);
+    listingDate.setUTCHours(0, 0, 0, 0);
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 

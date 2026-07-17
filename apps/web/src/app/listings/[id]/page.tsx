@@ -324,7 +324,7 @@ export default function ListingDetailPage() {
                     l.title && l.title !== 'New Listing'
                       ? l.title
                       : l.category?.name || t('listing.general'),
-                  price: Number(l.price),
+                  price: Number(l.effectivePrice ?? l.price),
                   cleaningCost: Number(l.cleaningCost ?? 0),
                   cleaning: false,
                   unit: l.unit,
@@ -375,7 +375,7 @@ export default function ListingDetailPage() {
                           : l.category?.name || 'Fish'}
                       </h3>
                       <span className="text-sm font-bold text-blue-600">
-                        {l.currency} {Number(l.price).toFixed(2)}
+                        {l.currency} {Number(l.effectivePrice ?? l.price).toFixed(2)}
                         {l.unit ? `/${l.unit}` : ''}
                       </span>
                     </Link>

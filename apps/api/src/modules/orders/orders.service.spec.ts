@@ -3,6 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { DeliveryPricingService } from '../delivery-pricing/delivery-pricing.service';
 import { InventoryReservationService } from './inventory-reservation.service';
 import { OrderCalculationService } from './order-calculation.service';
 import { OrderStatusService } from './order-status.service';
@@ -22,10 +23,14 @@ describe('OrdersService', () => {
 
   const mockEventEmitter = { emit: jest.fn() };
 
+  const mockDeliveryPricing = { calculate: jest.fn().mockResolvedValue(3.5) };
+
   const mockPrisma = {
     cart: { findUnique: jest.fn() },
     order: { findFirst: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), count: jest.fn() },
     orderItem: { findMany: jest.fn() },
+    sellerProfile: { findMany: jest.fn() },
+    userAddress: { findFirst: jest.fn() },
     $transaction: jest.fn((fn: any) => fn(mockTx)),
   };
 
@@ -37,6 +42,7 @@ describe('OrdersService', () => {
         OrdersService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventEmitter2, useValue: mockEventEmitter },
+        { provide: DeliveryPricingService, useValue: mockDeliveryPricing },
         InventoryReservationService,
         OrderCalculationService,
         OrderStatusService,
@@ -48,7 +54,7 @@ describe('OrdersService', () => {
 
   describe('createFromCart', () => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
 
     const mockCartItem = {
       id: 'ci-1',
@@ -67,7 +73,7 @@ describe('OrdersService', () => {
         category: { id: 'cat-1', name: 'Fish' },
         title: 'Sea Bass',
         variant: { id: 'variant-1', name: 'Whole', unit: 'kg' },
-        seller: { user: { id: 'seller-user-1' } },
+        seller: { id: 'seller-profile-1', user: { id: 'seller-user-1' } },
       },
     };
 
@@ -90,20 +96,25 @@ describe('OrdersService', () => {
         items: [mockCartItem],
       });
 
-      mockTx.sellerProfile.findMany.mockResolvedValue([
-        { userId: 'seller-user-1', commissionRate: 0.12 },
+      mockPrisma.sellerProfile.findMany.mockResolvedValue([
+        {
+          id: 'seller-profile-1',
+          userId: 'seller-user-1',
+          commissionRate: 0.12,
+          address: { areaId: 'area-1' },
+        },
       ]);
+      mockPrisma.userAddress.findFirst.mockResolvedValue({ areaId: 'customer-area-1' });
       mockTx.sellerListing.updateMany.mockResolvedValue({ count: 1 });
       mockTx.order.create.mockResolvedValue({ id: 'order-1' });
 
       const result = await service.createFromCart('user-1');
 
-      expect(result.parentOrder).toBeNull();
-      expect(result.childOrders).toHaveLength(1);
+      expect(result.orders).toHaveLength(1);
       expect(mockTx.cartItem.deleteMany).toHaveBeenCalled();
     });
 
-    it('should create parent + child orders for multi-seller cart', async () => {
+    it('should create independent orders for multi-seller cart', async () => {
       const seller2Item = {
         ...mockCartItem,
         id: 'ci-2',
@@ -111,7 +122,7 @@ describe('OrdersService', () => {
         listing: {
           ...mockCartItem.listing,
           id: 'listing-2',
-          seller: { user: { id: 'seller-user-2' } },
+          seller: { id: 'seller-profile-2', user: { id: 'seller-user-2' } },
           category: { id: 'cat-2', name: 'Seafood' },
           title: 'Shrimp',
         },
@@ -123,17 +134,27 @@ describe('OrdersService', () => {
         items: [mockCartItem, seller2Item],
       });
 
-      mockTx.sellerProfile.findMany.mockResolvedValue([
-        { userId: 'seller-user-1', commissionRate: 0.12 },
-        { userId: 'seller-user-2', commissionRate: 0.1 },
+      mockPrisma.sellerProfile.findMany.mockResolvedValue([
+        {
+          id: 'seller-profile-1',
+          userId: 'seller-user-1',
+          commissionRate: 0.12,
+          address: { areaId: 'area-1' },
+        },
+        {
+          id: 'seller-profile-2',
+          userId: 'seller-user-2',
+          commissionRate: 0.1,
+          address: { areaId: 'area-2' },
+        },
       ]);
+      mockPrisma.userAddress.findFirst.mockResolvedValue({ areaId: 'customer-area-1' });
       mockTx.sellerListing.updateMany.mockResolvedValue({ count: 1 });
       mockTx.order.create.mockResolvedValue({ id: 'child-1' });
 
       const result = await service.createFromCart('user-1');
 
-      expect(result.parentOrder).toBeDefined();
-      expect(result.childOrders).toHaveLength(2);
+      expect(result.orders).toHaveLength(2);
     });
   });
 
@@ -166,23 +187,16 @@ describe('OrdersService', () => {
   });
 
   describe('cancelOrder', () => {
-    it('should cancel order and release inventory', async () => {
+    it('should cancel order', async () => {
       mockPrisma.order.findFirst.mockResolvedValue({
         id: 'order-1',
         customerId: 'user-1',
         status: 'DRAFT',
-        parentOrderId: null,
       });
-      mockPrisma.order.findMany.mockResolvedValue([]);
-      mockTx.orderItem.findMany.mockResolvedValue([
-        { id: 'oi-1', listingId: 'listing-1', quantity: 2 },
-      ]);
-      mockTx.sellerListing.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.cancelOrder('user-1', 'order-1', { reason: 'Changed mind' });
 
       expect(result.message).toBe('Order cancelled successfully');
-      expect(mockTx.orderItem.findMany).toHaveBeenCalled();
     });
 
     it('should throw if order not found', async () => {

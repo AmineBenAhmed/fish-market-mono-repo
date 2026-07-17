@@ -103,7 +103,7 @@ export function OrderDetailPage() {
     );
   }
 
-  const storeProfile = order.seller?.sellerProfiles?.[0];
+  const storeProfile = order.sellerProfile;
   const deliveryAddress = order.delivery?.address;
   const totalCleaningCost = (order.items ?? []).reduce(
     (sum, item) => sum + (item.cleaning ? Number(item.cleaningCost) * item.quantity : 0),

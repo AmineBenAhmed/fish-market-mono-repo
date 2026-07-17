@@ -1,7 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { DeliveryPricingService } from '../delivery-pricing/delivery-pricing.service';
 import { MarketplaceService } from './marketplace.service';
 
 describe('MarketplaceService', () => {
@@ -18,6 +20,9 @@ describe('MarketplaceService', () => {
       findUnique: jest.fn(),
     },
   };
+
+  const mockEventEmitter = { emit: jest.fn() };
+  const mockDeliveryPricing = { calculate: jest.fn().mockResolvedValue(3.5) };
 
   const mockListing = {
     id: 'listing-1',
@@ -45,7 +50,12 @@ describe('MarketplaceService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MarketplaceService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        MarketplaceService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
+        { provide: DeliveryPricingService, useValue: mockDeliveryPricing },
+      ],
     }).compile();
 
     service = module.get<MarketplaceService>(MarketplaceService);

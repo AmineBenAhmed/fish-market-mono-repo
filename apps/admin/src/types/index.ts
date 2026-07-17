@@ -99,12 +99,18 @@ export interface OrderSeller {
   id: string;
   name: string;
   phone?: string;
-  sellerProfiles?: {
-    storeName: string;
-    city: string;
-    state: string;
-    pickupAddress?: string;
-  }[];
+}
+
+export interface OrderSellerProfile {
+  id: string;
+  storeName: string;
+  city: string;
+  state: string;
+  pickupAddress?: string;
+  address?: {
+    addressLine: string;
+    nearestReference?: string;
+  };
 }
 
 export interface Order {
@@ -113,6 +119,7 @@ export interface Order {
   status: string;
   customerId: string;
   sellerId?: string;
+  sellerProfileId?: string;
   subtotal: number;
   deliveryFee: number;
   commission: number;
@@ -121,8 +128,8 @@ export interface Order {
   cancelReason?: string;
   customer?: OrderCustomer;
   seller?: OrderSeller;
+  sellerProfile?: OrderSellerProfile;
   items?: OrderItem[];
-  childOrders?: Partial<Order>[];
   payment?: Payment;
   delivery?: Delivery;
   statusHistory?: OrderStatusHistory[];

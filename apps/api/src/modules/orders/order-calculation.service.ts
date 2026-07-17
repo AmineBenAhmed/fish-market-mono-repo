@@ -43,6 +43,10 @@ export class OrderCalculationService {
     };
   }
 
+  calculateSellerDeliveryFee(sellerSubtotal: number): number {
+    return sellerSubtotal >= 50 ? 0 : 5;
+  }
+
   calculateMarketplaceOrder(sellerResults: CalculationResult[]): CalculationResult {
     const subtotal = sellerResults.reduce((s, r) => s + r.subtotal, 0);
     const deliveryFee = sellerResults.reduce((s, r) => s + r.deliveryFee, 0);

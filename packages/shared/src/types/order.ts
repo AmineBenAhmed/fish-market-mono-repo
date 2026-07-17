@@ -27,7 +27,6 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  parentOrderId?: string;
   orderNumber: string;
   customerId: string;
   sellerId?: string;
@@ -43,7 +42,6 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   items?: OrderItem[];
-  childOrders?: Order[];
 }
 
 export interface CartItem {

@@ -5,6 +5,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Order, OrderStatus, Prisma } from '@prisma/client';
 
 import { createPaginationMeta, parsePagination } from '../../common/utils';
+import { DeliveryPricingService } from '../delivery-pricing/delivery-pricing.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -13,8 +14,7 @@ import { OrderCalculationService } from './order-calculation.service';
 import { OrderStatusService } from './order-status.service';
 
 export interface OrderCreateResult {
-  parentOrder: Order | null;
-  childOrders: Order[];
+  orders: Order[];
 }
 
 @Injectable()
@@ -24,6 +24,7 @@ export class OrdersService {
     private readonly calculation: OrderCalculationService,
     private readonly orderStatus: OrderStatusService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly deliveryPricing: DeliveryPricingService,
   ) {}
 
   private generateOrderNumber(): string {
@@ -73,91 +74,81 @@ export class OrdersService {
 
     const groupedBySeller = new Map<string, typeof cart.items>();
     for (const item of cart.items) {
-      const sellerId = item.listing.seller.user.id;
-      if (!groupedBySeller.has(sellerId)) {
-        groupedBySeller.set(sellerId, []);
+      const sellerProfileId = item.listing.seller.id;
+      if (!groupedBySeller.has(sellerProfileId)) {
+        groupedBySeller.set(sellerProfileId, []);
       }
-      groupedBySeller.get(sellerId)!.push(item);
+      groupedBySeller.get(sellerProfileId)!.push(item);
     }
 
-    const orderNumber = this.generateOrderNumber();
+    const customerAddress = await this.prisma.userAddress.findFirst({
+      where: { userId, isDefault: true },
+    });
+    const customerAreaId = (customerAddress as any)?.areaId ?? null;
+
+    const sellerProfileIds = Array.from(groupedBySeller.keys());
+    const profiles = await this.prisma.sellerProfile.findMany({
+      where: { id: { in: sellerProfileIds } },
+      select: {
+        id: true,
+        userId: true,
+        commissionRate: true,
+        address: { select: { areaId: true } },
+      },
+    });
+    const commissionMap = new Map(profiles.map((p) => [p.id, p.commissionRate]));
+    const profileUserMap = new Map(profiles.map((p) => [p.id, p.userId]));
+
+    const deliveryFeeMap = new Map<string, number>();
+    for (const profile of profiles) {
+      const storeAreaId = profile.address?.areaId;
+      if (customerAreaId && storeAreaId) {
+        deliveryFeeMap.set(
+          profile.id,
+          await this.deliveryPricing.calculate(customerAreaId, storeAreaId),
+        );
+      } else {
+        deliveryFeeMap.set(profile.id, 0);
+      }
+    }
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const sellerOrders: { data: Prisma.OrderCreateInput; items: typeof cart.items }[] = [];
+      const createdOrders: Order[] = [];
 
-      const sellerIds = Array.from(groupedBySeller.keys());
-      const profiles = await tx.sellerProfile.findMany({
-        where: { userId: { in: sellerIds } },
-        select: { userId: true, commissionRate: true },
-      });
-      const commissionMap = new Map(profiles.map((p) => [p.userId, p.commissionRate]));
-
-      for (const [sellerId, items] of groupedBySeller) {
+      for (const [sellerProfileId, items] of groupedBySeller) {
         const calcItems = items.map((i) => ({
-          unitPrice: Number(i.listing.price),
+          unitPrice: Number(i.listing.price) + Number(i.listing.cleaningCost ?? 0),
           quantity: i.quantity,
         }));
-        const sellerCommissionRate = commissionMap.get(sellerId) ?? 0.12;
+        const sellerCommissionRate = commissionMap.get(sellerProfileId) || 0.12;
         const sellerCalc = this.calculation.calculateSellerOrder({
           items: calcItems,
           commissionRate: sellerCommissionRate,
         });
+        const deliveryFee = deliveryFeeMap.get(sellerProfileId) ?? 0;
 
-        sellerOrders.push({
-          data: {
-            orderNumber: `${orderNumber}-S${sellerOrders.length + 1}`,
-            customer: { connect: { id: userId } },
-            seller: { connect: { id: sellerId } },
-            status: OrderStatus.DRAFT,
-            subtotal: sellerCalc.subtotal,
-            deliveryFee: sellerCalc.deliveryFee,
-            commission: sellerCalc.commission,
-            discount: 0,
-            total: sellerCalc.total,
-          },
-          items,
-        });
-      }
+        const orderNumber = this.generateOrderNumber();
+        const sellerUserId = profileUserMap.get(sellerProfileId)!;
 
-      let parentOrder: Order | null = null;
-
-      if (sellerOrders.length > 1) {
-        const parentCalc = this.calculation.calculateMarketplaceOrder(
-          sellerOrders.map((so) => ({
-            subtotal: so.data.subtotal as number,
-            deliveryFee: so.data.deliveryFee as number,
-            commission: so.data.commission as number,
-            total: so.data.total as number,
-          })),
-        );
-
-        parentOrder = await tx.order.create({
+        const created = await tx.order.create({
           data: {
             orderNumber,
             customer: { connect: { id: userId } },
+            seller: { connect: { id: sellerUserId } },
+            sellerProfile: { connect: { id: sellerProfileId } },
             status: OrderStatus.DRAFT,
-            subtotal: parentCalc.subtotal,
-            deliveryFee: parentCalc.deliveryFee,
-            commission: parentCalc.commission,
+            subtotal: sellerCalc.subtotal,
+            deliveryFee,
+            commission: sellerCalc.commission,
             discount: 0,
-            total: parentCalc.total,
+            total: sellerCalc.subtotal + deliveryFee + sellerCalc.commission,
           },
         });
 
-        for (const so of sellerOrders) {
-          so.data.parentOrder = { connect: { id: parentOrder.id } };
-        }
-      }
-
-      const createdOrders: Order[] = [];
-
-      for (const so of sellerOrders) {
-        const created = await tx.order.create({
-          data: so.data,
-        });
-
-        for (const cartItem of so.items) {
+        for (const cartItem of items) {
           const variant = cartItem.listing.variant;
+          const cleaningCost = Number(cartItem.listing.cleaningCost ?? 0);
+          const effectiveUnitPrice = Number(cartItem.listing.price) + cleaningCost;
 
           const itemData = {
             orderId: created.id,
@@ -167,10 +158,10 @@ export class OrdersService {
             variantName: variant?.name ?? 'Standard',
             quantity: cartItem.quantity,
             unit: (variant?.unit ?? 'KG') as any,
-            unitPrice: cartItem.listing.price,
-            totalPrice: Number(cartItem.listing.price) * cartItem.quantity,
-            cleaning: false,
-            cleaningCost: 0,
+            unitPrice: effectiveUnitPrice,
+            totalPrice: effectiveUnitPrice * cartItem.quantity,
+            cleaning: cleaningCost > 0,
+            cleaningCost,
           } as any;
 
           if (variant?.id) itemData.variantId = variant.id;
@@ -191,10 +182,10 @@ export class OrdersService {
 
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
-      return { parentOrder, childOrders: createdOrders } satisfies OrderCreateResult;
+      return { orders: createdOrders } satisfies OrderCreateResult;
     });
 
-    for (const order of result.childOrders) {
+    for (const order of result.orders) {
       this.eventEmitter.emit('order.created', {
         orderId: order.id,
         orderNumber: order.orderNumber,
@@ -204,23 +195,12 @@ export class OrdersService {
       });
     }
 
-    if (result.parentOrder) {
-      this.eventEmitter.emit('order.created', {
-        orderId: result.parentOrder.id,
-        orderNumber: result.parentOrder.orderNumber,
-        customerId: userId,
-        sellerId: null,
-        total: Number(result.parentOrder.total),
-      });
-    }
-
     return result as OrderCreateResult;
   }
 
   async findCustomerOrders(userId: string, query: QueryOrdersDto) {
     const where: Prisma.OrderWhereInput = {
       customerId: userId,
-      parentOrderId: null,
     };
 
     if (query.status) where.status = query.status as OrderStatus;
@@ -239,12 +219,6 @@ export class OrdersService {
       this.prisma.order.findMany({
         where,
         include: {
-          childOrders: {
-            include: {
-              seller: { select: { id: true, name: true } },
-              items: true,
-            },
-          },
           items: true,
         },
         orderBy: { createdAt: 'desc' },
@@ -275,27 +249,20 @@ export class OrdersService {
             id: true,
             name: true,
             phone: true,
-            sellerProfiles: {
-              select: {
-                storeName: true,
-                city: true,
-                state: true,
-                address: {
-                  select: {
-                    addressLine: true,
-                    nearestReference: true,
-                  },
-                },
-              },
-              take: 1,
-            },
           },
         },
-        childOrders: {
-          include: {
-            seller: { select: { id: true, name: true } },
-            items: true,
-            statusHistory: { orderBy: { createdAt: 'desc' } },
+        sellerProfile: {
+          select: {
+            id: true,
+            storeName: true,
+            city: true,
+            state: true,
+            address: {
+              select: {
+                addressLine: true,
+                nearestReference: true,
+              },
+            },
           },
         },
         items: true,
@@ -361,40 +328,21 @@ export class OrdersService {
 
     this.orderStatus.validateTransition(order.status as OrderStatus, OrderStatus.CANCELLED);
 
-    const cancelTargets: string[] = [];
-
-    if (order.parentOrderId === null) {
-      const children = await this.prisma.order.findMany({
-        where: { parentOrderId: order.id },
-        select: { id: true },
-      });
-      cancelTargets.push(order.id, ...children.map((c) => c.id));
-    } else {
-      cancelTargets.push(order.id);
-      const parent = await this.prisma.order.findUnique({
-        where: { id: order.parentOrderId! },
-        select: { id: true },
-      });
-      if (parent) cancelTargets.push(parent.id);
-    }
-
     await this.prisma.$transaction(async (tx) => {
-      for (const id of cancelTargets) {
-        await tx.order.update({
-          where: { id },
-          data: { status: OrderStatus.CANCELLED, cancelReason: dto.reason, cancelledById: userId },
-        });
+      await tx.order.update({
+        where: { id: order.id },
+        data: { status: OrderStatus.CANCELLED, cancelReason: dto.reason, cancelledById: userId },
+      });
 
-        await tx.orderStatusHistory.create({
-          data: {
-            orderId: id,
-            fromStatus: order.status,
-            toStatus: OrderStatus.CANCELLED,
-            changedById: userId,
-            reason: dto.reason,
-          },
-        });
-      }
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId: order.id,
+          fromStatus: order.status,
+          toStatus: OrderStatus.CANCELLED,
+          changedById: userId,
+          reason: dto.reason,
+        },
+      });
     });
 
     this.eventEmitter.emit('order.cancelled', {
@@ -446,7 +394,6 @@ export class OrdersService {
   async findSellerOrders(sellerUserId: string, query: QueryOrdersDto) {
     const where: Prisma.OrderWhereInput = {
       sellerId: sellerUserId,
-      parentOrderId: { not: null },
     };
 
     if (query.status) where.status = query.status as OrderStatus;
@@ -464,7 +411,6 @@ export class OrdersService {
         include: {
           items: true,
           customer: { select: { id: true, name: true } },
-          parentOrder: { select: { id: true, orderNumber: true } },
           statusHistory: { orderBy: { createdAt: 'desc' }, take: 1 },
         },
         orderBy: { createdAt: 'desc' },
@@ -488,7 +434,6 @@ export class OrdersService {
           include: { listing: { include: { category: { select: { name: true } } } } },
         },
         customer: { select: { id: true, name: true } },
-        parentOrder: { select: { id: true, orderNumber: true } },
         statusHistory: { orderBy: { createdAt: 'desc' } },
       },
     });
@@ -527,24 +472,24 @@ export class OrdersService {
             select: {
               id: true,
               name: true,
-              sellerProfiles: {
+              phone: true,
+            },
+          },
+          sellerProfile: {
+            select: {
+              id: true,
+              storeName: true,
+              city: true,
+              state: true,
+              address: {
                 select: {
-                  storeName: true,
-                  city: true,
-                  state: true,
-                  address: {
-                    select: {
-                      addressLine: true,
-                      nearestReference: true,
-                    },
-                  },
+                  addressLine: true,
+                  nearestReference: true,
                 },
-                take: 1,
               },
             },
           },
           items: true,
-          childOrders: { select: { id: true, orderNumber: true, status: true, total: true } },
           delivery: {
             include: {
               driver: { select: { id: true, name: true, phone: true } },
