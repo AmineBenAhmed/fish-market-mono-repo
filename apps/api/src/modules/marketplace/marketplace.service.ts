@@ -484,6 +484,7 @@ export class MarketplaceService {
             unitPrice: effectiveUnitPrice,
             totalPrice: effectiveUnitPrice * cartItem.quantity,
             cleaning: cartItem.cleaning ?? false,
+            cleaningCost: cleaningCost,
           };
 
           await tx.orderItem.create({ data: itemData });

@@ -21,6 +21,8 @@ export interface OrderItem {
   unit: string;
   unitPrice: number;
   totalPrice: number;
+  cleaning?: boolean;
+  cleaningCost?: number;
 }
 
 export interface Order {

@@ -141,6 +141,7 @@ export interface OrderItem {
   unitPrice: number;
   totalPrice: number;
   cleaning: boolean;
+  cleaningCost: number;
 }
 
 export interface OrderStatusHistory {

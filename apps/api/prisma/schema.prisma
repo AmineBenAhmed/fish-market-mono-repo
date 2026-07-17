@@ -653,6 +653,7 @@ model OrderItem {
   unitPrice   Decimal @db.Decimal(10, 2)
   totalPrice  Decimal @db.Decimal(10, 2)
   cleaning    Boolean @default(false)
+  cleaningCost Decimal @default(0) @db.Decimal(10, 2)
 
   // Relations
   order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)

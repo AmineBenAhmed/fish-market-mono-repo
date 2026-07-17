@@ -169,6 +169,8 @@ export class OrdersService {
             unit: (variant?.unit ?? 'KG') as any,
             unitPrice: cartItem.listing.price,
             totalPrice: Number(cartItem.listing.price) * cartItem.quantity,
+            cleaning: false,
+            cleaningCost: 0,
           } as any;
 
           if (variant?.id) itemData.variantId = variant.id;

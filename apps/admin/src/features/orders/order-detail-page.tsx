@@ -105,6 +105,10 @@ export function OrderDetailPage() {
 
   const storeProfile = order.seller?.sellerProfiles?.[0];
   const deliveryAddress = order.delivery?.address;
+  const totalCleaningCost = (order.items ?? []).reduce(
+    (sum, item) => sum + (item.cleaning ? Number(item.cleaningCost) * item.quantity : 0),
+    0,
+  );
 
   return (
     <div className="space-y-6">
@@ -205,43 +209,65 @@ export function OrderDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Order Info */}
+        {/* Order Summary */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Order Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Subtotal</span>
-              <span className="text-sm font-medium">{formatCurrency(Number(order.subtotal))}</span>
+            <div>
+              <span className="text-sm text-muted-foreground">Order Number</span>
+              <p className="font-medium">{order.orderNumber}</p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Delivery Fee</span>
-              <span className="text-sm font-medium">
-                {formatCurrency(Number(order.deliveryFee))}
-              </span>
+            <div>
+              <span className="text-sm text-muted-foreground">Created</span>
+              <p className="text-sm">{formatDate(order.createdAt)}</p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Commission</span>
-              <span className="text-sm font-medium">
-                {formatCurrency(Number(order.commission))}
-              </span>
+            <div>
+              <span className="text-sm text-muted-foreground">Status</span>
+              <Badge variant="outline" className={statusColor(order.status)}>
+                {order.status.replace(/_/g, ' ')}
+              </Badge>
             </div>
-            {Number(order.discount) > 0 && (
+            <div className="border-t pt-3 space-y-2">
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Discount</span>
-                <span className="text-sm font-medium text-green-600">
-                  -{formatCurrency(Number(order.discount))}
+                <span className="text-sm text-muted-foreground">
+                  Items ({order.items?.length ?? 0})
+                </span>
+                <span className="text-sm font-medium">
+                  {formatCurrency(Number(order.subtotal))}
                 </span>
               </div>
-            )}
-            <div className="flex justify-between border-t pt-2">
-              <span className="text-sm font-semibold">Total</span>
-              <span className="text-sm font-bold">{formatCurrency(Number(order.total))}</span>
-            </div>
-            <div className="flex justify-between pt-2">
-              <span className="text-sm text-muted-foreground">Items</span>
-              <span className="text-sm">{order.items?.length ?? 0}</span>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Delivery Fee</span>
+                <span className="text-sm font-medium">
+                  {formatCurrency(Number(order.deliveryFee))}
+                </span>
+              </div>
+              {totalCleaningCost > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Cleaning Cost</span>
+                  <span className="text-sm font-medium">{formatCurrency(totalCleaningCost)}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Commission</span>
+                <span className="text-sm font-medium">
+                  {formatCurrency(Number(order.commission))}
+                </span>
+              </div>
+              {Number(order.discount) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Discount</span>
+                  <span className="text-sm font-medium text-green-600">
+                    -{formatCurrency(Number(order.discount))}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-sm font-semibold">Total</span>
+                <span className="text-sm font-bold">{formatCurrency(Number(order.total))}</span>
+              </div>
             </div>
             {order.cancelReason && (
               <div className="flex justify-between pt-2 border-t">
