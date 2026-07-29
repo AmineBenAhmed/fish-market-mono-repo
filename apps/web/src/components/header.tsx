@@ -1,44 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, SlidersHorizontal } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { useCart } from '@/stores/cart';
 import { useLocale } from '@/stores/locale';
 
-interface Props {
-  onOpenFilters?: () => void;
-}
-
-export function Header({ onOpenFilters }: Props) {
+export function Header() {
   const { itemCount, ready } = useCart();
   const { t } = useLocale();
 
   return (
     <header className="sticky top-0 z-40 bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-500 border-b border-blue-800 shadow-md">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-20 flex items-center justify-between">
-        <button
-          onClick={onOpenFilters}
-          className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/25 text-white hover:bg-white/40 transition-colors backdrop-blur-sm text-sm font-semibold border border-white/20 shadow-sm"
-        >
-          <SlidersHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
-          <span className="text-sm font-medium">Filtres</span>
-        </button>
+        <div className="w-10 sm:w-12" />
 
-        <div className="hidden lg:flex-1 lg:flex lg:justify-center">
-          <div className="text-center">
-            <p className="text-sm sm:text-base leading-snug font-bold text-white">
-              {t('header.tagline')}
-            </p>
-            <p className="text-xs text-white/70 mt-0.5">
-              nous sommes disponible seulement à Sousse
-            </p>
-          </div>
-        </div>
-
-        <div className="lg:hidden">
-          <div className="text-center">
-            <p className="text-xs leading-tight font-bold text-white">{t('header.tagline')}</p>
-          </div>
+        <div className="text-center flex-1">
+          <p className="text-xs leading-tight font-bold text-white sm:text-sm sm:leading-snug">
+            {t('header.tagline')}
+          </p>
+          <p className="hidden sm:block text-xs text-white/70 mt-0.5">
+            nous sommes disponible seulement à Sousse
+          </p>
         </div>
 
         <Link

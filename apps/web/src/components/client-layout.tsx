@@ -13,7 +13,7 @@ function LayoutInner({ children }: { children: ReactNode }) {
 
   return (
     <div dir={dir}>
-      <Header onOpenFilters={() => setOpen(true)} />
+      <Header />
       <MobileFilterDrawer open={open} onClose={() => setOpen(false)} />
       <div className="flex gap-4 sm:gap-8">
         <Suspense fallback={null}>
