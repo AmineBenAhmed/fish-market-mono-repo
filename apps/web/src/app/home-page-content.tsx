@@ -110,6 +110,23 @@ export function HomePageContent() {
 
   return (
     <div className="flex-1 min-w-0">
+      <div className="relative h-36 sm:h-48 lg:h-64 -mx-3 sm:-mx-6 mb-4 sm:mb-8 overflow-hidden rounded-none sm:rounded-2xl">
+        <img
+          src="/assets/ship.webp"
+          alt={t('home.heroAlt')}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-900/40 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg">
+            {t('home.heroTitle')}
+          </h1>
+          <p className="text-blue-100 mt-0.5 sm:mt-1 text-sm sm:text-base lg:text-lg drop-shadow">
+            {t('home.heroSubtitle')}
+          </p>
+        </div>
+      </div>
+
       {/* ── Mobile filter bar ── */}
       <div className="lg:hidden flex items-center justify-between -mx-3 sm:-mx-6 px-3 sm:px-6 py-2.5 bg-white border-b border-gray-200 mb-3">
         <button
@@ -135,23 +152,6 @@ export function HomePageContent() {
               {selectedAreaId ? 'Zone' : 'Région'}
             </span>
           )}
-        </div>
-      </div>
-
-      <div className="relative h-36 sm:h-48 lg:h-64 -mx-3 sm:-mx-6 mb-4 sm:mb-8 overflow-hidden rounded-none sm:rounded-2xl">
-        <img
-          src="/assets/ship.webp"
-          alt={t('home.heroAlt')}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-900/40 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-8">
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg">
-            {t('home.heroTitle')}
-          </h1>
-          <p className="text-blue-100 mt-0.5 sm:mt-1 text-sm sm:text-base lg:text-lg drop-shadow">
-            {t('home.heroSubtitle')}
-          </p>
         </div>
       </div>
 
