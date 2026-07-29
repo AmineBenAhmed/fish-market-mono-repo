@@ -16,7 +16,7 @@ const translations: Record<string, Record<Locale, string>> = {
   'header.cart': { en: 'Cart', fr: 'Panier', ar: 'السلة' },
 
   // ── Sidebar ──
-  'sidebar.brand': { en: 'FishMarket', fr: 'FishMarket', ar: 'فيش ماركت' },
+  'sidebar.brand': { en: 'SAMAK', fr: 'SAMAK', ar: 'SAMAK' },
   'sidebar.searchPlaceholder': {
     en: 'Search categories…',
     fr: 'Rechercher des catégories…',
