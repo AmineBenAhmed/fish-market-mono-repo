@@ -13,7 +13,7 @@ export default defineConfig({
     port: 3001,
     proxy: {
       '/api': {
-        target: process.env.API_URL || 'http://178.162.242.127:4000',
+        target: process.env.API_URL || 'https://api.samak.tn',
         changeOrigin: true,
       },
     },

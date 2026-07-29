@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { toast } from 'sonner';
 import { deliveryPricingService } from '../../services/delivery-pricing.service';
 
-const API_BASE =
-  import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://178.162.242.127:4000';
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'https://api.samak.tn';
 
 interface Governorate {
   id: string;
