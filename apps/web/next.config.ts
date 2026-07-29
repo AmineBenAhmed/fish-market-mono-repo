@@ -8,6 +8,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'api.samak.tn' },
     ],
   },
+  devIndicators: false,
   outputFileTracingRoot: path.join(__dirname, '../../'),
   experimental: {
     prerenderEarlyExit: false,
