@@ -1,7 +1,13 @@
+import type { Metadata } from 'next';
 import { ClientLayout } from '@/components/client-layout';
 import './globals.css';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'SAMAK',
+  description: 'Fresh Fish Market',
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

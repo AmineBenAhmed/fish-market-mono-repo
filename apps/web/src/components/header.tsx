@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Fish } from 'lucide-react';
 import { useCart } from '@/stores/cart';
 import { useLocale } from '@/stores/locale';
 
@@ -12,15 +12,16 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-500 border-b border-blue-800 shadow-md">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-20 flex items-center justify-between">
-        <div className="w-10 sm:w-12" />
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-sm">
+            <Fish className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+          </div>
+          <span className="text-white font-bold text-base sm:text-lg tracking-tight">SAMAK</span>
+        </Link>
 
-        <div className="text-center flex-1">
-          <p className="text-xs leading-tight font-bold text-white sm:text-sm sm:leading-snug">
-            {t('header.tagline')}
-          </p>
-          <p className="hidden sm:block text-xs text-white/70 mt-0.5">
-            nous sommes disponible seulement à Sousse
-          </p>
+        <div className="text-center flex-1 hidden sm:block">
+          <p className="text-sm leading-snug font-bold text-white">{t('header.tagline')}</p>
+          <p className="text-xs text-white/70 mt-0.5">nous sommes disponible seulement à Sousse</p>
         </div>
 
         <Link
