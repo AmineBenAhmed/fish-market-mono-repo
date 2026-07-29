@@ -43,7 +43,7 @@ export function ListingCard({ listing }: Props) {
             <Fish className="h-16 w-16" />
           </div>
         )}
-        <div className="absolute top-2 ltr:left-2 rtl:right-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
+        <div className="absolute top-2 ltr:left-2 rtl:right-2 bg-white/90 backdrop-blur-sm text-xs font-bold text-gray-700 px-2 py-1 rounded-full">
           {categoryName}
         </div>
       </div>

@@ -3,7 +3,10 @@ import path from 'path';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    remotePatterns: [{ protocol: 'http', hostname: '178.162.242.127', port: '4000' }],
+    remotePatterns: [
+      { protocol: 'http', hostname: 'localhost', port: '4000' },
+      { protocol: 'https', hostname: 'api.samak.tn' },
+    ],
   },
   outputFileTracingRoot: path.join(__dirname, '../../'),
   experimental: {
