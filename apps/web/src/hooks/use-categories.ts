@@ -7,10 +7,13 @@ import type { FishCategory } from '@/lib/types';
 let cached: FishCategory[] | null = null;
 
 export function useCategories() {
-  const [categories, setCategories] = useState<FishCategory[]>(cached ?? []);
+  const [categories, setCategories] = useState<FishCategory[]>([]);
 
   useEffect(() => {
-    if (cached) return;
+    if (cached) {
+      setCategories(cached);
+      return;
+    }
     fetchCategories()
       .then((res) => {
         cached = res.data || [];
