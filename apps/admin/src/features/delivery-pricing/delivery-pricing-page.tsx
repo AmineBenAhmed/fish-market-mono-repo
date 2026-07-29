@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { deliveryPricingService } from '../../services/delivery-pricing.service';
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'https://api.samak.tn';
+console.log('API_BASE', API_BASE);
 
 interface Governorate {
   id: string;
