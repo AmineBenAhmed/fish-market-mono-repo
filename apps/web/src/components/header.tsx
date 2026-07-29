@@ -18,10 +18,10 @@ export function Header({ onOpenFilters }: Props) {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-20 flex items-center justify-between">
         <button
           onClick={onOpenFilters}
-          className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm text-sm"
+          className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/25 text-white hover:bg-white/40 transition-colors backdrop-blur-sm text-sm font-semibold border border-white/20 shadow-sm"
         >
           <SlidersHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
-          <span className="hidden sm:inline text-sm font-medium">Filtres</span>
+          <span className="text-sm font-medium">Filtres</span>
         </button>
 
         <div className="hidden lg:flex-1 lg:flex lg:justify-center">
