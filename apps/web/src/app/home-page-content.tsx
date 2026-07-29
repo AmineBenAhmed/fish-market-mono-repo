@@ -6,8 +6,9 @@ import { fetchCategories, fetchTodayListings } from '@/lib/api';
 import { CategoryCard } from '@/components/category-card';
 import { StoreCard } from '@/components/store-card';
 import type { FishCategory, Listing } from '@/lib/types';
-import { Loader2, Store } from 'lucide-react';
+import { Loader2, Store, SlidersHorizontal, X } from 'lucide-react';
 import { useLocale } from '@/stores/locale';
+import { useFilterDrawer } from '@/stores/filter-drawer';
 
 export function HomePageContent() {
   const searchParams = useSearchParams();
@@ -94,12 +95,49 @@ export function HomePageContent() {
     router.push(qs ? `/?${qs}` : '/');
   }
 
+  const { setOpen: setFilterOpen } = useFilterDrawer();
+
+  const activeFilterCount = [
+    selectedCategory,
+    selectedCondition,
+    selectedGovernorateId,
+    selectedAreaId,
+  ].filter(Boolean).length;
+
   const showingCategory = selectedCategory
     ? categories.find((c) => c.id === selectedCategory)
     : null;
 
   return (
     <div className="flex-1 min-w-0">
+      {/* ── Mobile filter bar ── */}
+      <div className="lg:hidden flex items-center justify-between -mx-3 sm:-mx-6 px-3 sm:px-6 py-2.5 bg-white border-b border-gray-200 mb-3">
+        <button
+          onClick={() => setFilterOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-sm shadow-blue-500/20 active:scale-95 transition-all font-semibold text-sm"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Filtres
+          {activeFilterCount > 0 && (
+            <span className="bg-white text-blue-700 text-[10px] font-bold rounded-full min-w-[1.125rem] h-[1.125rem] flex items-center justify-center px-1">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+        <div className="flex items-center gap-2">
+          {selectedCategory && (
+            <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium truncate max-w-[120px]">
+              {categories.find((c) => c.id === selectedCategory)?.name}
+            </span>
+          )}
+          {selectedGovernorateId && (
+            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
+              {selectedAreaId ? 'Zone' : 'Région'}
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className="relative h-36 sm:h-48 lg:h-64 -mx-3 sm:-mx-6 mb-4 sm:mb-8 overflow-hidden rounded-none sm:rounded-2xl">
         <img
           src="/assets/ship.webp"
