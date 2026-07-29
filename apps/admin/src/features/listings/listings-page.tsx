@@ -22,8 +22,9 @@ export function ListingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [storeName, setStoreName] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const today = new Date().toISOString().slice(0, 10);
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useQuery({
