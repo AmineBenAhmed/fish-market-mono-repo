@@ -25,20 +25,17 @@ async function bootstrap() {
   app.setGlobalPrefix(API_PREFIX);
 
   app.enableCors({
-    origin: process.env.APP_URL
-      ? process.env.APP_URL.split(',')
-      : [
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'http://localhost:3002',
-          'http://localhost:3003',
-          'http://localhost:8081',
-          'http://192.168.0.122:8081',
-          'http://192.168.0.122:8082',
-          'http://localhost:8082',
-          'https://samak.tn',
-          'https://admin.samak.tn',
-        ],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      'http://localhost:8081',
+      'http://localhost:8082',
+      'https://samak.tn',
+      'https://admin.samak.tn',
+      'https://admin.samak.tn/login',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
