@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'https://api.samak.tn';
 
 function getImages(listing: Listing): string[] {
   const urls: string[] = [];

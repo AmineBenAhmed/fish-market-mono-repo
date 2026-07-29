@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { NormalizedAddress } from '@fishmarket/shared';
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://178.162.242.127:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'https://api.samak.tn';
 
 interface LocationOption {
   id: string;

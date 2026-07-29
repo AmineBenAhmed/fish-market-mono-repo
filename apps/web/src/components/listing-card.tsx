@@ -9,7 +9,7 @@ interface Props {
   listing: Listing;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 'https://api.samak.tn';
 
 function getImageUrl(listing: Listing): string | null {
   if (listing.coverImage?.url) return `${API_URL}${listing.coverImage.url}`;
