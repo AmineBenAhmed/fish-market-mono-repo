@@ -148,16 +148,6 @@ export function Sidebar() {
           </div>
         </div> */}
 
-        {/* ── Brand ── */}
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold text-blue-600">
-          <img
-            src="/assets/samak-logo.jpeg"
-            alt="SAMAK"
-            className="h-9 w-9 rounded-xl object-cover"
-          />
-          {t('sidebar.brand')}
-        </Link>
-
         {/* ── Search ── */}
         <div className="relative group">
           <Search className="absolute ltr:left-3.5 rtl:right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none transition-colors group-focus-within:text-blue-500" />
