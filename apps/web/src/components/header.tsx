@@ -12,7 +12,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-500 border-b border-blue-800 shadow-md">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-20 flex items-center justify-between">
-        <div className="w-10 sm:w-12" />
+        <Link href="/" className="shrink-0">
+          <img
+            src="/assets/samak-logo.jpeg"
+            alt="SAMAK"
+            className="h-9 w-9 sm:h-11 sm:w-11 rounded-xl object-cover"
+          />
+        </Link>
 
         <div className="text-center flex-1">
           <p className="text-xs leading-tight font-bold text-white sm:text-sm sm:leading-snug">
