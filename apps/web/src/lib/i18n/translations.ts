@@ -34,6 +34,7 @@ const translations: Record<string, Record<Locale, string>> = {
     ar: 'لا توجد فئات مطابقة',
   },
   'sidebar.clearSearch': { en: 'Clear search', fr: 'Effacer la recherche', ar: 'مسح البحث' },
+  'sidebar.selectGovernorate': { en: 'Governorate', fr: 'Gouvernorat', ar: 'الولاية' },
 
   // ── Home ──
   'home.heroAlt': {
