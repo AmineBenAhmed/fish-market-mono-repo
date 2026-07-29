@@ -150,7 +150,11 @@ export function Sidebar() {
 
         {/* ── Brand ── */}
         <Link href="/" className="flex items-center gap-2 text-xl font-bold text-blue-600">
-          <Fish className="h-6 w-6" />
+          <img
+            src="/assets/samak-logo.jpeg"
+            alt="SAMAK"
+            className="h-9 w-9 rounded-xl object-cover"
+          />
           {t('sidebar.brand')}
         </Link>
 

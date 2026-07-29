@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'SAMAK',
   description: 'Fresh Fish Market',
+  icons: [{ rel: 'icon', url: '/assets/samak-logo.jpeg' }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
