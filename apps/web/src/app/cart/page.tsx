@@ -325,26 +325,33 @@ export default function CartPage() {
 
   // ── Cart with items ──
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{t('cart.shoppingCart')}</h1>
-        <span className="text-gray-500">
-          {itemCount} {t('cart.items')}
-        </span>
+    <div className="max-w-3xl mx-auto px-0 sm:px-0">
+      {/* Sticky header for mobile */}
+      <div className="sticky top-14 sm:top-20 z-30 bg-white/95 backdrop-blur-sm -mx-3 sm:mx-0 px-3 sm:px-0 py-3 sm:py-0 sm:static sm:bg-transparent sm:backdrop-blur-none border-b sm:border-b-0 border-gray-100 sm:border-0 mb-3 sm:mb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg sm:text-2xl font-bold">{t('cart.shoppingCart')}</h1>
+          <span className="text-xs sm:text-base text-gray-500">
+            {itemCount} {t('cart.items')}
+          </span>
+        </div>
       </div>
 
       {/* Customer info summary */}
       {customer && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-sm text-gray-700">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 text-xs sm:text-sm text-gray-700">
           <p>
             <strong>{customer.name}</strong> &middot; {customer.phone}
           </p>
         </div>
       )}
 
-      {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-4">{error}</div>}
+      {error && (
+        <div className="bg-red-50 text-red-700 text-xs sm:text-sm p-2.5 sm:p-3 rounded-lg mb-3 sm:mb-4">
+          {error}
+        </div>
+      )}
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {stores.map(([sellerId, storeItems]) => {
           const storeName = storeItems[0].storeName;
           const currency = storeItems[0].currency;
@@ -354,18 +361,20 @@ export default function CartPage() {
             0,
           );
           return (
-            <div key={sellerId} className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
-                <h2 className="font-bold text-lg text-gray-900">{storeName}</h2>
-                <span className="text-xs text-gray-400">{storeItems.length} article(s)</span>
+            <div key={sellerId} className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-3 pb-2 sm:pb-3 border-b border-gray-100">
+                <h2 className="font-bold text-sm sm:text-lg text-gray-900 truncate">{storeName}</h2>
+                <span className="text-[10px] sm:text-xs text-gray-400 shrink-0">
+                  {storeItems.length} article(s)
+                </span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3 sm:space-y-3">
                 {storeItems.map((item) => (
                   <div
                     key={`${item.listingId}-${item.cleaning}`}
-                    className="flex items-center gap-4"
+                    className="flex items-start sm:items-center gap-2 sm:gap-4"
                   >
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                       {item.imageUrl ? (
                         <img
                           src={item.imageUrl}
@@ -374,29 +383,31 @@ export default function CartPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <Fish className="h-6 w-6" />
+                          <Fish className="h-4 w-4 sm:h-6 sm:w-6" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-sm truncate">
+                      <h3 className="font-semibold text-xs sm:text-sm truncate">
                         {item.title === 'New Listing' ? item.storeName : item.title}
                       </h3>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-[10px] sm:text-xs text-gray-400">
                         {item.currency} {item.price.toFixed(2)} / {item.unit}
                       </p>
                       {item.cleaningCost > 0 && (
                         <button
                           onClick={() => toggleCleaning(item.listingId, item.cleaning)}
-                          className="flex items-center gap-1 mt-1"
+                          className="flex items-center gap-1 mt-0.5 sm:mt-1"
                         >
                           <div
-                            className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center transition-colors ${item.cleaning ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}
+                            className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${item.cleaning ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}
                           >
-                            {item.cleaning && <Check className="h-2 w-2 text-white" />}
+                            {item.cleaning && (
+                              <Check className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />
+                            )}
                           </div>
                           <span
-                            className={`text-xs ${item.cleaning ? 'text-green-600' : 'text-gray-400'}`}
+                            className={`text-[10px] sm:text-xs ${item.cleaning ? 'text-green-600' : 'text-gray-400'}`}
                           >
                             {t('cart.cleaning')}: +{item.currency} {item.cleaningCost.toFixed(2)} /{' '}
                             {item.unit}
@@ -404,30 +415,32 @@ export default function CartPage() {
                         </button>
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-3 shrink-0">
                       <QuantityPicker
                         value={item.quantity}
                         max={9999}
                         onChange={(q) => updateQuantity(item.listingId, item.cleaning, q)}
                       />
-                      <p className="font-semibold text-blue-600 w-20 text-right text-sm">
-                        {(
-                          item.price * item.quantity +
-                          (item.cleaning ? item.cleaningCost * item.quantity : 0)
-                        ).toFixed(2)}{' '}
-                        {item.currency}
-                      </p>
-                      <button
-                        onClick={() => removeItem(item.listingId, item.cleaning)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <p className="font-semibold text-blue-600 text-[11px] sm:text-sm text-right w-auto sm:w-20">
+                          {(
+                            item.price * item.quantity +
+                            (item.cleaning ? item.cleaningCost * item.quantity : 0)
+                          ).toFixed(2)}{' '}
+                          {item.currency}
+                        </p>
+                        <button
+                          onClick={() => removeItem(item.listingId, item.cleaning)}
+                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 pt-3 border-t border-gray-100 space-y-1 text-sm">
+              <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 space-y-0.5 sm:space-y-1 text-[11px] sm:text-sm">
                 <div className="flex items-center justify-between text-gray-500">
                   <span>{t('cart.subtotal')}</span>
                   <span>
@@ -454,46 +467,49 @@ export default function CartPage() {
         })}
       </div>
 
-      <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
-        <div className="space-y-2 text-sm mb-4">
-          <div className="flex items-center justify-between text-gray-500">
-            <span>{t('cart.subtotal')}</span>
-            <span>
-              {items[0]?.currency || 'TND'} {total.toFixed(2)}
-            </span>
-          </div>
-          {totalCleaning > 0 && (
-            <div className="flex items-center justify-between text-green-600">
-              <span>Total frais de nettoyage</span>
-              <span>
-                {items[0]?.currency || 'TND'} {totalCleaning.toFixed(2)}
-              </span>
-            </div>
-          )}
-          {Object.keys(deliveryFees).length > 0 && (
+      {/* Sticky summary on mobile */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 -mx-3 sm:mx-0 px-3 sm:px-0 sm:static sm:border-none sm:bg-transparent mt-4 sm:mt-8">
+        <div className="sm:bg-white sm:rounded-xl sm:border sm:border-gray-200 sm:p-6 pt-3 sm:pt-6 pb-3 sm:pb-6">
+          <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm mb-3 sm:mb-4">
             <div className="flex items-center justify-between text-gray-500">
+              <span>{t('cart.subtotal')}</span>
               <span>
-                Total frais de livraison ({storeCount} boutique{storeCount > 1 ? 's' : ''})
-              </span>
-              <span>
-                {items[0]?.currency || 'TND'} {totalDelivery.toFixed(2)}
+                {items[0]?.currency || 'TND'} {total.toFixed(2)}
               </span>
             </div>
-          )}
-          <div className="border-t pt-2 flex items-center justify-between text-lg">
-            <span className="font-semibold">{t('cart.total')}</span>
-            <span className="font-bold text-xl text-blue-600">
-              {items[0]?.currency || 'TND'} {(total + totalDelivery).toFixed(2)}
-            </span>
+            {totalCleaning > 0 && (
+              <div className="flex items-center justify-between text-green-600">
+                <span>Total frais de nettoyage</span>
+                <span>
+                  {items[0]?.currency || 'TND'} {totalCleaning.toFixed(2)}
+                </span>
+              </div>
+            )}
+            {Object.keys(deliveryFees).length > 0 && (
+              <div className="flex items-center justify-between text-gray-500">
+                <span>
+                  Total frais de livraison ({storeCount} boutique{storeCount > 1 ? 's' : ''})
+                </span>
+                <span>
+                  {items[0]?.currency || 'TND'} {totalDelivery.toFixed(2)}
+                </span>
+              </div>
+            )}
+            <div className="border-t pt-1.5 sm:pt-2 flex items-center justify-between text-base sm:text-lg">
+              <span className="font-semibold">{t('cart.total')}</span>
+              <span className="font-bold text-lg sm:text-xl text-blue-600">
+                {items[0]?.currency || 'TND'} {(total + totalDelivery).toFixed(2)}
+              </span>
+            </div>
           </div>
+          <button
+            onClick={handleConfirmOrder}
+            disabled={submitting}
+            className="w-full py-2.5 sm:py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors text-sm sm:text-lg"
+          >
+            {submitting ? 'Traitement en cours...' : 'Je confirme'}
+          </button>
         </div>
-        <button
-          onClick={handleConfirmOrder}
-          disabled={submitting}
-          className="w-full py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors text-lg"
-        >
-          {submitting ? 'Traitement en cours...' : 'Je confirme'}
-        </button>
       </div>
     </div>
   );

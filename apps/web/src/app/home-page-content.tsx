@@ -100,27 +100,33 @@ export function HomePageContent() {
 
   return (
     <div className="flex-1 min-w-0">
-      <div className="relative h-64 -mx-6 mb-8 overflow-hidden rounded-2xl">
+      <div className="relative h-36 sm:h-48 lg:h-64 -mx-3 sm:-mx-6 mb-4 sm:mb-8 overflow-hidden rounded-none sm:rounded-2xl">
         <img
           src="/assets/ship.webp"
           alt={t('home.heroAlt')}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-900/40 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-center px-8">
-          <h1 className="text-3xl font-bold text-white drop-shadow-lg">{t('home.heroTitle')}</h1>
-          <p className="text-blue-100 mt-1 text-lg drop-shadow">{t('home.heroSubtitle')}</p>
+        <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg">
+            {t('home.heroTitle')}
+          </h1>
+          <p className="text-blue-100 mt-0.5 sm:mt-1 text-sm sm:text-base lg:text-lg drop-shadow">
+            {t('home.heroSubtitle')}
+          </p>
         </div>
       </div>
 
       {!selectedCategory && !selectedCondition ? (
         <>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-black">
-              <p className="text-gray-500 mt-1">Nos Poissons ({availableCategories.length})</p>
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-black">
+              <p className="text-gray-500 mt-1 text-sm sm:text-base">
+                Nos Poissons ({availableCategories.length})
+              </p>
             </h1>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {availableCategories.slice(0, visibleCount).map((cat) => (
               <CategoryCard key={cat.id} category={cat} onClick={handleSelectCategory} />
             ))}
@@ -157,7 +163,7 @@ export function HomePageContent() {
           )}
 
           {!loading && listings.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {listings.map((listing) => (
                 <StoreCard key={listing.id} listing={listing} />
               ))}
@@ -165,15 +171,15 @@ export function HomePageContent() {
           )}
 
           {!loading && listings.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-              <Store className="h-16 w-16 mx-auto mb-4" />
-              <p className="text-lg">{t('home.noListings')}</p>
-              <p className="text-sm mt-1">{t('home.tryDifferent')}</p>
+            <div className="text-center py-12 sm:py-20 text-gray-400">
+              <Store className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4" />
+              <p className="text-base sm:text-lg">{t('home.noListings')}</p>
+              <p className="text-xs sm:text-sm mt-1">{t('home.tryDifferent')}</p>
             </div>
           )}
 
           {hasMore && !loading && listings.length > 0 && (
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center py-6 sm:py-8">
               <button
                 onClick={() =>
                   loadListings(
@@ -184,7 +190,7 @@ export function HomePageContent() {
                     selectedAreaId,
                   )
                 }
-                className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
               >
                 {t('home.more')}
               </button>

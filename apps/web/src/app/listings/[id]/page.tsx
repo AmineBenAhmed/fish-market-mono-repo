@@ -126,18 +126,18 @@ export default function ListingDetailPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto px-0 sm:px-0">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-6"
+        className="flex items-center gap-2 text-gray-500 hover:text-gray-700 mb-4 sm:mb-6 text-sm sm:text-base"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         {t('listing.back')}
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 mb-8 sm:mb-12">
         <div>
-          <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden">
+          <div className="aspect-square bg-gray-100 sm:rounded-2xl overflow-hidden">
             {images.length > 0 ? (
               <img
                 src={images[selectedImage]}
@@ -148,17 +148,17 @@ export default function ListingDetailPage() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-300">
-                <Fish className="h-24 w-24" />
+                <Fish className="h-16 w-16 sm:h-24 sm:w-24" />
               </div>
             )}
           </div>
           {images.length > 1 && (
-            <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+            <div className="flex gap-2 mt-2 sm:mt-3 overflow-x-auto pb-2 px-1">
               {images.map((url, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
-                  className={`w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-colors ${
+                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-colors ${
                     selectedImage === i ? 'border-blue-500' : 'border-gray-200'
                   }`}
                 >
@@ -169,38 +169,44 @@ export default function ListingDetailPage() {
           )}
         </div>
 
-        <div className="space-y-6 bg-white p-6 rounded-2xl">
+        <div className="space-y-4 sm:space-y-6 bg-white p-4 sm:p-6 -mx-3 sm:mx-0 sm:rounded-2xl">
           <div>
-            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+            <span className="text-[10px] sm:text-xs font-medium text-blue-600 bg-blue-50 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full">
               {categoryName}
             </span>
-            <h1 className="text-2xl font-bold text-gray-900 mt-3">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 mt-2 sm:mt-3">
               {listing.title && listing.title !== 'New Listing' ? listing.title : categoryName}
             </h1>
-            {listing.description && <p className="text-gray-600 mt-2">{listing.description}</p>}
+            {listing.description && (
+              <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">
+                {listing.description}
+              </p>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
             {listing.seller.storeLogoUrl ? (
               <img
                 src={listing.seller.storeLogoUrl}
                 alt=""
-                className="h-6 w-6 rounded-full object-cover"
+                className="h-5 w-5 sm:h-6 sm:w-6 rounded-full object-cover"
               />
             ) : (
-              <Store className="h-4 w-4" />
+              <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             )}
             <span>
               {listing.seller.storeName} &middot; {listing.seller.city}, {listing.seller.state}
             </span>
           </div>
 
-          <div className="text-3xl font-bold text-blue-600">
+          <div className="text-2xl sm:text-3xl font-bold text-blue-600">
             {listing.currency} {Number(listing.effectivePrice ?? listing.price).toFixed(2)}
-            {listing.unit && <span className="text-lg text-gray-400"> / {listing.unit}</span>}
+            {listing.unit && (
+              <span className="text-base sm:text-lg text-gray-400"> / {listing.unit}</span>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 rounded-xl p-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm bg-gray-50 rounded-xl p-3 sm:p-4">
             {listing.origin && (
               <div>
                 <span className="text-gray-400">{t('listing.origin')}</span>
@@ -229,13 +235,13 @@ export default function ListingDetailPage() {
             )}
           </div>
 
-          <div className="border-t pt-6 space-y-4">
+          <div className="border-t pt-4 sm:pt-6 space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">{t('listing.quantity')}</span>
+              <span className="text-xs sm:text-sm text-gray-500">{t('listing.quantity')}</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={decrement}
-                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors text-sm sm:text-base"
                 >
                   −
                 </button>
@@ -248,11 +254,11 @@ export default function ListingDetailPage() {
                     const v = parseFloat(e.target.value);
                     if (!isNaN(v) && v >= 0.1) setQuantity(v);
                   }}
-                  className="w-20 text-center text-sm font-medium border border-gray-200 rounded-lg py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+                  className="w-14 sm:w-20 text-center text-sm font-medium border border-gray-200 rounded-lg py-1 sm:py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
                 />
                 <button
                   onClick={increment}
-                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors text-sm sm:text-base"
                 >
                   +
                 </button>
@@ -262,7 +268,7 @@ export default function ListingDetailPage() {
             {Number(listing.cleaningCost ?? 0) > 0 && (
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
                     cleaning
                       ? 'bg-blue-600 border-blue-600'
                       : 'border-gray-300 group-hover:border-gray-400'
@@ -271,9 +277,9 @@ export default function ListingDetailPage() {
                 >
                   {cleaning && <Check className="h-3.5 w-3.5 text-white" />}
                 </div>
-                <div className="flex-1">
-                  <span className="text-sm font-medium">{t('listing.cleanFish')}</span>
-                  <p className="text-xs text-gray-400">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm font-medium">{t('listing.cleanFish')}</span>
+                  <p className="text-[10px] sm:text-xs text-gray-400">
                     +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} /{' '}
                     {listing.unit}
                   </p>
@@ -281,7 +287,7 @@ export default function ListingDetailPage() {
               </label>
             )}
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-xs sm:text-sm">
               <span className="text-gray-500">{t('listing.total')}</span>
               <span className="font-semibold">
                 {listing.currency}{' '}
@@ -295,11 +301,11 @@ export default function ListingDetailPage() {
 
             <button
               onClick={handleAddToCart}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-lg transition-all ${
+              className={`w-full flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-semibold text-base sm:text-lg transition-all ${
                 added ? 'bg-green-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
               {added ? t('listing.addedToCart') : t('listing.addToCart')}
             </button>
           </div>
@@ -307,11 +313,11 @@ export default function ListingDetailPage() {
       </div>
 
       {sameStoreListings.length > 0 && (
-        <div className="border-t pt-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">
+        <div className="border-t pt-6 sm:pt-8">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
             {t('listing.moreFrom')} {listing.seller.storeName}
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
             {sameStoreListings.map((l) => {
               const justAdded = sameStoreAdded[l.id];
 
@@ -359,35 +365,35 @@ export default function ListingDetailPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300">
-                          <Fish className="h-12 w-12" />
+                          <Fish className="h-8 w-8 sm:h-12 sm:w-12" />
                         </div>
                       )}
-                      <div className="absolute top-2 ltr:left-2 rtl:right-2 bg-white/90 backdrop-blur-sm text-xs font-medium text-gray-700 px-2 py-1 rounded-full">
+                      <div className="absolute top-1.5 sm:top-2 ltr:left-1.5 sm:ltr:left-2 rtl:right-1.5 sm:rtl:right-2 bg-white/90 backdrop-blur-sm text-[10px] sm:text-xs font-medium text-gray-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
                         {l.category?.name || t('listing.general')}
                       </div>
                     </div>
                   </Link>
-                  <div className="p-3 space-y-2">
+                  <div className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">
                     <Link href={`/listings/${l.id}`}>
-                      <h3 className="font-semibold text-gray-900 text-sm truncate">
+                      <h3 className="font-semibold text-gray-900 text-[11px] sm:text-sm truncate">
                         {l.title && l.title !== 'New Listing'
                           ? l.title
                           : l.category?.name || 'Fish'}
                       </h3>
-                      <span className="text-sm font-bold text-blue-600">
+                      <span className="text-xs sm:text-sm font-bold text-blue-600">
                         {l.currency} {Number(l.effectivePrice ?? l.price).toFixed(2)}
                         {l.unit ? `/${l.unit}` : ''}
                       </span>
                     </Link>
                     <button
                       onClick={handleAdd}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                      className={`w-full flex items-center justify-center gap-1 sm:gap-1.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-sm font-semibold transition-all ${
                         justAdded
                           ? 'bg-green-500 text-white'
                           : 'bg-blue-600 text-white hover:bg-blue-700'
                       }`}
                     >
-                      <ShoppingCart className="h-3.5 w-3.5" />
+                      <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                       {justAdded ? t('listing.added') : t('listing.add')}
                     </button>
                   </div>

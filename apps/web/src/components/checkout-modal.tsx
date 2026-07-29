@@ -88,42 +88,46 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white z-10">
-          <h2 className="text-lg font-semibold">{t('checkout.confirmOrder')}</h2>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b sticky top-0 bg-white z-10">
+          <h2 className="text-base sm:text-lg font-semibold">{t('checkout.confirmOrder')}</h2>
           <button onClick={handleClose} className="p-1 hover:bg-gray-100 rounded-lg">
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">{error}</div>}
+        <form onSubmit={handleSubmit} className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+          {error && (
+            <div className="bg-red-50 text-red-700 text-xs sm:text-sm p-2.5 sm:p-3 rounded-lg">
+              {error}
+            </div>
+          )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               {t('checkout.fullName')}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('checkout.fullNamePlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {fieldErrors.name && <p className="text-red-500 text-xs mt-1">{fieldErrors.name}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               {t('checkout.phoneNumber')}
             </label>
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder={t('checkout.phonePlaceholder')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {fieldErrors.phone && <p className="text-red-500 text-xs mt-1">{fieldErrors.phone}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
               {t('checkout.fullAddress')}
             </label>
             <AddressForm value={addressForm} onChange={setAddressForm} showLabel={false} />
@@ -134,7 +138,7 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="w-full py-2.5 sm:py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm sm:text-base"
           >
             {loading ? t('checkout.processing') : t('checkout.placeOrder')}
           </button>
