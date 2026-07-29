@@ -11,8 +11,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-gradient-to-r from-blue-700 via-cyan-600 to-blue-500 border-b border-blue-800 shadow-md">
-      <div className="max-w-[1440px] mx-auto px-3 sm:px-4 h-14 sm:h-20 flex items-center justify-between">
-        <Link href="/" className="shrink-0 ltr:ml-8 rtl:mr-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 h-14 sm:h-20 flex items-center justify-between">
+        <Link href="/" className="shrink-0">
           <img
             src="/assets/samak-logo.jpeg"
             alt="SAMAK"

@@ -15,14 +15,14 @@ function LayoutInner({ children }: { children: ReactNode }) {
     <div dir={dir}>
       <Header />
       <MobileFilterDrawer open={open} onClose={() => setOpen(false)} />
-      <div className="max-w-[1440px] mx-auto flex gap-4 sm:gap-8 px-3 sm:px-4">
+      <div className="flex gap-4 sm:gap-8">
         <Suspense fallback={null}>
           <Sidebar />
         </Suspense>
-        <main className="flex-1 min-w-0 py-4 sm:py-8">
+        <main className="flex-1 min-w-0 max-w-[1440px] mx-auto px-3 sm:px-6 py-4 sm:py-8">
           <Suspense
             fallback={
-              <div className="py-4 sm:py-8">{children}</div>
+              <div className="max-w-[1440px] mx-auto px-3 sm:px-6 py-4 sm:py-8">{children}</div>
             }
           >
             {children}
