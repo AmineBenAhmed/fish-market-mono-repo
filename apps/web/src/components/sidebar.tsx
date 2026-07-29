@@ -271,7 +271,7 @@ export function Sidebar() {
                   <button
                     key={cat.id}
                     onClick={() => handleSelect(cat.id)}
-                    className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    className={`group relative w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? 'bg-gradient-to-r from-blue-50 to-blue-50/50 text-blue-700 shadow-sm'
                         : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -301,12 +301,9 @@ export function Sidebar() {
                         </div>
                       )}
                     </div>
-                    <span className="flex-1 ltr:text-left rtl:text-right truncate">{cat.name}</span>
-                    {isActive ? (
-                      <ChevronRight className="h-4 w-4 text-blue-400 animate-pulse" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-gray-300 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                    )}
+                    <span className="ltr:text-right rtl:text-left truncate font-semibold">
+                      {cat.name}
+                    </span>
                   </button>
                 );
               })}
