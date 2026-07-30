@@ -245,57 +245,50 @@ export function HomePageContent() {
           </select>
         )}
 
-        {!selectedCategory && !selectedCondition && (
-          <>
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900">
-                Nos Poissons ({availableCategories.length})
-              </h2>
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={() => router.push('/')}
-                  className="text-xs text-blue-600 font-medium"
-                >
-                  Effacer tout
-                </button>
-              )}
-            </div>
-            <div className="relative flex items-center">
-              <button
-                onClick={() => scrollCarousel('left')}
-                className="shrink-0 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10 -mr-3"
-              >
-                <ChevronLeft className="h-4 w-4 text-blue-600" />
-              </button>
-              <div
-                ref={carouselRef}
-                className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-1 flex-1"
-                onScroll={(e) => setCarouselOffset(e.currentTarget.scrollLeft)}
-              >
-                {filteredCategories.map((cat) => (
-                  <div key={cat.id} className="shrink-0 w-28">
-                    <CategoryCard category={cat} onClick={handleSelectCategory} />
-                  </div>
-                ))}
-                {filteredCategories.length > 0 && (
-                  <button
-                    onClick={() => setFilterOpen(true)}
-                    className="shrink-0 w-20 flex flex-col items-center justify-center bg-white rounded-xl border border-gray-200 py-4"
-                  >
-                    <ChevronRight className="h-5 w-5 text-blue-600" />
-                    <span className="text-[11px] font-semibold text-blue-600 mt-1">Voir plus</span>
-                  </button>
-                )}
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-900">
+            Nos Poissons ({availableCategories.length})
+          </h2>
+          {activeFilterCount > 0 && (
+            <button onClick={() => router.push('/')} className="text-xs text-blue-600 font-medium">
+              Effacer tout
+            </button>
+          )}
+        </div>
+        <div className="relative flex items-center">
+          <button
+            onClick={() => scrollCarousel('left')}
+            className="shrink-0 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10 -mr-3"
+          >
+            <ChevronLeft className="h-4 w-4 text-blue-600" />
+          </button>
+          <div
+            ref={carouselRef}
+            className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-1 flex-1"
+            onScroll={(e) => setCarouselOffset(e.currentTarget.scrollLeft)}
+          >
+            {filteredCategories.map((cat) => (
+              <div key={cat.id} className="shrink-0 w-28">
+                <CategoryCard category={cat} onClick={handleSelectCategory} />
               </div>
+            ))}
+            {filteredCategories.length > 0 && (
               <button
-                onClick={() => scrollCarousel('right')}
-                className="shrink-0 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10 -ml-3"
+                onClick={() => setFilterOpen(true)}
+                className="shrink-0 w-20 flex flex-col items-center justify-center bg-white rounded-xl border border-gray-200 py-4"
               >
-                <ChevronRight className="h-4 w-4 text-blue-600" />
+                <ChevronRight className="h-5 w-5 text-blue-600" />
+                <span className="text-[11px] font-semibold text-blue-600 mt-1">Voir plus</span>
               </button>
-            </div>
-          </>
-        )}
+            )}
+          </div>
+          <button
+            onClick={() => scrollCarousel('right')}
+            className="shrink-0 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10 -ml-3"
+          >
+            <ChevronRight className="h-4 w-4 text-blue-600" />
+          </button>
+        </div>
       </div>
 
       {!selectedCategory && !selectedCondition ? (
