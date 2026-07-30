@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Phone } from 'lucide-react';
 import { useCart } from '@/stores/cart';
 import { useLocale } from '@/stores/locale';
 
@@ -29,6 +29,17 @@ export function Header() {
           </p>
         </div>
 
+        {process.env.NEXT_PUBLIC_CONTACT_PHONE && (
+          <a
+            href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`}
+            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
+          >
+            <Phone className="h-4 w-4" />
+            <span className="hidden sm:inline text-xs sm:text-sm whitespace-nowrap">
+              {process.env.NEXT_PUBLIC_CONTACT_PHONE}
+            </span>
+          </a>
+        )}
         <Link
           href="/cart"
           className="relative flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
