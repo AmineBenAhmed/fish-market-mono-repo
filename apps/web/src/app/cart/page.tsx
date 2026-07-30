@@ -17,7 +17,6 @@ import {
   User,
   Phone,
   MapPin,
-  Edit,
 } from 'lucide-react';
 import { useLocale } from '@/stores/locale';
 import type { AddressFormValue } from '@/components/address-form';
@@ -372,10 +371,9 @@ export default function CartPage() {
                 </div>
                 <button
                   onClick={handleEditDetails}
-                  className="shrink-0 p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                  title="Modifier"
+                  className="shrink-0 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
                 >
-                  <Edit className="h-4 w-4" />
+                  Modifier données
                 </button>
               </div>
             </div>
