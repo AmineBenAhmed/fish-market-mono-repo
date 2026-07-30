@@ -451,7 +451,9 @@ export default function CartPage() {
                 <div className="flex items-center justify-between text-gray-500">
                   <span>
                     {t('cart.subtotal')}{' '}
-                    <span className="text-[10px] text-gray-400">(y inclus frais de nettoyage)</span>
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      (y inclus frais de nettoyage)
+                    </span>
                   </span>
                   <span>
                     {currency} {storeSubtotal.toFixed(2)}
@@ -476,7 +478,9 @@ export default function CartPage() {
             <div className="flex items-center justify-between text-gray-500">
               <span>
                 {t('cart.subtotal')}{' '}
-                <span className="text-[10px] text-gray-400">(y inclus frais de nettoyage)</span>
+                <span className="text-[10px] text-gray-400 font-medium">
+                  (y inclus frais de nettoyage)
+                </span>
               </span>
               <span>
                 {items[0]?.currency || 'TND'} {total.toFixed(2)}
