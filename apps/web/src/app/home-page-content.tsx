@@ -80,7 +80,7 @@ export function HomePageContent() {
       setLoading(true);
       setError(null);
       try {
-        const params: any = { page: p, limit: LIMIT };
+        const params: any = { page: p, limit: LIMIT, sortBy: 'createdAt', sortOrder: 'asc' };
         if (governorateId) params.governorateId = governorateId;
         if (areaId) params.areaId = areaId;
         if (categoryId) params.categoryId = categoryId;
