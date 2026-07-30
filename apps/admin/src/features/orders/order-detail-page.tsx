@@ -105,11 +105,6 @@ export function OrderDetailPage() {
 
   const storeProfile = order.sellerProfile;
   const deliveryAddress = order.delivery?.address;
-  const totalCleaningCost = (order.items ?? []).reduce(
-    (sum, item) => sum + (item.cleaning ? Number(item.cleaningCost) * item.quantity : 0),
-    0,
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -244,12 +239,6 @@ export function OrderDetailPage() {
                   {formatCurrency(Number(order.deliveryFee))}
                 </span>
               </div>
-              {totalCleaningCost > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Cleaning Cost</span>
-                  <span className="text-sm font-medium">{formatCurrency(totalCleaningCost)}</span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Commission</span>
                 <span className="text-sm font-medium">
@@ -351,7 +340,6 @@ export function OrderDetailPage() {
                     <th className="pb-3 font-medium">Variant</th>
                     <th className="pb-3 font-medium text-center">Qty</th>
                     <th className="pb-3 font-medium text-right">Unit Price</th>
-                    <th className="pb-3 font-medium text-center">Cleaning</th>
                     <th className="pb-3 font-medium text-right">Total</th>
                   </tr>
                 </thead>
@@ -365,19 +353,6 @@ export function OrderDetailPage() {
                       <td className="py-3 text-center">{item.quantity}</td>
                       <td className="py-3 text-right font-medium">
                         {formatCurrency(Number(item.unitPrice))}
-                      </td>
-                      <td className="py-3 text-center">
-                        {item.cleaning ? (
-                          <span className="inline-flex items-center gap-1 text-green-600 font-medium">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground">
-                            <XCircle className="h-3.5 w-3.5" />
-                            No
-                          </span>
-                        )}
                       </td>
                       <td className="py-3 text-right font-semibold">
                         {formatCurrency(Number(item.totalPrice))}
