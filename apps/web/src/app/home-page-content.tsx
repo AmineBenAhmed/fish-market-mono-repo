@@ -230,32 +230,19 @@ export function HomePageContent() {
           ))}
         </div>
 
-        {selectedGovernorateId && areas.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            <button
-              onClick={() => handleAreaChange(null)}
-              className={`shrink-0 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors whitespace-nowrap ${
-                !selectedAreaId
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-gray-600 border-gray-200'
-              }`}
-            >
-              Toutes les zones
-            </button>
+        {selectedGovernorateId && (
+          <select
+            value={selectedAreaId || ''}
+            onChange={(e) => handleAreaChange(e.target.value || null)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">Zone</option>
             {areas.map((a: any) => (
-              <button
-                key={a.id}
-                onClick={() => handleAreaChange(a.id)}
-                className={`shrink-0 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors whitespace-nowrap ${
-                  selectedAreaId === a.id
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-600 border-gray-200'
-                }`}
-              >
+              <option key={a.id} value={a.id}>
                 {a.name}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         )}
 
         {!selectedCategory && !selectedCondition && (
