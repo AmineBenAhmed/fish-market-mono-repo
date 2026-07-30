@@ -34,3 +34,12 @@ export {
   calculateCommission,
   calculateDeliveryFee,
 } from './utils';
+
+export {
+  getGovernorates,
+  getGovernorateById,
+  getAreasByGovernorateId,
+  getAreaById,
+  getZonesByAreaId,
+  getZoneById,
+} from './data';

@@ -6,6 +6,7 @@ import { useCart } from '@/stores/cart';
 import { QuantityPicker } from '@/components/quantity-picker';
 import { AddressForm } from '@/components/address-form';
 import { createOrder, calculateDeliveryFees } from '@/lib/api';
+import { getAreaById, getZoneById } from '@fishmarket/shared';
 import {
   ShoppingCart,
   Trash2,
@@ -16,6 +17,7 @@ import {
   User,
   Phone,
   MapPin,
+  Edit,
 } from 'lucide-react';
 import { useLocale } from '@/stores/locale';
 import type { AddressFormValue } from '@/components/address-form';
@@ -65,6 +67,7 @@ export default function CartPage() {
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [calculatingFees, setCalculatingFees] = useState(false);
   const [deliveryFees, setDeliveryFees] = useState<Record<string, number>>({});
+  const [isEditing, setIsEditing] = useState(false);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -156,6 +159,27 @@ export default function CartPage() {
     setShowDetailsForm(false);
   };
 
+  const handleEditDetails = () => {
+    if (!customer) return;
+    setName(customer.name);
+    setPhone(customer.phone);
+    setAddressForm({
+      governorateId: customer.governorateId,
+      areaId: customer.areaId,
+      zoneId: customer.zoneId,
+      landmark: customer.landmark,
+    });
+    setFieldErrors({});
+    setIsEditing(true);
+    setShowDetailsForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setShowDetailsForm(false);
+    setFieldErrors({});
+  };
+
   const handleConfirmOrder = async () => {
     if (!customer) return;
     setSubmitting(true);
@@ -228,13 +252,17 @@ export default function CartPage() {
     );
   }
 
-  // ── Customer details form (first visit) ──
+  // ── Customer details form (first visit / edit) ──
   if (showDetailsForm) {
     return (
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Vos coordonnées</h1>
+        <h1 className="text-2xl font-bold mb-6">
+          {isEditing ? 'Modifier vos coordonnées' : 'Vos coordonnées'}
+        </h1>
         <p className="text-gray-500 mb-6">
-          Veuillez entrer vos informations pour finaliser votre commande.
+          {isEditing
+            ? 'Modifiez vos informations de livraison.'
+            : 'Veuillez entrer vos informations pour finaliser votre commande.'}
         </p>
 
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
@@ -279,13 +307,27 @@ export default function CartPage() {
             )}
           </div>
 
-          <button
-            onClick={handleSaveDetails}
-            disabled={calculatingFees}
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors text-lg"
-          >
-            {calculatingFees ? 'Calcul des frais de livraison...' : 'Voir mon panier'}
-          </button>
+          <div className="flex gap-3">
+            {isEditing && (
+              <button
+                onClick={handleCancelEdit}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-lg"
+              >
+                Annuler
+              </button>
+            )}
+            <button
+              onClick={handleSaveDetails}
+              disabled={calculatingFees}
+              className={`${isEditing ? 'flex-1' : 'w-full'} py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors text-lg`}
+            >
+              {calculatingFees
+                ? 'Calcul des frais de livraison...'
+                : isEditing
+                  ? 'Enregistrer'
+                  : 'Voir mon panier'}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -305,13 +347,40 @@ export default function CartPage() {
       </div>
 
       {/* Customer info summary */}
-      {customer && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 text-xs sm:text-sm text-gray-700">
-          <p>
-            <strong>{customer.name}</strong> &middot; {customer.phone}
-          </p>
-        </div>
-      )}
+      {customer &&
+        (() => {
+          const area = customer.areaId
+            ? getAreaById(customer.governorateId, customer.areaId)
+            : null;
+          const zone =
+            customer.zoneId && area
+              ? getZoneById(customer.governorateId, customer.areaId, customer.zoneId)
+              : null;
+          const addressParts = [area?.name, zone?.name, customer.landmark].filter(Boolean);
+          return (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-xs sm:text-sm text-gray-700 space-y-0.5 min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">{customer.name}</p>
+                  <p className="text-gray-500">{customer.phone}</p>
+                  {addressParts.length > 0 && (
+                    <p className="text-gray-500 flex items-center gap-1">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{addressParts.join('، ')}</span>
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleEditDetails}
+                  className="shrink-0 p-1.5 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                  title="Modifier"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
       {error && (
         <div className="bg-red-50 text-red-700 text-xs sm:text-sm p-2.5 sm:p-3 rounded-lg mb-3 sm:mb-4">
