@@ -33,6 +33,9 @@ export function StoreCard({ listing }: Props) {
         <h3 className="font-semibold text-gray-900 truncate text-xs sm:text-base">
           {listing.seller.storeName}
         </h3>
+        {listing.category && (
+          <p className="text-[11px] sm:text-xs text-gray-500 truncate">{listing.category.name}</p>
+        )}
         <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-400">
           <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
           <span className="truncate">
