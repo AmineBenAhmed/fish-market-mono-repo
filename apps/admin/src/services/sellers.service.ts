@@ -34,6 +34,8 @@ export const sellersService = {
     taxId?: string;
     photo?: string;
     storeLogoUrl?: string;
+    phone?: string;
+    phone2?: string;
   }): Promise<SellerProfile> {
     const result = await api.post('/admin/sellers', data);
     return unwrap<SellerProfile>(result);
@@ -65,6 +67,8 @@ export const sellersService = {
       registrationNumber?: string;
       storeLogoUrl?: string;
       commissionRate?: number;
+      phone?: string;
+      phone2?: string;
     },
   ): Promise<SellerProfile> {
     const result = await api.patch(`/admin/sellers/${id}`, data);

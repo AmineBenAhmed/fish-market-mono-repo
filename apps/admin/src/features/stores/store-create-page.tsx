@@ -35,6 +35,8 @@ export function StoreCreatePage() {
     taxId: '',
     photo: '',
     storeLogoUrl: '',
+    phone: '',
+    phone2: '',
   });
   const [address, setAddress] = useState<AddressFormValue>({
     governorateId: 'sousse',
@@ -114,6 +116,10 @@ export function StoreCreatePage() {
       toast.error('Store name is required');
       return;
     }
+    if (!form.phone.trim()) {
+      toast.error('Store phone number is required');
+      return;
+    }
     if (!address.areaId) {
       toast.error('Please select an area');
       return;
@@ -145,6 +151,8 @@ export function StoreCreatePage() {
       taxId: form.taxId || undefined,
       photo: form.photo || undefined,
       storeLogoUrl: form.storeLogoUrl || undefined,
+      phone: form.phone.trim() || undefined,
+      phone2: form.phone2.trim() || undefined,
     });
   };
 
@@ -218,6 +226,24 @@ export function StoreCreatePage() {
                   value={form.storeName}
                   onChange={(e) => handleChange('storeName', e.target.value)}
                   required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">
+                  Store Phone <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  placeholder="+216 XX XXX XXX"
+                  value={form.phone}
+                  onChange={(e) => handleChange('phone', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Manager Phone</label>
+                <Input
+                  placeholder="+216 XX XXX XXX (optional)"
+                  value={form.phone2}
+                  onChange={(e) => handleChange('phone2', e.target.value)}
                 />
               </div>
               <div>

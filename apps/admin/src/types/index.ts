@@ -55,6 +55,8 @@ export interface SellerProfile {
   photo?: string;
   registrationNumber?: string;
   storeLogoUrl?: string;
+  phone?: string;
+  phone2?: string;
   user?: User;
   createdAt: string;
   updatedAt: string;
