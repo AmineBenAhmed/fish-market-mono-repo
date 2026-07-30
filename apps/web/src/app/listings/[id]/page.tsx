@@ -15,7 +15,6 @@ import {
   AlertTriangle,
   Package,
   Store,
-  Check,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -45,7 +44,6 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cleaning, setCleaning] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -109,7 +107,7 @@ export default function ListingDetailPage() {
           : listing.category?.name || t('listing.general'),
       price: Number(listing.effectivePrice ?? listing.price),
       cleaningCost: Number(listing.cleaningCost ?? 0),
-      cleaning,
+      cleaning: true,
       unit: listing.unit,
       currency: listing.currency,
       imageUrl: images[0] || null,
@@ -265,35 +263,13 @@ export default function ListingDetailPage() {
               </div>
             </div>
 
-            {Number(listing.cleaningCost ?? 0) > 0 && (
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
-                    cleaning
-                      ? 'bg-blue-600 border-blue-600'
-                      : 'border-gray-300 group-hover:border-gray-400'
-                  }`}
-                  onClick={() => setCleaning(!cleaning)}
-                >
-                  {cleaning && <Check className="h-3.5 w-3.5 text-white" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs sm:text-sm font-medium">{t('listing.cleanFish')}</span>
-                  <p className="text-[10px] sm:text-xs text-gray-400">
-                    +{listing.currency} {Number(listing.cleaningCost ?? 0).toFixed(2)} /{' '}
-                    {listing.unit}
-                  </p>
-                </div>
-              </label>
-            )}
-
             <div className="flex items-center justify-between text-xs sm:text-sm">
               <span className="text-gray-500">{t('listing.total')}</span>
               <span className="font-semibold">
                 {listing.currency}{' '}
                 {(
                   (Number(listing.effectivePrice ?? listing.price) +
-                    (cleaning ? Number(listing.cleaningCost ?? 0) : 0)) *
+                    Number(listing.cleaningCost ?? 0)) *
                   quantity
                 ).toFixed(2)}
               </span>
@@ -332,7 +308,7 @@ export default function ListingDetailPage() {
                       : l.category?.name || t('listing.general'),
                   price: Number(l.effectivePrice ?? l.price),
                   cleaningCost: Number(l.cleaningCost ?? 0),
-                  cleaning: false,
+                  cleaning: true,
                   unit: l.unit,
                   currency: l.currency,
                   imageUrl: img[0] || null,

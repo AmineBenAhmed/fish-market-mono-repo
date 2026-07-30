@@ -9,9 +9,8 @@ interface CartState {
   items: CartItem[];
   ready: boolean;
   addItem: (item: CartItem) => void;
-  updateQuantity: (listingId: string, cleaning: boolean, quantity: number) => void;
-  removeItem: (listingId: string, cleaning: boolean) => void;
-  toggleCleaning: (listingId: string, currentCleaning: boolean) => void;
+  updateQuantity: (listingId: string, quantity: number) => void;
+  removeItem: (listingId: string) => void;
   clearCart: () => void;
 }
 
@@ -22,13 +21,11 @@ const useCartStore = create<CartState>()(
       ready: true,
       addItem: (newItem) => {
         const items = get().items;
-        const existing = items.find(
-          (i) => i.listingId === newItem.listingId && i.cleaning === newItem.cleaning,
-        );
+        const existing = items.find((i) => i.listingId === newItem.listingId);
         if (existing) {
           set({
             items: items.map((i) =>
-              i.listingId === newItem.listingId && i.cleaning === newItem.cleaning
+              i.listingId === newItem.listingId
                 ? { ...i, quantity: i.quantity + newItem.quantity }
                 : i,
             ),
@@ -37,42 +34,45 @@ const useCartStore = create<CartState>()(
           set({ items: [...items, newItem] });
         }
       },
-      updateQuantity: (listingId, cleaning, quantity) => {
+      updateQuantity: (listingId, quantity) => {
         set({
           items: get()
-            .items.map((i) =>
-              i.listingId === listingId && i.cleaning === cleaning ? { ...i, quantity } : i,
-            )
+            .items.map((i) => (i.listingId === listingId ? { ...i, quantity } : i))
             .filter((i) => i.quantity > 0),
         });
       },
-      removeItem: (listingId, cleaning) => {
+      removeItem: (listingId) => {
         set({
-          items: get().items.filter((i) => i.listingId !== listingId || i.cleaning !== cleaning),
-        });
-      },
-      toggleCleaning: (listingId, currentCleaning) => {
-        const items = get().items;
-        const item = items.find((i) => i.listingId === listingId && i.cleaning === currentCleaning);
-        if (!item) return;
-        set({
-          items: [
-            ...items.filter((i) => i.listingId !== listingId || i.cleaning !== currentCleaning),
-            { ...item, cleaning: !currentCleaning },
-          ],
+          items: get().items.filter((i) => i.listingId !== listingId),
         });
       },
       clearCart: () => set({ items: [] }),
     }),
     {
       name: 'fishmarket_cart',
+      version: 1,
       partialize: (state) => ({
         items: state.items.map((item) => ({
           ...item,
-          cleaning: item.cleaning ?? false,
+          cleaning: true,
           cleaningCost: item.cleaningCost ?? 0,
         })),
       }),
+      migrate: (persisted: any, version) => {
+        if (version === 0) {
+          const items = (persisted?.items || []).reduce((acc: CartItem[], item: CartItem) => {
+            const existing = acc.find((i) => i.listingId === item.listingId);
+            if (existing) {
+              existing.quantity += item.quantity;
+            } else {
+              acc.push({ ...item, cleaning: true, cleaningCost: item.cleaningCost ?? 0 });
+            }
+            return acc;
+          }, []);
+          return { ...persisted, items };
+        }
+        return persisted;
+      },
     },
   ),
 );
@@ -83,12 +83,11 @@ function useCart() {
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
-  const toggleCleaning = useCartStore((s) => s.toggleCleaning);
   const clearCart = useCartStore((s) => s.clearCart);
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const total = items.reduce((sum, i) => {
-    const unitPrice = i.price + (i.cleaning ? i.cleaningCost : 0);
+    const unitPrice = i.price + i.cleaningCost;
     return sum + unitPrice * i.quantity;
   }, 0);
 
@@ -100,7 +99,6 @@ function useCart() {
     addItem,
     updateQuantity,
     removeItem,
-    toggleCleaning,
     clearCart,
   };
 }

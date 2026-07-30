@@ -7,17 +7,7 @@ import { QuantityPicker } from '@/components/quantity-picker';
 import { AddressForm } from '@/components/address-form';
 import { createOrder, calculateDeliveryFees } from '@/lib/api';
 import { getAreaById, getZoneById } from '@fishmarket/shared';
-import {
-  ShoppingCart,
-  Trash2,
-  ArrowLeft,
-  Fish,
-  Loader2,
-  Check,
-  User,
-  Phone,
-  MapPin,
-} from 'lucide-react';
+import { ShoppingCart, Trash2, ArrowLeft, Fish, Loader2, User, Phone, MapPin } from 'lucide-react';
 import { useLocale } from '@/stores/locale';
 import type { AddressFormValue } from '@/components/address-form';
 
@@ -55,8 +45,7 @@ export default function CartPage() {
     setHydrated(true);
   }, []);
 
-  const { items, total, itemCount, updateQuantity, removeItem, toggleCleaning, clearCart } =
-    useCart();
+  const { items, total, itemCount, updateQuantity, removeItem, clearCart } = useCart();
   const { t } = useLocale();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,10 +116,6 @@ export default function CartPage() {
 
   const storeCount = stores.length;
   const totalDelivery = stores.reduce((s, [id]) => s + (deliveryFees[id] || 0), 0);
-  const totalCleaning = items.reduce(
-    (s, i) => s + (i.cleaning ? i.cleaningCost * i.quantity : 0),
-    0,
-  );
 
   const validateDetails = () => {
     const errs: typeof fieldErrors = {};
@@ -195,7 +180,7 @@ export default function CartPage() {
         items: items.map((i) => ({
           listingId: i.listingId,
           quantity: i.quantity,
-          cleaning: i.cleaning,
+          cleaning: true,
         })),
       };
       await createOrder(payload);
@@ -390,9 +375,8 @@ export default function CartPage() {
         {stores.map(([sellerId, storeItems]) => {
           const storeName = storeItems[0].storeName;
           const currency = storeItems[0].currency;
-          const storeSubtotal = storeItems.reduce((s, i) => s + i.price * i.quantity, 0);
-          const storeCleaning = storeItems.reduce(
-            (s, i) => s + (i.cleaning ? i.cleaningCost * i.quantity : 0),
+          const storeSubtotal = storeItems.reduce(
+            (s, i) => s + (i.price + i.cleaningCost) * i.quantity,
             0,
           );
           return (
@@ -406,7 +390,7 @@ export default function CartPage() {
               <div className="space-y-3 sm:space-y-3">
                 {storeItems.map((item) => (
                   <div
-                    key={`${item.listingId}-${item.cleaning}`}
+                    key={item.listingId}
                     className="flex items-start sm:items-center gap-2 sm:gap-4"
                   >
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -429,43 +413,20 @@ export default function CartPage() {
                       <p className="text-[10px] sm:text-xs text-gray-400">
                         {item.currency} {item.price.toFixed(2)} / {item.unit}
                       </p>
-                      {item.cleaningCost > 0 && (
-                        <button
-                          onClick={() => toggleCleaning(item.listingId, item.cleaning)}
-                          className="flex items-center gap-1 mt-0.5 sm:mt-1"
-                        >
-                          <div
-                            className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${item.cleaning ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}
-                          >
-                            {item.cleaning && (
-                              <Check className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />
-                            )}
-                          </div>
-                          <span
-                            className={`text-[10px] sm:text-xs ${item.cleaning ? 'text-green-600' : 'text-gray-400'}`}
-                          >
-                            {t('cart.cleaning')}: +{item.currency} {item.cleaningCost.toFixed(2)} /{' '}
-                            {item.unit}
-                          </span>
-                        </button>
-                      )}
                     </div>
                     <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-3 shrink-0">
                       <QuantityPicker
                         value={item.quantity}
                         max={9999}
-                        onChange={(q) => updateQuantity(item.listingId, item.cleaning, q)}
+                        onChange={(q) => updateQuantity(item.listingId, q)}
                       />
                       <div className="flex items-center gap-1 sm:gap-2">
                         <p className="font-semibold text-blue-600 text-[11px] sm:text-sm text-right w-auto sm:w-20">
-                          {(
-                            item.price * item.quantity +
-                            (item.cleaning ? item.cleaningCost * item.quantity : 0)
-                          ).toFixed(2)}{' '}
+                          {((item.price + item.cleaningCost) * item.quantity).toFixed(2)}{' '}
                           {item.currency}
                         </p>
                         <button
-                          onClick={() => removeItem(item.listingId, item.cleaning)}
+                          onClick={() => removeItem(item.listingId)}
                           className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                         >
                           <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -482,14 +443,6 @@ export default function CartPage() {
                     {currency} {storeSubtotal.toFixed(2)}
                   </span>
                 </div>
-                {storeCleaning > 0 && (
-                  <div className="flex items-center justify-between text-green-600">
-                    <span>{t('cart.cleaningFee')}</span>
-                    <span>
-                      {currency} {storeCleaning.toFixed(2)}
-                    </span>
-                  </div>
-                )}
                 <div className="flex items-center justify-between text-gray-500">
                   <span>Frais de livraison</span>
                   <span>
@@ -512,14 +465,6 @@ export default function CartPage() {
                 {items[0]?.currency || 'TND'} {total.toFixed(2)}
               </span>
             </div>
-            {totalCleaning > 0 && (
-              <div className="flex items-center justify-between text-green-600">
-                <span>Total frais de nettoyage</span>
-                <span>
-                  {items[0]?.currency || 'TND'} {totalCleaning.toFixed(2)}
-                </span>
-              </div>
-            )}
             {Object.keys(deliveryFees).length > 0 && (
               <div className="flex items-center justify-between text-gray-500">
                 <span>
