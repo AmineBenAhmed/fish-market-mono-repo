@@ -322,6 +322,50 @@ export function HomePageContent() {
               </button>
             </div>
           )}
+
+          <div className="lg:hidden mt-6 space-y-3">
+            <h2 className="text-sm font-bold text-gray-900">
+              Nos poissoneries ({listings.length})
+            </h2>
+            {error && <div className="bg-red-50 text-red-700 p-4 rounded-lg">{error}</div>}
+            {loading && (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              </div>
+            )}
+            {!loading && listings.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {listings.map((listing) => (
+                  <StoreCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            )}
+            {!loading && listings.length === 0 && (
+              <div className="text-center py-10 text-gray-400">
+                <Store className="h-10 w-10 mx-auto mb-2" />
+                <p className="text-sm">{t('home.noListings')}</p>
+                <p className="text-xs mt-1">{t('home.tryDifferent')}</p>
+              </div>
+            )}
+            {hasMore && !loading && listings.length > 0 && (
+              <div className="flex justify-center py-4">
+                <button
+                  onClick={() =>
+                    loadListings(
+                      page + 1,
+                      selectedCategory,
+                      selectedCondition,
+                      selectedGovernorateId,
+                      selectedAreaId,
+                    )
+                  }
+                  className="w-full px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-md text-sm"
+                >
+                  {t('home.more')}
+                </button>
+              </div>
+            )}
+          </div>
         </>
       ) : (
         <>
