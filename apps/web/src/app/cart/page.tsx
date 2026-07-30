@@ -7,7 +7,17 @@ import { QuantityPicker } from '@/components/quantity-picker';
 import { AddressForm } from '@/components/address-form';
 import { createOrder, calculateDeliveryFees } from '@/lib/api';
 import { getAreaById, getZoneById } from '@fishmarket/shared';
-import { ShoppingCart, Trash2, ArrowLeft, Fish, Loader2, User, Phone, MapPin } from 'lucide-react';
+import {
+  ShoppingCart,
+  Trash2,
+  ArrowLeft,
+  Fish,
+  Loader2,
+  User,
+  Phone,
+  MapPin,
+  Edit,
+} from 'lucide-react';
 import { useLocale } from '@/stores/locale';
 import type { AddressFormValue } from '@/components/address-form';
 
@@ -356,8 +366,9 @@ export default function CartPage() {
                 </div>
                 <button
                   onClick={handleEditDetails}
-                  className="shrink-0 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                 >
+                  <Edit className="h-3.5 w-3.5" />
                   Modifier données
                 </button>
               </div>
