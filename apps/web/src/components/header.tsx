@@ -26,7 +26,7 @@ export function Header() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-8">
           {process.env.NEXT_PUBLIC_CONTACT_PHONE && (
             <a
               href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`}
