@@ -20,12 +20,9 @@ export function Header() {
           />
         </Link>
 
-        <div className="text-center flex-1">
-          <p className="text-xs leading-tight font-bold text-white sm:text-sm sm:leading-snug">
+        <div className="text-center flex-1 min-w-0 px-2">
+          <p className="text-[10px] sm:text-sm leading-tight font-bold text-white truncate">
             {t('header.tagline')}
-          </p>
-          <p className="hidden sm:block text-xs text-white/70 mt-0.5">
-            nous sommes disponible seulement à Sousse
           </p>
         </div>
 
@@ -35,7 +32,7 @@ export function Header() {
             className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
           >
             <Phone className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs sm:text-sm whitespace-nowrap">
+            <span className="text-[10px] sm:text-sm whitespace-nowrap">
               {process.env.NEXT_PUBLIC_CONTACT_PHONE}
             </span>
           </a>
