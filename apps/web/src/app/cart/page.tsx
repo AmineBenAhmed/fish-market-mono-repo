@@ -124,8 +124,11 @@ export default function CartPage() {
     return Array.from(map.entries());
   }, [items]);
 
+  const MIN_AMOUNT = 30;
   const storeCount = stores.length;
   const totalDelivery = stores.reduce((s, [id]) => s + (deliveryFees[id] || 0), 0);
+  const totalWithDelivery = total + totalDelivery;
+  const belowMinimum = totalWithDelivery < MIN_AMOUNT;
 
   const validateDetails = () => {
     const errs: typeof fieldErrors = {};
@@ -176,6 +179,10 @@ export default function CartPage() {
 
   const handleConfirmOrder = async () => {
     if (!customer) return;
+    if (totalWithDelivery < MIN_AMOUNT) {
+      setError(`Le montant minimum est de ${MIN_AMOUNT} TND`);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -499,13 +506,16 @@ export default function CartPage() {
             <div className="border-t pt-1.5 sm:pt-2 flex items-center justify-between text-base sm:text-lg">
               <span className="font-semibold">{t('cart.total')}</span>
               <span className="font-bold text-lg sm:text-xl text-blue-600">
-                {items[0]?.currency || 'TND'} {(total + totalDelivery).toFixed(2)}
+                {items[0]?.currency || 'TND'} {totalWithDelivery.toFixed(2)}
               </span>
             </div>
           </div>
+          {belowMinimum && (
+            <p className="text-xs text-red-600 mb-2">Le montant minimum est de {MIN_AMOUNT} TND</p>
+          )}
           <button
             onClick={handleConfirmOrder}
-            disabled={submitting}
+            disabled={submitting || belowMinimum}
             className="w-full py-2.5 sm:py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 transition-colors text-sm sm:text-lg"
           >
             {submitting ? 'Traitement en cours...' : 'Je confirme'}
