@@ -13,10 +13,6 @@ interface CheckoutData {
   governorateId?: string;
   areaId?: string;
   zoneId?: string;
-  street?: string;
-  buildingNumber?: string;
-  apartment?: string;
-  floor?: string;
   landmark?: string;
 }
 
@@ -36,14 +32,7 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
     governorateId: 'sousse',
     areaId: '',
     zoneId: '',
-    street: '',
-    buildingNumber: '',
-    apartment: '',
-    floor: '',
     landmark: '',
-    label: '',
-    lat: '',
-    lng: '',
   });
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<'name' | 'phone' | 'address', string>>
@@ -56,7 +45,7 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
     if (!name.trim()) errs.name = t('checkout.nameRequired');
     if (!phone.trim()) errs.phone = t('checkout.phoneRequired');
     else if (!/^[\d\s+\-()]{7,20}$/.test(phone.trim())) errs.phone = t('checkout.phoneInvalid');
-    if (!addressForm.street.trim() || !addressForm.areaId || !addressForm.zoneId) {
+    if (!addressForm.areaId) {
       errs.address = t('checkout.addressRequired');
     }
     setFieldErrors(errs);
@@ -67,17 +56,10 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
     e.preventDefault();
     if (!validate()) return;
 
-    const parts: string[] = [];
-    if (addressForm.street) parts.push(addressForm.street);
-    if (addressForm.buildingNumber) parts.push(`بناية ${addressForm.buildingNumber}`);
-    if (addressForm.floor) parts.push(`طابق ${addressForm.floor}`);
-    if (addressForm.apartment) parts.push(`شقة ${addressForm.apartment}`);
-    if (addressForm.landmark) parts.push(`بجانب ${addressForm.landmark}`);
-
     onSubmit({
       name: name.trim(),
       phone: phone.trim(),
-      address: parts.join('، ') || addressForm.street,
+      address: addressForm.landmark ? `بجانب ${addressForm.landmark}` : '',
       ...addressForm,
     });
   };
@@ -130,7 +112,7 @@ export function CheckoutModal({ open, onClose, onSubmit, error, loading }: Props
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
               {t('checkout.fullAddress')}
             </label>
-            <AddressForm value={addressForm} onChange={setAddressForm} showLabel={false} />
+            <AddressForm value={addressForm} onChange={setAddressForm} />
             {fieldErrors.address && (
               <p className="text-red-500 text-xs mt-1">{fieldErrors.address}</p>
             )}

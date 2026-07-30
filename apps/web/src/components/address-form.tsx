@@ -14,29 +14,18 @@ interface AddressFormValue {
   governorateId: string;
   areaId: string;
   zoneId: string;
-  street: string;
-  buildingNumber: string;
-  apartment: string;
-  floor: string;
   landmark: string;
-  label: string;
-  lat: string;
-  lng: string;
+  label?: string;
+  lat?: string;
+  lng?: string;
 }
 
 interface AddressFormProps {
   value?: Partial<AddressFormValue>;
   onChange: (value: AddressFormValue) => void;
-  showLabel?: boolean;
-  showCoordinates?: boolean;
 }
 
-export function AddressForm({
-  value = {},
-  onChange,
-  showLabel = true,
-  showCoordinates = false,
-}: AddressFormProps) {
+export function AddressForm({ value = {}, onChange }: AddressFormProps) {
   const [governorates, setGovernorates] = useState<LocationOption[]>([]);
   const [areas, setAreas] = useState<LocationOption[]>([]);
   const [zones, setZones] = useState<LocationOption[]>([]);
@@ -46,14 +35,7 @@ export function AddressForm({
     governorateId: value.governorateId || 'sousse',
     areaId: value.areaId || '',
     zoneId: value.zoneId || '',
-    street: value.street || '',
-    buildingNumber: value.buildingNumber || '',
-    apartment: value.apartment || '',
-    floor: value.floor || '',
     landmark: value.landmark || '',
-    label: value.label || '',
-    lat: value.lat || '',
-    lng: value.lng || '',
   };
 
   useEffect(() => {
@@ -145,16 +127,14 @@ export function AddressForm({
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            المنطقة <span className="text-red-500">*</span>
-          </label>
+          <label className="block text-sm font-medium text-gray-700">المنطقة</label>
           <select
             value={form.zoneId}
             onChange={(e) => update({ zoneId: e.target.value })}
             disabled={!form.areaId}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-400"
           >
-            <option value="">اختر المنطقة</option>
+            <option value="">اختر المنطقة (اختياري)</option>
             {zones.map((z) => (
               <option key={z.id} value={z.id}>
                 {z.name}
@@ -163,56 +143,6 @@ export function AddressForm({
           </select>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            الشارع <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={form.street}
-            onChange={(e) => update({ street: e.target.value })}
-            placeholder="اسم الشارع"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">رقم البناية</label>
-          <input
-            type="text"
-            value={form.buildingNumber}
-            onChange={(e) => update({ buildingNumber: e.target.value })}
-            placeholder="رقم البناية"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">الطابق</label>
-          <input
-            type="text"
-            value={form.floor}
-            onChange={(e) => update({ floor: e.target.value })}
-            placeholder="رقم الطابق"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">الشقة</label>
-          <input
-            type="text"
-            value={form.apartment}
-            onChange={(e) => update({ apartment: e.target.value })}
-            placeholder="رقم الشقة"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">أقرب معلم</label>
           <input
@@ -223,51 +153,7 @@ export function AddressForm({
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
-
-        {showLabel && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">تصنيف العنوان</label>
-            <select
-              value={form.label}
-              onChange={(e) => update({ label: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-            >
-              <option value="">اختر التصنيف</option>
-              <option value="home">المنزل</option>
-              <option value="work">العمل</option>
-              <option value="family">العائلة</option>
-              <option value="other">أخرى</option>
-            </select>
-          </div>
-        )}
-
-        {!showLabel && <div />}
       </div>
-
-      {showCoordinates && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">خط العرض</label>
-            <input
-              type="text"
-              value={form.lat}
-              onChange={(e) => update({ lat: e.target.value })}
-              placeholder="Latitude"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">خط الطول</label>
-            <input
-              type="text"
-              value={form.lng}
-              onChange={(e) => update({ lng: e.target.value })}
-              placeholder="Longitude"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

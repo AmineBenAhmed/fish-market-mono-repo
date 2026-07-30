@@ -28,10 +28,6 @@ interface CustomerDetails {
   governorateId: string;
   areaId: string;
   zoneId: string;
-  street: string;
-  buildingNumber: string;
-  apartment: string;
-  floor: string;
   landmark: string;
 }
 
@@ -76,14 +72,7 @@ export default function CartPage() {
     governorateId: 'sousse',
     areaId: '',
     zoneId: '',
-    street: '',
-    buildingNumber: '',
-    apartment: '',
-    floor: '',
     landmark: '',
-    label: '',
-    lat: '',
-    lng: '',
   });
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({});
 
@@ -146,8 +135,7 @@ export default function CartPage() {
     if (!name.trim()) errs.name = 'Le nom est requis';
     if (!phone.trim()) errs.phone = 'Le numéro de téléphone est requis';
     else if (!/^[\d\s+\-()]{7,20}$/.test(phone.trim())) errs.phone = 'Numéro de téléphone invalide';
-    if (!addressForm.areaId || !addressForm.zoneId)
-      errs.address = "Veuillez remplir l'adresse complète";
+    if (!addressForm.areaId) errs.address = "Veuillez remplir l'adresse complète";
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -161,10 +149,6 @@ export default function CartPage() {
       governorateId: addressForm.governorateId,
       areaId: addressForm.areaId,
       zoneId: addressForm.zoneId,
-      street: addressForm.street,
-      buildingNumber: addressForm.buildingNumber,
-      apartment: addressForm.apartment,
-      floor: addressForm.floor,
       landmark: addressForm.landmark,
     };
     saveCustomer(details);
@@ -177,24 +161,13 @@ export default function CartPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const parts: string[] = [];
-      if (customer.street) parts.push(customer.street);
-      if (customer.buildingNumber) parts.push(`بناية ${customer.buildingNumber}`);
-      if (customer.floor) parts.push(`طابق ${customer.floor}`);
-      if (customer.apartment) parts.push(`شقة ${customer.apartment}`);
-      if (customer.landmark) parts.push(`بجانب ${customer.landmark}`);
-
       const payload = {
         customerName: customer.name,
         customerPhone: customer.phone,
-        customerAddress: parts.join('، ') || customer.street,
+        customerAddress: customer.landmark ? `بجانب ${customer.landmark}` : '',
         governorateId: customer.governorateId,
         areaId: customer.areaId,
-        zoneId: customer.zoneId,
-        street: customer.street,
-        buildingNumber: customer.buildingNumber || undefined,
-        apartment: customer.apartment || undefined,
-        floor: customer.floor || undefined,
+        zoneId: customer.zoneId || undefined,
         landmark: customer.landmark || undefined,
         items: items.map((i) => ({
           listingId: i.listingId,
@@ -300,12 +273,7 @@ export default function CartPage() {
               <MapPin className="h-4 w-4 text-gray-400" />
               Adresse de livraison
             </label>
-            <AddressForm
-              value={addressForm}
-              onChange={setAddressForm}
-              showLabel={false}
-              showCoordinates={false}
-            />
+            <AddressForm value={addressForm} onChange={setAddressForm} />
             {fieldErrors.address && (
               <p className="text-red-500 text-xs mt-1">{fieldErrors.address}</p>
             )}
