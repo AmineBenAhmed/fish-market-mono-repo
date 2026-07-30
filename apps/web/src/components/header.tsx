@@ -26,29 +26,31 @@ export function Header() {
           </p>
         </div>
 
-        {process.env.NEXT_PUBLIC_CONTACT_PHONE && (
-          <a
-            href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`}
-            className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
-          >
-            <Phone className="h-4 w-4" />
-            <span className="text-[10px] sm:text-sm whitespace-nowrap">
-              {process.env.NEXT_PUBLIC_CONTACT_PHONE}
-            </span>
-          </a>
-        )}
-        <Link
-          href="/cart"
-          className="relative flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
-        >
-          <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
-          <span className="hidden sm:inline text-sm font-medium">{t('header.cart')}</span>
-          {ready && itemCount > 0 && (
-            <span className="absolute -top-1.5 ltr:-right-1.5 rtl:-left-1.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1">
-              {itemCount}
-            </span>
+        <div className="flex items-center gap-2">
+          {process.env.NEXT_PUBLIC_CONTACT_PHONE && (
+            <a
+              href={`tel:${process.env.NEXT_PUBLIC_CONTACT_PHONE}`}
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
+            >
+              <Phone className="h-4 w-4" />
+              <span className="text-[10px] sm:text-sm whitespace-nowrap">
+                {process.env.NEXT_PUBLIC_CONTACT_PHONE}
+              </span>
+            </a>
           )}
-        </Link>
+          <Link
+            href="/cart"
+            className="relative flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
+          >
+            <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline text-sm font-medium">{t('header.cart')}</span>
+            {ready && itemCount > 0 && (
+              <span className="absolute -top-1.5 ltr:-right-1.5 rtl:-left-1.5 bg-red-500 text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1">
+                {itemCount}
+              </span>
+            )}
+          </Link>
+        </div>
       </div>
     </header>
   );
