@@ -251,7 +251,7 @@ export function HomePageContent() {
           </h2>
           {activeFilterCount > 0 && (
             <button onClick={() => router.push('/')} className="text-xs text-blue-600 font-medium">
-              Effacer tout
+              Voir tout
             </button>
           )}
         </div>
