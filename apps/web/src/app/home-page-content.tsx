@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { fetchCategories, fetchTodayListings } from '@/lib/api';
+import { fetchCategories, fetchTodayListings, fetchGovernorates, fetchAreas } from '@/lib/api';
 import { CategoryCard } from '@/components/category-card';
 import { StoreCard } from '@/components/store-card';
 import type { FishCategory, Listing } from '@/lib/types';
-import { Loader2, Store, SlidersHorizontal, X } from 'lucide-react';
+import { Loader2, Store, Search, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLocale } from '@/stores/locale';
 import { useFilterDrawer } from '@/stores/filter-drawer';
 
@@ -25,6 +25,11 @@ export function HomePageContent() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [govs, setGovs] = useState<any[]>([]);
+  const [areas, setAreas] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [carouselOffset, setCarouselOffset] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const LIMIT = 12;
 
   const listedCategoryIds = useMemo(() => {
@@ -35,11 +40,30 @@ export function HomePageContent() {
     ? categories.filter((c) => !loading && listedCategoryIds.has(c.id))
     : categories;
 
+  const filteredCategories = search
+    ? categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    : categories;
+
   useEffect(() => {
-    fetchCategories()
-      .then((res) => setCategories(res.data || []))
-      .catch(() => {});
+    Promise.all([
+      fetchCategories()
+        .then((res) => setCategories(res.data || []))
+        .catch(() => {}),
+      fetchGovernorates()
+        .then((res) => setGovs(res.data || []))
+        .catch(() => {}),
+    ]);
   }, []);
+
+  useEffect(() => {
+    if (selectedGovernorateId) {
+      fetchAreas(selectedGovernorateId)
+        .then((res) => setAreas(res.data || []))
+        .catch(() => setAreas([]));
+    } else {
+      setAreas([]);
+    }
+  }, [selectedGovernorateId]);
 
   useEffect(() => {
     setVisibleCount(12);
@@ -95,7 +119,28 @@ export function HomePageContent() {
     router.push(qs ? `/?${qs}` : '/');
   }
 
-  const { setOpen: setFilterOpen } = useFilterDrawer();
+  function handleGovernorateChange(id: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set('governorateId', id);
+    } else {
+      params.delete('governorateId');
+    }
+    params.delete('areaId');
+    const qs = params.toString();
+    router.push(qs ? `/?${qs}` : '/');
+  }
+
+  function handleAreaChange(id: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id) {
+      params.set('areaId', id);
+    } else {
+      params.delete('areaId');
+    }
+    const qs = params.toString();
+    router.push(qs ? `/?${qs}` : '/');
+  }
 
   const activeFilterCount = [
     selectedCategory,
@@ -108,9 +153,19 @@ export function HomePageContent() {
     ? categories.find((c) => c.id === selectedCategory)
     : null;
 
+  const { setOpen: setFilterOpen } = useFilterDrawer();
+
+  const scrollCarousel = (dir: 'left' | 'right') => {
+    if (!carouselRef.current) return;
+    const step = 140;
+    const newOffset = dir === 'left' ? Math.max(0, carouselOffset - step) : carouselOffset + step;
+    carouselRef.current.scrollTo({ left: newOffset, behavior: 'smooth' });
+  };
+
   return (
     <div className="flex-1 min-w-0">
-      <div className="relative h-36 sm:h-48 lg:h-64 -mx-3 sm:-mx-6 mb-4 sm:mb-8 overflow-hidden rounded-none sm:rounded-2xl">
+      {/* ── Hero (desktop only) ── */}
+      <div className="hidden lg:block relative h-36 sm:h-48 lg:h-64 -mx-3 sm:-mx-6 mb-4 sm:mb-8 overflow-hidden rounded-none sm:rounded-2xl">
         <img
           src="/assets/ship.webp"
           alt={t('home.heroAlt')}
@@ -127,50 +182,151 @@ export function HomePageContent() {
         </div>
       </div>
 
-      {/* ── Mobile filter bar ── */}
-      <div className="lg:hidden flex items-center justify-between -mx-3 sm:-mx-6 px-3 sm:px-6 py-2.5 bg-white border-b border-gray-200 mb-3">
-        <button
-          onClick={() => setFilterOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-sm shadow-blue-500/20 active:scale-95 transition-all font-semibold text-sm"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          Filtres
-          {activeFilterCount > 0 && (
-            <span className="bg-white text-blue-700 text-[10px] font-bold rounded-full min-w-[1.125rem] h-[1.125rem] flex items-center justify-center px-1">
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-        <div className="flex items-center gap-2">
-          {selectedCategory && (
-            <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium truncate max-w-[120px]">
-              {categories.find((c) => c.id === selectedCategory)?.name}
-            </span>
-          )}
-          {selectedGovernorateId && (
-            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
-              {selectedAreaId ? 'Zone' : 'Région'}
-            </span>
+      {/* ── Mobile search + location + categories ── */}
+      <div className="lg:hidden space-y-3 mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Rechercher..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-semibold"
+            >
+              Effacer
+            </button>
           )}
         </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <button
+            onClick={() => handleGovernorateChange(null)}
+            className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
+              !selectedGovernorateId
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-gray-600 border-gray-200'
+            }`}
+          >
+            <MapPin className="h-3 w-3" />
+            Toutes les villes
+          </button>
+          {govs.map((g: any) => (
+            <button
+              key={g.id}
+              onClick={() => handleGovernorateChange(g.id)}
+              className={`shrink-0 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors whitespace-nowrap ${
+                selectedGovernorateId === g.id
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              {g.name}
+            </button>
+          ))}
+        </div>
+
+        {selectedGovernorateId && areas.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button
+              onClick={() => handleAreaChange(null)}
+              className={`shrink-0 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors whitespace-nowrap ${
+                !selectedAreaId
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'bg-white text-gray-600 border-gray-200'
+              }`}
+            >
+              Toutes les zones
+            </button>
+            {areas.map((a: any) => (
+              <button
+                key={a.id}
+                onClick={() => handleAreaChange(a.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors whitespace-nowrap ${
+                  selectedAreaId === a.id
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-200'
+                }`}
+              >
+                {a.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!selectedCategory && !selectedCondition && (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-900">
+                Nos Poissons ({availableCategories.length})
+              </h2>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={() => router.push('/')}
+                  className="text-xs text-blue-600 font-medium"
+                >
+                  Effacer tout
+                </button>
+              )}
+            </div>
+            <div className="relative flex items-center">
+              <button
+                onClick={() => scrollCarousel('left')}
+                className="shrink-0 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10 -mr-3"
+              >
+                <ChevronLeft className="h-4 w-4 text-blue-600" />
+              </button>
+              <div
+                ref={carouselRef}
+                className="flex gap-2 overflow-x-auto scrollbar-hide px-1 py-1 flex-1"
+                onScroll={(e) => setCarouselOffset(e.currentTarget.scrollLeft)}
+              >
+                {filteredCategories.map((cat) => (
+                  <div key={cat.id} className="shrink-0 w-28">
+                    <CategoryCard category={cat} onClick={handleSelectCategory} />
+                  </div>
+                ))}
+                {filteredCategories.length > 0 && (
+                  <button
+                    onClick={() => setFilterOpen(true)}
+                    className="shrink-0 w-20 flex flex-col items-center justify-center bg-white rounded-xl border border-gray-200 py-4"
+                  >
+                    <ChevronRight className="h-5 w-5 text-blue-600" />
+                    <span className="text-[11px] font-semibold text-blue-600 mt-1">Voir plus</span>
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => scrollCarousel('right')}
+                className="shrink-0 w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm z-10 -ml-3"
+              >
+                <ChevronRight className="h-4 w-4 text-blue-600" />
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {!selectedCategory && !selectedCondition ? (
         <>
-          <div className="mb-4 sm:mb-6">
+          <div className="hidden lg:block mb-4 sm:mb-6">
             <h1 className="text-xl sm:text-2xl font-bold text-black">
               <p className="text-gray-500 mt-1 text-sm sm:text-base">
                 Nos Poissons ({availableCategories.length})
               </p>
             </h1>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className="hidden lg:grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             {availableCategories.slice(0, visibleCount).map((cat) => (
               <CategoryCard key={cat.id} category={cat} onClick={handleSelectCategory} />
             ))}
           </div>
           {visibleCount < availableCategories.length && (
-            <div className="flex justify-center py-8">
+            <div className="hidden lg:flex justify-center py-8">
               <button
                 onClick={() => setVisibleCount((prev) => prev + 12)}
                 className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"

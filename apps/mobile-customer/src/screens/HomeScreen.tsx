@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -54,6 +54,7 @@ export function HomeScreen({
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const [carouselOffset, setCarouselOffset] = useState(0);
   const LIMIT = 12;
 
   const [governorates, setGovernorates] = useState<LocationOption[]>([]);
@@ -178,6 +179,13 @@ export function HomeScreen({
 
   const filteredListings = listings;
   const globalError = categoriesError || error;
+  const carouselRef = useRef<ScrollView>(null);
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    const step = 140;
+    const newOffset =
+      direction === 'left' ? Math.max(0, carouselOffset - step) : carouselOffset + step;
+    carouselRef.current?.scrollTo({ x: newOffset, animated: true });
+  };
 
   return (
     <ScrollView
@@ -307,23 +315,40 @@ export function HomeScreen({
             </View>
           ) : (
             <>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carouselContent}
-              >
-                {filteredCategories.map((cat) => (
-                  <View key={cat.id} style={styles.carouselItem}>
-                    <CategoryCard category={cat} onClick={handleSelectCategory} small />
-                  </View>
-                ))}
-                {filteredCategories.length > 0 && (
-                  <TouchableOpacity style={styles.voirPlusCard} onPress={onOpenFilter}>
-                    <Ionicons name="arrow-forward" size={24} color="#2563eb" />
-                    <Text style={styles.voirPlusText}>Voir plus</Text>
-                  </TouchableOpacity>
-                )}
-              </ScrollView>
+              <View style={styles.carouselWrapper}>
+                <TouchableOpacity
+                  style={[styles.carouselArrow, styles.carouselArrowLeft]}
+                  onPress={() => scrollCarousel('left')}
+                >
+                  <Ionicons name="chevron-back" size={20} color="#2563eb" />
+                </TouchableOpacity>
+                <ScrollView
+                  ref={carouselRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.carouselContent}
+                  onScroll={(e) => setCarouselOffset(e.nativeEvent.contentOffset.x)}
+                  scrollEventThrottle={16}
+                >
+                  {filteredCategories.map((cat) => (
+                    <View key={cat.id} style={styles.carouselItem}>
+                      <CategoryCard category={cat} onClick={handleSelectCategory} small />
+                    </View>
+                  ))}
+                  {filteredCategories.length > 0 && (
+                    <TouchableOpacity style={styles.voirPlusCard} onPress={onOpenFilter}>
+                      <Ionicons name="arrow-forward" size={24} color="#2563eb" />
+                      <Text style={styles.voirPlusText}>Voir plus</Text>
+                    </TouchableOpacity>
+                  )}
+                </ScrollView>
+                <TouchableOpacity
+                  style={[styles.carouselArrow, styles.carouselArrowRight]}
+                  onPress={() => scrollCarousel('right')}
+                >
+                  <Ionicons name="chevron-forward" size={20} color="#2563eb" />
+                </TouchableOpacity>
+              </View>
               {filteredCategories.length === 0 && !categoriesError ? (
                 <View style={styles.emptyState}>
                   <Ionicons name="fish-outline" size={60} color="#d1d5db" />
@@ -507,15 +532,36 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6b7280',
   },
+  carouselWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  carouselArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  carouselArrowLeft: {
+    marginRight: -16,
+  },
+  carouselArrowRight: {
+    marginLeft: -16,
+  },
   carouselContent: {
-    paddingRight: 16,
+    paddingHorizontal: 24,
   },
   carouselItem: {
-    width: 130,
-    marginRight: 12,
+    width: 110,
+    marginRight: 10,
   },
   voirPlusCard: {
-    width: 100,
+    width: 90,
     backgroundColor: '#fff',
     borderRadius: 12,
     borderWidth: 1,
@@ -525,10 +571,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   voirPlusText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#2563eb',
-    marginTop: 8,
+    marginTop: 6,
   },
   grid: {
     flexDirection: 'row',

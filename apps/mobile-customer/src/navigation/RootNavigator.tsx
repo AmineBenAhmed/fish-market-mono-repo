@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, Modal } from 'react-native';
 import { Header } from '@/components/Header';
 import { HomeScreen } from '@/screens/HomeScreen';
 import { ListingDetailScreen } from '@/screens/ListingDetailScreen';
@@ -124,12 +123,6 @@ export function RootNavigator() {
     <View style={styles.container}>
       <Header onCartPress={navigateToCart} />
       <View style={styles.screenContainer}>{renderScreen()}</View>
-      {currentScreen === 'home' && (
-        <TouchableOpacity onPress={handleOpenFilter} style={styles.filterFAB}>
-          <Ionicons name="options-outline" size={18} color="#fff" />
-          <Text style={styles.filterFABText}>Sélectionner</Text>
-        </TouchableOpacity>
-      )}
       <Modal visible={showFilter} animationType="slide" presentationStyle="pageSheet">
         <FilterScreen
           categories={categories}
