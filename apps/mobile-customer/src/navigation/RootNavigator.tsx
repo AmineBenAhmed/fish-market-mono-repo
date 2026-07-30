@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '@/components/Header';
 import { HomeScreen } from '@/screens/HomeScreen';
@@ -88,6 +88,7 @@ export function RootNavigator() {
           <HomeScreen
             onNavigateToListing={navigateToListing}
             onFilterChange={handleFilterChange}
+            onOpenFilter={handleOpenFilter}
             route={{
               params: {
                 category: filterCategory,
@@ -105,6 +106,7 @@ export function RootNavigator() {
           <HomeScreen
             onNavigateToListing={navigateToListing}
             onFilterChange={handleFilterChange}
+            onOpenFilter={handleOpenFilter}
             route={{
               params: {
                 category: filterCategory,
@@ -122,15 +124,12 @@ export function RootNavigator() {
     <View style={styles.container}>
       <Header onCartPress={navigateToCart} />
       <View style={styles.screenContainer}>{renderScreen()}</View>
-      {currentScreen === 'home' &&
-        !filterCategory &&
-        !filterCondition &&
-        !filterGovernorateId &&
-        !filterAreaId && (
-          <TouchableOpacity onPress={handleOpenFilter} style={styles.filterFAB}>
-            <Ionicons name="options-outline" size={22} color="#fff" />
-          </TouchableOpacity>
-        )}
+      {currentScreen === 'home' && (
+        <TouchableOpacity onPress={handleOpenFilter} style={styles.filterFAB}>
+          <Ionicons name="options-outline" size={18} color="#fff" />
+          <Text style={styles.filterFABText}>Sélectionner</Text>
+        </TouchableOpacity>
+      )}
       <Modal visible={showFilter} animationType="slide" presentationStyle="pageSheet">
         <FilterScreen
           categories={categories}
@@ -158,16 +157,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 24,
     right: 24,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#2563eb',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2563eb',
     shadowColor: '#2563eb',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
+  },
+  filterFABText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

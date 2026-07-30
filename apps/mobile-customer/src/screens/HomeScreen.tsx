@@ -4,13 +4,13 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { fetchCategories, fetchListings } from '@/services/api';
+import { fetchCategories, fetchListings, fetchGovernorates, fetchAreas } from '@/services/api';
 import { CategoryCard } from '@/components/CategoryCard';
 import { StoreCard } from '@/components/StoreCard';
 import type { FishCategory, Listing } from '@/types';
@@ -24,10 +24,21 @@ interface HomeScreenProps {
     governorateId?: string | null,
     areaId?: string | null,
   ) => void;
+  onOpenFilter: () => void;
   route?: any;
 }
 
-export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeScreenProps) {
+interface LocationOption {
+  id: string;
+  name: string;
+}
+
+export function HomeScreen({
+  onNavigateToListing,
+  onFilterChange,
+  onOpenFilter,
+  route,
+}: HomeScreenProps) {
   const { t } = useLocale();
   const selectedCategory = route?.params?.category ?? null;
   const selectedCondition = route?.params?.condition ?? null;
@@ -36,27 +47,40 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
   const [categories, setCategories] = useState<FishCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(12);
   const [listings, setListings] = useState<Listing[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
   const LIMIT = 12;
+
+  const [governorates, setGovernorates] = useState<LocationOption[]>([]);
+  const [areas, setAreas] = useState<LocationOption[]>([]);
 
   useEffect(() => {
     setCategoriesLoading(true);
     setCategoriesError(null);
-    fetchCategories()
-      .then((res) => setCategories(res.data || []))
-      .catch((err) => setCategoriesError(err.message || 'Failed to load categories'))
-      .finally(() => setCategoriesLoading(false));
+    Promise.all([
+      fetchCategories()
+        .then((res) => setCategories(res.data || []))
+        .catch(() => {}),
+      fetchGovernorates()
+        .then((res) => setGovernorates(res.data || []))
+        .catch(() => {}),
+    ]).finally(() => setCategoriesLoading(false));
   }, []);
 
   useEffect(() => {
-    setVisibleCount(12);
-  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId]);
+    if (selectedGovernorateId) {
+      fetchAreas(selectedGovernorateId)
+        .then((res) => setAreas(res.data || []))
+        .catch(() => setAreas([]));
+    } else {
+      setAreas([]);
+    }
+  }, [selectedGovernorateId]);
 
   const loadListings = useCallback(
     async (
@@ -65,6 +89,7 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
       condition: string | null,
       governorateId?: string | null,
       areaId?: string | null,
+      searchTerm?: string,
     ) => {
       setLoading(true);
       setError(null);
@@ -74,6 +99,7 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
         if (areaId) params.areaId = areaId;
         if (categoryId) params.categoryId = categoryId;
         if (condition) params.condition = condition;
+        if (searchTerm) params.search = searchTerm;
         const res = await fetchListings(params);
         const payload = res.data.data;
         if (p === 1) {
@@ -93,8 +119,22 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
   );
 
   useEffect(() => {
-    loadListings(1, selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId);
-  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId, loadListings]);
+    loadListings(
+      1,
+      selectedCategory,
+      selectedCondition,
+      selectedGovernorateId,
+      selectedAreaId,
+      search || undefined,
+    );
+  }, [
+    selectedCategory,
+    selectedCondition,
+    selectedGovernorateId,
+    selectedAreaId,
+    search,
+    loadListings,
+  ]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -102,10 +142,27 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
       fetchCategories()
         .then((res) => setCategories(res.data || []))
         .catch(() => {}),
-      loadListings(1, selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId),
+      fetchGovernorates()
+        .then((res) => setGovernorates(res.data || []))
+        .catch(() => {}),
+      loadListings(
+        1,
+        selectedCategory,
+        selectedCondition,
+        selectedGovernorateId,
+        selectedAreaId,
+        search || undefined,
+      ),
     ]);
     setRefreshing(false);
-  }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId, loadListings]);
+  }, [
+    selectedCategory,
+    selectedCondition,
+    selectedGovernorateId,
+    selectedAreaId,
+    search,
+    loadListings,
+  ]);
 
   const showingCategory = selectedCategory
     ? categories.find((c) => c.id === selectedCategory)
@@ -115,6 +172,10 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
     onFilterChange(id, selectedCondition, selectedGovernorateId, selectedAreaId);
   };
 
+  const filteredCategories = search
+    ? categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    : categories;
+
   const filteredListings = listings;
   const globalError = categoriesError || error;
 
@@ -122,21 +183,11 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
       }
     >
-      <View style={styles.hero}>
-        <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=800' }}
-          style={styles.heroImage}
-        />
-        <View style={styles.heroOverlay}>
-          <Text style={styles.heroTitle}>{t('home.heroTitle')}</Text>
-          <Text style={styles.heroSubtitle}>{t('home.heroSubtitle')}</Text>
-        </View>
-      </View>
-
       {globalError ? (
         <View style={styles.errorBox}>
           <Ionicons name="alert-circle-outline" size={18} color="#b91c1c" />
@@ -144,13 +195,110 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
         </View>
       ) : null}
 
-      {!selectedCategory && !selectedCondition && !selectedAreaId ? (
+      <View style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={18} color="#9ca3af" />
+        <TextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Rechercher..."
+          style={styles.searchInput}
+          placeholderTextColor="#9ca3af"
+        />
+        {search ? (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Ionicons name="close-circle" size={18} color="#9ca3af" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      <View style={styles.locationRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity
+            style={[styles.locationChip, !selectedGovernorateId && styles.locationChipActive]}
+            onPress={() => onFilterChange(selectedCategory, selectedCondition, null, null)}
+          >
+            <Ionicons
+              name="location-outline"
+              size={14}
+              color={!selectedGovernorateId ? '#fff' : '#6b7280'}
+            />
+            <Text
+              style={[
+                styles.locationChipText,
+                !selectedGovernorateId && styles.locationChipTextActive,
+              ]}
+            >
+              Toutes les villes
+            </Text>
+          </TouchableOpacity>
+          {governorates.map((gov) => (
+            <TouchableOpacity
+              key={gov.id}
+              style={[
+                styles.locationChip,
+                selectedGovernorateId === gov.id && styles.locationChipActive,
+              ]}
+              onPress={() => onFilterChange(selectedCategory, selectedCondition, gov.id, null)}
+            >
+              <Text
+                style={[
+                  styles.locationChipText,
+                  selectedGovernorateId === gov.id && styles.locationChipTextActive,
+                ]}
+              >
+                {gov.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+        {selectedGovernorateId && areas.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.areaChipsRow}>
+            <TouchableOpacity
+              style={[styles.areaChip, !selectedAreaId && styles.areaChipActive]}
+              onPress={() =>
+                onFilterChange(selectedCategory, selectedCondition, selectedGovernorateId, null)
+              }
+            >
+              <Text style={[styles.areaChipText, !selectedAreaId && styles.areaChipTextActive]}>
+                Toutes les zones
+              </Text>
+            </TouchableOpacity>
+            {areas.map((area) => (
+              <TouchableOpacity
+                key={area.id}
+                style={[styles.areaChip, selectedAreaId === area.id && styles.areaChipActive]}
+                onPress={() =>
+                  onFilterChange(
+                    selectedCategory,
+                    selectedCondition,
+                    selectedGovernorateId,
+                    area.id,
+                  )
+                }
+              >
+                <Text
+                  style={[
+                    styles.areaChipText,
+                    selectedAreaId === area.id && styles.areaChipTextActive,
+                  ]}
+                >
+                  {area.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+
+      {!selectedCategory && !selectedCondition ? (
         <>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('home.allCategories')}</Text>
-            <Text style={styles.sectionCount}>
-              {categoriesLoading ? '...' : `${categories.length} ${t('home.categories')}`}
-            </Text>
+            {categoriesLoading ? null : (
+              <Text style={styles.sectionCount}>
+                {filteredCategories.length} {t('home.categories')}
+              </Text>
+            )}
           </View>
 
           {categoriesLoading ? (
@@ -159,27 +307,29 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
             </View>
           ) : (
             <>
-              <View style={styles.grid}>
-                {categories.slice(0, visibleCount).map((cat) => (
-                  <View key={cat.id} style={styles.gridItem}>
-                    <CategoryCard category={cat} onClick={handleSelectCategory} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carouselContent}
+              >
+                {filteredCategories.map((cat) => (
+                  <View key={cat.id} style={styles.carouselItem}>
+                    <CategoryCard category={cat} onClick={handleSelectCategory} small />
                   </View>
                 ))}
-              </View>
-              {categories.length === 0 && !categoriesError ? (
+                {filteredCategories.length > 0 && (
+                  <TouchableOpacity style={styles.voirPlusCard} onPress={onOpenFilter}>
+                    <Ionicons name="arrow-forward" size={24} color="#2563eb" />
+                    <Text style={styles.voirPlusText}>Voir plus</Text>
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+              {filteredCategories.length === 0 && !categoriesError ? (
                 <View style={styles.emptyState}>
                   <Ionicons name="fish-outline" size={60} color="#d1d5db" />
                   <Text style={styles.emptyTitle}>{t('home.noListings')}</Text>
                 </View>
               ) : null}
-              {visibleCount < categories.length && (
-                <TouchableOpacity
-                  onPress={() => setVisibleCount((prev) => prev + 12)}
-                  style={styles.moreButton}
-                >
-                  <Text style={styles.moreButtonText}>{t('home.more')}</Text>
-                </TouchableOpacity>
-              )}
             </>
           )}
         </>
@@ -237,6 +387,7 @@ export function HomeScreen({ onNavigateToListing, onFilterChange, route }: HomeS
                   selectedCondition,
                   selectedGovernorateId,
                   selectedAreaId,
+                  search || undefined,
                 )
               }
               style={styles.moreButton}
@@ -259,40 +410,73 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  hero: {
-    height: 180,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 24,
-    position: 'relative',
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  heroOverlay: {
-    position: 'absolute',
-    inset: 0,
-    backgroundColor: 'rgba(30,58,138,0.6)',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  heroTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  heroSubtitle: {
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
     fontSize: 14,
-    color: '#bfdbfe',
-    marginTop: 4,
-    textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    color: '#111827',
+  },
+  locationRow: {
+    marginBottom: 20,
+  },
+  locationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#fff',
+    gap: 6,
+  },
+  locationChipActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  locationChipText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  locationChipTextActive: {
+    color: '#fff',
+  },
+  areaChipsRow: {
+    marginTop: 8,
+    flexGrow: 0,
+  },
+  areaChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#fff',
+    marginRight: 8,
+  },
+  areaChipActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  areaChipText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  areaChipTextActive: {
+    color: '#fff',
   },
   sectionHeader: {
     marginBottom: 16,
@@ -322,6 +506,29 @@ const styles = StyleSheet.create({
   clearFilterText: {
     fontSize: 13,
     color: '#6b7280',
+  },
+  carouselContent: {
+    paddingRight: 16,
+  },
+  carouselItem: {
+    width: 130,
+    marginRight: 12,
+  },
+  voirPlusCard: {
+    width: 100,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  voirPlusText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2563eb',
+    marginTop: 8,
   },
   grid: {
     flexDirection: 'row',

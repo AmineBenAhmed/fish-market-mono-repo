@@ -5,22 +5,28 @@ import type { FishCategory } from '@/types';
 interface Props {
   category: FishCategory;
   onClick: (id: string) => void;
+  small?: boolean;
 }
 
-export function CategoryCard({ category, onClick }: Props) {
+export function CategoryCard({ category, onClick, small }: Props) {
   return (
-    <TouchableOpacity onPress={() => onClick(category.id)} style={styles.card}>
-      <View style={styles.imageContainer}>
+    <TouchableOpacity
+      onPress={() => onClick(category.id)}
+      style={[styles.card, small && styles.cardSmall]}
+    >
+      <View style={[styles.imageContainer, small && styles.imageContainerSmall]}>
         {category.image?.url ? (
           <Image source={{ uri: category.image.url }} style={styles.image} />
         ) : (
           <View style={styles.placeholder}>
-            <Ionicons name="fish-outline" size={40} color="#d1d5db" />
+            <Ionicons name="fish-outline" size={small ? 24 : 40} color="#d1d5db" />
           </View>
         )}
       </View>
-      <View style={styles.labelContainer}>
-        <Text style={styles.label}>{category.name}</Text>
+      <View style={[styles.labelContainer, small && styles.labelContainerSmall]}>
+        <Text style={[styles.label, small && styles.labelSmall]} numberOfLines={1}>
+          {category.name}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -57,5 +63,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
+  },
+  cardSmall: {
+    borderRadius: 10,
+  },
+  imageContainerSmall: {
+    aspectRatio: 1,
+  },
+  labelContainerSmall: {
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+  },
+  labelSmall: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
