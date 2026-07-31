@@ -19,6 +19,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const setToken = useAuthStore((s) => s.setToken);
+  const setRefreshToken = useAuthStore((s) => s.setRefreshToken);
   const setUser = useAuthStore((s) => s.setUser);
   const navigate = useNavigate();
 
@@ -26,6 +27,7 @@ export function LoginPage() {
     mutationFn: () => authService.login({ email, password }),
     onSuccess: (data) => {
       setToken(data.accessToken);
+      setRefreshToken(data.refreshToken);
       setUser(data.user);
       navigate('/', { replace: true });
     },
