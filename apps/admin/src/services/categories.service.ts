@@ -14,6 +14,8 @@ export const categoriesService = {
 
   async create(data: {
     name: string;
+    nameFr?: string;
+    nameIt?: string;
     slug: string;
     description?: string;
     parentId?: string;
@@ -28,6 +30,8 @@ export const categoriesService = {
     id: string,
     data: {
       name?: string;
+      nameFr?: string;
+      nameIt?: string;
       slug?: string;
       description?: string;
       parentId?: string;

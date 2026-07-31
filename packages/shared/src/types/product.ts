@@ -9,6 +9,8 @@ export type ListingStatus = 'ACTIVE' | 'OUT_OF_STOCK' | 'EXPIRED';
 export interface FishCategory {
   id: string;
   name: string;
+  nameFr?: string;
+  nameIt?: string;
   slug: string;
   description?: string;
   imageFileId?: string;

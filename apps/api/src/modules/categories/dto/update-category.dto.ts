@@ -13,6 +13,14 @@ export class UpdateCategoryDto {
 
   @IsString()
   @IsOptional()
+  nameFr?: string;
+
+  @IsString()
+  @IsOptional()
+  nameIt?: string;
+
+  @IsString()
+  @IsOptional()
   description?: string;
 
   @IsString()

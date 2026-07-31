@@ -57,6 +57,8 @@ export class CategoriesService {
     const category = await this.prisma.fishCategory.create({
       data: {
         name: dto.name,
+        nameFr: dto.nameFr,
+        nameIt: dto.nameIt,
         slug: dto.slug,
         description: dto.description,
         parentId: dto.parentId,
@@ -91,6 +93,8 @@ export class CategoriesService {
       where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.nameFr !== undefined && { nameFr: dto.nameFr }),
+        ...(dto.nameIt !== undefined && { nameIt: dto.nameIt }),
         ...(dto.slug !== undefined && { slug: dto.slug }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.parentId !== undefined && { parentId: dto.parentId }),

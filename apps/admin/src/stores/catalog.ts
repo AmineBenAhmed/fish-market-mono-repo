@@ -4,6 +4,8 @@ import { categoriesService } from '../services/categories.service';
 export interface Category {
   id: string;
   name: string;
+  nameFr?: string;
+  nameIt?: string;
   slug: string;
   description?: string;
   sortOrder: number;

@@ -22,10 +22,14 @@ export function CategoriesPage() {
   const [showAdd, setShowAdd] = useState(false);
 
   const [editName, setEditName] = useState('');
+  const [editNameFr, setEditNameFr] = useState('');
+  const [editNameIt, setEditNameIt] = useState('');
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editPreview, setEditPreview] = useState<string | null>(null);
 
   const [addName, setAddName] = useState('');
+  const [addNameFr, setAddNameFr] = useState('');
+  const [addNameIt, setAddNameIt] = useState('');
   const [addSlug, setAddSlug] = useState('');
   const [addFile, setAddFile] = useState<File | null>(null);
   const [addPreview, setAddPreview] = useState<string | null>(null);
@@ -41,6 +45,8 @@ export function CategoriesPage() {
 
   function resetEdit() {
     setEditName('');
+    setEditNameFr('');
+    setEditNameIt('');
     setEditFile(null);
     setEditPreview(null);
   }
@@ -48,12 +54,16 @@ export function CategoriesPage() {
   function openEdit(cat: Category) {
     setSelected(cat);
     setEditName(cat.name);
+    setEditNameFr(cat.nameFr ?? '');
+    setEditNameIt(cat.nameIt ?? '');
     setEditFile(null);
     setEditPreview(null);
   }
 
   function resetAdd() {
     setAddName('');
+    setAddNameFr('');
+    setAddNameIt('');
     setAddSlug('');
     setAddFile(null);
     setAddPreview(null);
@@ -75,8 +85,13 @@ export function CategoriesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; slug: string; imageUrl?: string }) =>
-      categoriesService.create(data),
+    mutationFn: async (data: {
+      name: string;
+      nameFr?: string;
+      nameIt?: string;
+      slug: string;
+      imageUrl?: string;
+    }) => categoriesService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       loadCategories();
@@ -115,6 +130,8 @@ export function CategoriesPage() {
       id: selected.id,
       data: {
         name: editName.trim(),
+        nameFr: editNameFr.trim() || undefined,
+        nameIt: editNameIt.trim() || undefined,
         slug: selected.slug,
         ...(imageUrl && { imageUrl }),
       },
@@ -139,7 +156,13 @@ export function CategoriesPage() {
       setUploading(false);
     }
 
-    createMutation.mutate({ name: addName.trim(), slug: addSlug.trim(), imageUrl });
+    createMutation.mutate({
+      name: addName.trim(),
+      nameFr: addNameFr.trim() || undefined,
+      nameIt: addNameIt.trim() || undefined,
+      slug: addSlug.trim(),
+      imageUrl,
+    });
   }
 
   const isPending =
@@ -288,6 +311,25 @@ export function CategoriesPage() {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name (FR)</label>
+                <Input
+                  value={editNameFr}
+                  onChange={(e) => setEditNameFr(e.target.value)}
+                  placeholder="e.g. Poisson Blanc"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name (IT)</label>
+                <Input
+                  value={editNameIt}
+                  onChange={(e) => setEditNameIt(e.target.value)}
+                  placeholder="e.g. Pesce Bianco"
+                />
+              </div>
+            </div>
+
             <div className="flex gap-3 pt-2">
               <Button
                 variant="destructive"
@@ -383,6 +425,25 @@ export function CategoriesPage() {
                 }
                 required
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name (FR)</label>
+                <Input
+                  placeholder="e.g. Poisson Blanc"
+                  value={addNameFr}
+                  onChange={(e) => setAddNameFr(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Name (IT)</label>
+                <Input
+                  placeholder="e.g. Pesce Bianco"
+                  value={addNameIt}
+                  onChange={(e) => setAddNameIt(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

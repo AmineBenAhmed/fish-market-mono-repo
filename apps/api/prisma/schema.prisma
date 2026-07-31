@@ -430,6 +430,8 @@ model UserAddress {
 model FishCategory {
   id          String    @id @default(cuid())
   name        String
+  nameFr      String?
+  nameIt      String?
   slug      String   @unique
   description String?
   imageFileId String?   @unique
