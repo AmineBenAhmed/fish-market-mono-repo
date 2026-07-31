@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { fetchCategories, fetchTodayListings, fetchGovernorates, fetchAreas } from '@/lib/api';
 import { CategoryCard } from '@/components/category-card';
@@ -32,7 +32,13 @@ export function HomePageContent() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const LIMIT = 12;
 
-  const availableCategories = categories;
+  const listedCategoryIds = useMemo(() => {
+    return new Set(listings.map((l) => l.category?.id).filter(Boolean));
+  }, [listings]);
+
+  const availableCategories = selectedAreaId
+    ? categories.filter((c) => !loading && listedCategoryIds.has(c.id))
+    : categories;
 
   const filteredCategories = search
     ? categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
