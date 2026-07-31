@@ -11,6 +11,7 @@ import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Skeleton } from '../../components/ui/skeleton';
 import { formatDate, statusColor } from '../../lib/utils';
+import { API_BASE_URL } from '../../services/api';
 import { cloudinaryService, sellersService } from '../../services';
 import { Dialog, DialogContent, DialogClose } from '../../components/ui/dialog';
 
@@ -427,6 +428,7 @@ export function StoreDetailPage() {
                   onChange={setAddress}
                   showLabel={false}
                   showCoordinates
+                  apiBaseUrl={API_BASE_URL}
                 />
               </div>
               <div className="flex items-center gap-2 pt-2">

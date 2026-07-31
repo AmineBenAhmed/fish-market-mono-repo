@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
+import { API_BASE_URL } from '../../services/api';
 import { cloudinaryService, driversService } from '../../services';
 
 const vehicleTypes = [
@@ -266,6 +267,7 @@ export function DriverCreatePage() {
                   onChange={setAddress}
                   showLabel={false}
                   showCoordinates={false}
+                  apiBaseUrl={API_BASE_URL}
                 />
               </div>
               <div>

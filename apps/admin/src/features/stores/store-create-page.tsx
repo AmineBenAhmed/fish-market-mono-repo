@@ -10,6 +10,7 @@ import { PageHeader } from '../../components/shared/page-header';
 import { MapPicker } from '../../components/shared/map-picker';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { API_BASE_URL } from '../../services/api';
 import { cloudinaryService, sellersService, usersService } from '../../services';
 import type { User as UserType } from '../../types';
 
@@ -255,6 +256,7 @@ export function StoreCreatePage() {
                   onChange={setAddress}
                   showLabel={false}
                   showCoordinates={false}
+                  apiBaseUrl={API_BASE_URL}
                 />
               </div>
             </CardContent>

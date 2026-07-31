@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = (() => {
+const DEFAULT_API_BASE = (() => {
   if (typeof window === 'undefined') return 'http://178.162.242.127:4000';
   const origin = window.location.origin;
   if (origin.includes('localhost') || origin.includes('192.168') || origin.includes('178.162')) {
@@ -33,6 +33,7 @@ interface AddressFormProps {
   onChange: (value: AddressFormValue) => void;
   showLabel?: boolean;
   showCoordinates?: boolean;
+  apiBaseUrl?: string;
 }
 
 export function AddressForm({
@@ -40,11 +41,13 @@ export function AddressForm({
   onChange,
   showLabel = true,
   showCoordinates = false,
+  apiBaseUrl,
 }: AddressFormProps) {
   const [governorates, setGovernorates] = useState<LocationOption[]>([]);
   const [areas, setAreas] = useState<LocationOption[]>([]);
   const [zones, setZones] = useState<LocationOption[]>([]);
   const [loadingGov, setLoadingGov] = useState(true);
+  const API_BASE = apiBaseUrl ?? DEFAULT_API_BASE;
 
   const form: AddressFormValue = {
     governorateId: value.governorateId || 'sousse',
