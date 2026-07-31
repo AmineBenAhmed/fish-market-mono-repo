@@ -28,22 +28,20 @@ export function CategoryCard({ category, onClick, small }: CategoryCardProps) {
           </div>
         )}
       </div>
-      {small ? (
-        <div className="flex items-end justify-between gap-1 py-1.5 px-1.5">
-          <p className="text-[10px] font-medium text-gray-500 truncate max-w-[45%]">
-            {category.nameFr || ''}
-          </p>
-          <h3 className="text-[11px] font-bold text-gray-900 text-right truncate max-w-[55%]">
-            {category.name}
-          </h3>
-        </div>
-      ) : (
-        <div className="text-center py-2 sm:py-4 px-1.5 sm:px-2">
-          <h3 className="font-bold text-gray-900 leading-tight text-sm sm:text-xl sm:leading-normal">
-            {category.name}
-          </h3>
-        </div>
-      )}
+      <div
+        className={`flex items-end justify-between gap-1 ${small ? 'py-1.5 px-1.5' : 'py-2 sm:py-3 px-1.5 sm:px-3'}`}
+      >
+        <p
+          className={`font-medium text-gray-500 truncate ${small ? 'text-[10px] max-w-[45%]' : 'text-xs sm:text-base max-w-[45%] sm:max-w-[50%]'}`}
+        >
+          {category.nameFr || ''}
+        </p>
+        <h3
+          className={`font-bold text-gray-900 text-right truncate ${small ? 'text-[11px] max-w-[55%]' : 'text-sm sm:text-lg max-w-[55%] sm:max-w-[50%]'}`}
+        >
+          {category.name}
+        </h3>
+      </div>
     </button>
   );
 }
