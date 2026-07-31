@@ -41,8 +41,8 @@ export function HomePageContent() {
     : categories;
 
   const filteredCategories = search
-    ? categories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-    : categories;
+    ? availableCategories.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    : availableCategories;
 
   useEffect(() => {
     Promise.all([
