@@ -127,6 +127,8 @@ export class SellersService {
         photo: dto.photo,
         registrationNumber: dto.registrationNumber,
         storeLogoUrl: dto.storeLogoUrl,
+        phone: dto.phone,
+        phone2: dto.phone2,
         verificationStatus: 'APPROVED',
         isActive: true,
       },
@@ -220,6 +222,8 @@ export class SellersService {
     if (dto.photo !== undefined) data.photo = dto.photo;
     if (dto.registrationNumber !== undefined) data.registrationNumber = dto.registrationNumber;
     if (dto.storeLogoUrl !== undefined) data.storeLogoUrl = dto.storeLogoUrl;
+    if (dto.phone !== undefined) data.phone = dto.phone;
+    if (dto.phone2 !== undefined) data.phone2 = dto.phone2;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     if (dto.verificationStatus !== undefined) {
       data.verificationStatus = dto.verificationStatus as SellerVerificationStatus;

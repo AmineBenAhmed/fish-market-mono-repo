@@ -323,6 +323,8 @@ model SellerProfile {
   photo              String?
   registrationNumber String?
   storeLogoUrl       String?
+  phone              String?
+  phone2             String?
   isActive           Boolean                 @default(false)
   city               String
   state              String

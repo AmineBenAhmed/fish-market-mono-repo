@@ -96,6 +96,14 @@ export class AdminUpdateSellerDto {
   @IsOptional()
   isActive?: boolean;
 
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @IsString()
+  @IsOptional()
+  phone2?: string;
+
   @IsEnum(SellerVerificationStatus)
   @IsOptional()
   verificationStatus?: SellerVerificationStatus;
