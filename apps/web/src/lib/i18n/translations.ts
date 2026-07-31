@@ -74,6 +74,11 @@ const translations: Record<string, Record<Locale, string>> = {
     fr: 'Essayez de sélectionner une autre catégorie',
     ar: 'حاول اختيار فئة مختلفة',
   },
+  'home.selectArea': {
+    en: 'Select an area to see listings',
+    fr: 'Sélectionnez une zone pour voir les annonces',
+    ar: 'اختر منطقة لعرض الإعلانات',
+  },
 
   // ── Listing Detail ──
   'listing.notFound': {

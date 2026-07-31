@@ -103,9 +103,18 @@ export function HomePageContent() {
     [],
   );
 
+  const hasAreaFilter = !!selectedAreaId;
+
   useEffect(() => {
     setPage(1);
-    loadListings(1, selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId);
+    if (selectedAreaId) {
+      loadListings(1, selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId);
+    } else {
+      setLoading(false);
+      setHasMore(false);
+      setListings([]);
+      setError(null);
+    }
   }, [selectedCategory, selectedCondition, selectedGovernorateId, selectedAreaId, loadListings]);
 
   function handleSelectCategory(id: string | null) {
@@ -333,7 +342,13 @@ export function HomePageContent() {
                 ))}
               </div>
             )}
-            {!loading && listings.length === 0 && (
+            {!loading && !hasAreaFilter && (
+              <div className="text-center py-10 text-gray-400">
+                <MapPin className="h-10 w-10 mx-auto mb-2" />
+                <p className="text-sm">{t('home.selectArea')}</p>
+              </div>
+            )}
+            {!loading && hasAreaFilter && listings.length === 0 && (
               <div className="text-center py-10 text-gray-400">
                 <Store className="h-10 w-10 mx-auto mb-2" />
                 <p className="text-sm">{t('home.noListings')}</p>
@@ -388,7 +403,14 @@ export function HomePageContent() {
             </div>
           )}
 
-          {!loading && listings.length === 0 && (
+          {!loading && !hasAreaFilter && (
+            <div className="text-center py-12 sm:py-20 text-gray-400">
+              <MapPin className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4" />
+              <p className="text-base sm:text-lg">{t('home.selectArea')}</p>
+            </div>
+          )}
+
+          {!loading && hasAreaFilter && listings.length === 0 && (
             <div className="text-center py-12 sm:py-20 text-gray-400">
               <Store className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4" />
               <p className="text-base sm:text-lg">{t('home.noListings')}</p>
