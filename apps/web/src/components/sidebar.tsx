@@ -274,6 +274,9 @@ export function Sidebar() {
                     {isActive && (
                       <span className="absolute ltr:left-0 rtl:right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-gradient-to-b from-blue-500 to-cyan-400 shadow-sm shadow-blue-200" />
                     )}
+                    <span className="text-xs text-gray-500 truncate max-w-[40%]">
+                      {cat.nameFr || cat.name}
+                    </span>
                     <div
                       className={`flex items-center justify-center h-8 w-8 rounded-xl overflow-hidden transition-all duration-200 ${
                         isActive
@@ -295,9 +298,7 @@ export function Sidebar() {
                         </div>
                       )}
                     </div>
-                    <span className="ltr:text-right rtl:text-left truncate font-semibold">
-                      {cat.name}
-                    </span>
+                    <span className="truncate font-semibold max-w-[40%]">{cat.name}</span>
                   </button>
                 );
               })}

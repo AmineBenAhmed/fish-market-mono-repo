@@ -13,6 +13,8 @@ export interface ListingImage {
 export interface FishCategory {
   id: string;
   name: string;
+  nameFr?: string;
+  nameIt?: string;
   slug: string;
   description?: string;
   image?: { id: string; url: string } | null;
