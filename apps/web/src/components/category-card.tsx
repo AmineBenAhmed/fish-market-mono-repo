@@ -28,13 +28,22 @@ export function CategoryCard({ category, onClick, small }: CategoryCardProps) {
           </div>
         )}
       </div>
-      <div className={`text-center ${small ? 'py-1.5 px-1' : 'py-2 sm:py-4 px-1.5 sm:px-2'}`}>
-        <h3
-          className={`font-bold text-gray-900 leading-tight ${small ? 'text-[11px]' : 'text-sm sm:text-xl sm:leading-normal'}`}
-        >
-          {category.name}
-        </h3>
-      </div>
+      {small ? (
+        <div className="flex items-end justify-between gap-1 py-1.5 px-1.5">
+          <p className="text-[10px] font-medium text-gray-500 truncate max-w-[45%]">
+            {category.nameFr || ''}
+          </p>
+          <h3 className="text-[11px] font-bold text-gray-900 text-right truncate max-w-[55%]">
+            {category.name}
+          </h3>
+        </div>
+      ) : (
+        <div className="text-center py-2 sm:py-4 px-1.5 sm:px-2">
+          <h3 className="font-bold text-gray-900 leading-tight text-sm sm:text-xl sm:leading-normal">
+            {category.name}
+          </h3>
+        </div>
+      )}
     </button>
   );
 }
